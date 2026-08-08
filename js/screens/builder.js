@@ -209,42 +209,42 @@ window.init_builder = function(params) {
                 </div>
 
                 <!-- Main Data Area -->
-                <div class="flex-1 p-unit-md flex flex-col gap-3">
-                    <div class="flex justify-between items-center gap-2">
-                        <input class="data-input border-none bg-transparent p-0 font-headline-md text-base font-bold text-primary w-full max-w-md focus:ring-0 ex-name-input" placeholder="Exercise Name (e.g. Bench Press)" type="text" value="${ex.name || ''}">
-                        <div class="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="flex-1 p-unit-md flex flex-col gap-3 min-w-0">
+                    <div class="flex justify-between items-center gap-2 min-w-0">
+                        <input class="data-input border-none bg-transparent p-0 font-headline-md text-base font-bold text-primary flex-1 min-w-0 focus:ring-0 ex-name-input" placeholder="Exercise Name (e.g. Bench Press)" type="text" value="${ex.name || ''}">
+                        <div class="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                             <button class="btn-ghost p-1.5 rounded-lg flex items-center justify-center btn-desktop-dup" title="Duplicate Exercise"><span class="material-symbols-outlined text-[16px]">content_copy</span></button>
                             <button class="btn-ghost p-1.5 rounded-lg flex items-center justify-center text-error hover:bg-error/10 btn-desktop-del" title="Delete Exercise"><span class="material-symbols-outlined text-[16px]">delete</span></button>
                         </div>
                     </div>
 
                     <!-- Data Grid (Sets, Reps, Weight/RPE, Rest, Tempo) -->
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                        <div class="flex flex-col">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 min-w-0">
+                        <div class="flex flex-col min-w-0">
                             <label class="font-label-caps text-[9px] text-on-surface-variant mb-1 uppercase tracking-wider">Sets</label>
-                            <input class="data-input rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-sets-input" type="number" value="${ex.sets || 3}">
+                            <input class="data-input min-w-0 rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-sets-input" type="number" value="${ex.sets || 3}">
                         </div>
-                        <div class="flex flex-col">
+                        <div class="flex flex-col min-w-0">
                             <label class="font-label-caps text-[9px] text-on-surface-variant mb-1 uppercase tracking-wider">Target Reps</label>
-                            <input class="data-input rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-reps-input" type="text" value="${ex.reps || '10'}">
+                            <input class="data-input min-w-0 rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-reps-input" type="text" value="${ex.reps || '10'}">
                         </div>
-                        <div class="flex flex-col">
+                        <div class="flex flex-col min-w-0">
                             <label class="font-label-caps text-[9px] text-on-surface-variant mb-1 uppercase tracking-wider">Load / RPE</label>
-                            <input class="data-input rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-weight-input" type="text" value="${ex.weight || 'RPE 8'}">
+                            <input class="data-input min-w-0 rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-weight-input" type="text" value="${ex.weight || 'RPE 8'}">
                         </div>
-                        <div class="flex flex-col">
+                        <div class="flex flex-col min-w-0">
                             <label class="font-label-caps text-[9px] text-on-surface-variant mb-1 uppercase tracking-wider">Rest Timer</label>
-                            <input class="data-input rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-rest-input" type="text" value="${ex.rest || '90s'}">
+                            <input class="data-input min-w-0 rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-rest-input" type="text" value="${ex.rest || '90s'}">
                         </div>
-                        <div class="flex flex-col col-span-2 sm:col-span-1">
+                        <div class="flex flex-col col-span-2 md:col-span-1 min-w-0">
                             <label class="font-label-caps text-[9px] text-on-surface-variant mb-1 uppercase tracking-wider">Tempo</label>
-                            <input class="data-input rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-tempo-input" placeholder="2-0-2" type="text" value="${ex.tempo || '2-0-2'}">
+                            <input class="data-input min-w-0 rounded-lg px-2.5 py-1.5 text-xs font-stat-mono bg-[#09090b] border border-[#27272a] ex-tempo-input" placeholder="2-0-2" type="text" value="${ex.tempo || '2-0-2'}">
                         </div>
                     </div>
 
                     <!-- Coaching Notes -->
-                    <div>
-                        <input class="data-input w-full rounded-lg px-3 py-1.5 text-xs text-on-surface-variant border-dashed border-[#27272a] focus:border-solid bg-transparent ex-notes-input" placeholder="Add coaching tips & cues (e.g. pause at bottom, explode up)..." type="text" value="${ex.notes || ''}">
+                    <div class="min-w-0">
+                        <input class="data-input w-full min-w-0 rounded-lg px-3 py-1.5 text-xs text-on-surface-variant border-dashed border-[#27272a] focus:border-solid bg-transparent ex-notes-input" placeholder="Add coaching tips & cues (e.g. pause at bottom, explode up)..." type="text" value="${ex.notes || ''}">
                     </div>
                 </div>
             `;

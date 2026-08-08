@@ -150,45 +150,47 @@ window.init_workout_logger = function(params) {
             const setRow = document.createElement('div');
             const isCompleted = setRec.completed;
 
-            setRow.className = `p-3 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 transition-all ${
-                isCompleted ? 'bg-[#18181b]/60 border-[#22c55e]/40 opacity-80' : 'bg-[#18181b] border-[#27272a]'
+            setRow.className = `p-2.5 sm:p-3 rounded-xl border transition-all ${
+                isCompleted ? 'bg-[#18181b]/60 border-[#22c55e]/40 opacity-85' : 'bg-[#18181b] border-[#27272a]'
             }`;
 
             setRow.innerHTML = `
-                <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <span class="w-7 h-7 rounded-lg flex items-center justify-center font-stat-mono text-xs font-bold ${
-                        isCompleted ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[#27272a] text-primary'
-                    }">${setRec.setNum}</span>
-                    <div>
-                        <p class="text-xs font-semibold text-primary">Set ${setRec.setNum}</p>
-                        <p class="text-[10px] text-on-surface-variant font-mono">Target: ${currentEx.reps || '10'} reps</p>
-                    </div>
-                </div>
-
-                <!-- Inputs Grid -->
-                <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                    <!-- Weight Input -->
-                    <div class="flex items-center gap-1 bg-[#09090b] border border-[#27272a] rounded-lg p-1">
-                        <button class="w-6 h-6 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold btn-weight-minus">-</button>
-                        <input type="number" step="0.5" class="w-14 bg-transparent border-none text-center font-mono text-xs font-bold text-primary p-0 focus:ring-0 input-weight" value="${setRec.weight}">
-                        <span class="text-[10px] text-on-surface-variant font-mono pr-1">kg</span>
-                        <button class="w-6 h-6 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold btn-weight-plus">+</button>
+                <div class="grid grid-cols-12 gap-1.5 sm:gap-2 items-center w-full min-w-0">
+                    <!-- Col 1-4: Set info -->
+                    <div class="col-span-4 flex items-center gap-2 min-w-0">
+                        <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-stat-mono text-xs font-bold shrink-0 ${
+                            isCompleted ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[#27272a] text-primary'
+                        }">${setRec.setNum}</span>
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold text-primary truncate">Set ${setRec.setNum}</p>
+                            <p class="text-[10px] text-on-surface-variant font-mono truncate">${currentEx.reps || '10'} reps</p>
+                        </div>
                     </div>
 
-                    <!-- Reps Input -->
-                    <div class="flex items-center gap-1 bg-[#09090b] border border-[#27272a] rounded-lg p-1">
-                        <button class="w-6 h-6 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold btn-reps-minus">-</button>
-                        <input type="number" class="w-10 bg-transparent border-none text-center font-mono text-xs font-bold text-primary p-0 focus:ring-0 input-reps" value="${setRec.reps}">
-                        <span class="text-[10px] text-on-surface-variant font-mono pr-1">reps</span>
-                        <button class="w-6 h-6 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold btn-reps-plus">+</button>
+                    <!-- Col 5-7: Weight input -->
+                    <div class="col-span-3 flex items-center gap-0.5 bg-[#09090b] border border-[#27272a] rounded-lg p-1 min-w-0">
+                        <button class="w-5 h-5 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold text-xs shrink-0 btn-weight-minus">-</button>
+                        <input type="number" step="0.5" class="w-full min-w-0 bg-transparent border-none text-center font-mono text-xs font-bold text-primary p-0 focus:ring-0 input-weight" value="${setRec.weight}">
+                        <span class="text-[9px] text-on-surface-variant font-mono pr-0.5 shrink-0 hidden sm:inline">kg</span>
+                        <button class="w-5 h-5 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold text-xs shrink-0 btn-weight-plus">+</button>
                     </div>
 
-                    <!-- Checkmark Toggle -->
-                    <button class="w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-                        isCompleted ? 'bg-[#22c55e] text-[#09090b] shadow-[0_0_12px_rgba(34,197,94,0.4)]' : 'bg-[#27272a] text-on-surface-variant hover:text-primary'
-                    } btn-toggle-complete" title="${isCompleted ? 'Mark as incomplete' : 'Complete set'}">
-                        <span class="material-symbols-outlined text-[20px]">${isCompleted ? 'check_circle' : 'radio_button_unchecked'}</span>
-                    </button>
+                    <!-- Col 8-10: Reps input -->
+                    <div class="col-span-3 flex items-center gap-0.5 bg-[#09090b] border border-[#27272a] rounded-lg p-1 min-w-0">
+                        <button class="w-5 h-5 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold text-xs shrink-0 btn-reps-minus">-</button>
+                        <input type="number" class="w-full min-w-0 bg-transparent border-none text-center font-mono text-xs font-bold text-primary p-0 focus:ring-0 input-reps" value="${setRec.reps}">
+                        <span class="text-[9px] text-on-surface-variant font-mono pr-0.5 shrink-0 hidden sm:inline">reps</span>
+                        <button class="w-5 h-5 rounded bg-[#18181b] text-on-surface hover:text-primary flex items-center justify-center font-bold text-xs shrink-0 btn-reps-plus">+</button>
+                    </div>
+
+                    <!-- Col 11-12: Complete checkmark -->
+                    <div class="col-span-2 flex justify-end">
+                        <button class="w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                            isCompleted ? 'bg-[#22c55e] text-[#09090b] shadow-[0_0_12px_rgba(34,197,94,0.4)]' : 'bg-[#27272a] text-on-surface-variant hover:text-primary'
+                        } btn-toggle-complete" title="${isCompleted ? 'Mark as incomplete' : 'Complete set'}">
+                            <span class="material-symbols-outlined text-[18px]">${isCompleted ? 'check_circle' : 'radio_button_unchecked'}</span>
+                        </button>
+                    </div>
                 </div>
             `;
 

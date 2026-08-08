@@ -82,31 +82,31 @@ window.init_templates = function(params) {
                     </button>
                 </div>
             </div>
-            <div class="grid grid-cols-5 gap-2">
-                <div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 min-w-0">
+                <div class="min-w-0">
                     <label class="block text-[9px] font-label-caps text-on-surface-variant mb-0.5 uppercase tracking-wider">Sets</label>
-                    <input type="number" placeholder="4" class="w-full bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-sets" value="${exData.sets || 4}">
+                    <input type="number" placeholder="4" class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-sets" value="${exData.sets || 4}">
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label class="block text-[9px] font-label-caps text-on-surface-variant mb-0.5 uppercase tracking-wider">Reps</label>
-                    <input type="text" placeholder="8-10" class="w-full bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-reps" value="${exData.reps || '8-10'}">
+                    <input type="text" placeholder="8-10" class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-reps" value="${exData.reps || '8-10'}">
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label class="block text-[9px] font-label-caps text-on-surface-variant mb-0.5 uppercase tracking-wider">Weight/RPE</label>
-                    <input type="text" placeholder="RPE 8" class="w-full bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-weight" value="${exData.weight || 'RPE 8'}">
+                    <input type="text" placeholder="RPE 8" class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-weight" value="${exData.weight || 'RPE 8'}">
                 </div>
-                <div>
+                <div class="min-w-0">
                     <label class="block text-[9px] font-label-caps text-on-surface-variant mb-0.5 uppercase tracking-wider">Rest</label>
-                    <input type="text" placeholder="90s" class="w-full bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-rest" value="${exData.rest || '90s'}">
+                    <input type="text" placeholder="90s" class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-rest" value="${exData.rest || '90s'}">
                 </div>
-                <div>
+                <div class="col-span-2 sm:col-span-1 min-w-0">
                     <label class="block text-[9px] font-label-caps text-on-surface-variant mb-0.5 uppercase tracking-wider">Tempo</label>
-                    <input type="text" placeholder="2-0-2" class="w-full bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-tempo" value="${exData.tempo || '2-0-2'}">
+                    <input type="text" placeholder="2-0-2" class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2 py-1 text-center text-xs text-on-surface ex-tempo" value="${exData.tempo || '2-0-2'}">
                 </div>
             </div>
-            <div>
+            <div class="min-w-0">
                 <label class="block text-[9px] font-label-caps text-on-surface-variant mb-0.5 uppercase tracking-wider">Coaching Notes</label>
-                <input type="text" placeholder="Add cues (e.g. pause at chest, drive legs)..." class="w-full bg-[#0d0e12] border border-[#27272a] rounded-lg px-2.5 py-1 text-xs text-on-surface ex-notes" value="${exData.notes || ''}">
+                <input type="text" placeholder="Add cues (e.g. pause at chest, drive legs)..." class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2.5 py-1 text-xs text-on-surface ex-notes" value="${exData.notes || ''}">
             </div>
         `;
         row.querySelector('.btn-remove-ex').onclick = () => row.remove();
@@ -147,16 +147,16 @@ window.init_templates = function(params) {
                 const totalSets = (t.exercises || []).reduce((acc, e) => acc + (parseInt(e.sets) || 0), 0);
 
                 const card = document.createElement('div');
-                card.className = 'card-bg border border-base hover:border-outline rounded-xl p-unit-md flex flex-col justify-between transition-all duration-200 hover:shadow-lg group';
+                card.className = 'card-bg border border-base hover:border-outline rounded-xl p-unit-md flex flex-col justify-between transition-all duration-200 hover:shadow-lg group min-w-0';
                 
                 card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="bg-[#27272a] text-[#d9f99d] text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase font-label-caps">${categoryTag}</span>
-                                <h3 class="font-body-base text-sm font-bold text-primary truncate max-w-[200px] mt-1.5">${t.name}</h3>
+                    <div class="min-w-0">
+                        <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <span class="bg-[#27272a] text-[#d9f99d] text-[9px] font-bold px-2 py-0.5 rounded tracking-wider uppercase font-label-caps inline-block">${categoryTag}</span>
+                                <h3 class="font-body-base text-sm font-bold text-primary truncate mt-1.5">${t.name}</h3>
                             </div>
-                            <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
                                 <button class="p-1 text-on-surface-variant hover:text-primary transition-colors btn-duplicate" title="Duplicate"><span class="material-symbols-outlined text-[16px]">content_copy</span></button>
                                 <button class="p-1 text-error/80 hover:text-error transition-colors btn-delete" title="Delete"><span class="material-symbols-outlined text-[16px]">delete</span></button>
                             </div>
@@ -171,12 +171,12 @@ window.init_templates = function(params) {
                         </div>
 
                         <!-- Exercises Preview -->
-                        <div class="space-y-1.5 mb-4 border-t border-outline-variant/30 pt-3">
+                        <div class="space-y-1.5 mb-4 border-t border-outline-variant/30 pt-3 min-w-0">
                             <span class="font-label-caps text-[9px] text-on-surface-variant uppercase tracking-wider block mb-1">ROUTINE BREAKDOWN</span>
                             ${(t.exercises || []).slice(0, 3).map(e => `
-                                <div class="flex justify-between text-xs text-on-surface">
-                                    <span class="truncate max-w-[150px]">• ${e.name}</span>
-                                    <span class="font-stat-mono text-[10px] text-primary-container font-semibold">${e.sets}x${e.reps}</span>
+                                <div class="flex justify-between items-center gap-2 text-xs text-on-surface min-w-0">
+                                    <span class="truncate flex-1 min-w-0">• ${e.name}</span>
+                                    <span class="font-stat-mono text-[10px] text-primary-container font-semibold shrink-0">${e.sets}x${e.reps}</span>
                                 </div>
                             `).join('')}
                             ${(t.exercises || []).length > 3 ? `<p class="text-[10px] text-primary-container font-semibold pt-0.5">+ ${(t.exercises || []).length - 3} more exercises</p>` : ''}
@@ -184,12 +184,12 @@ window.init_templates = function(params) {
                     </div>
 
                     <!-- Bottom Actions -->
-                    <div class="grid grid-cols-3 gap-2 pt-2 border-t border-outline-variant/10 mt-auto">
+                    <div class="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2 border-t border-outline-variant/10 mt-auto min-w-0">
                         <button class="py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary text-[11px] font-medium transition-colors btn-preview">Preview</button>
                         <button class="py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary text-[11px] font-medium transition-colors btn-edit">Edit</button>
                         <button class="py-1.5 rounded bg-[#d9f99d] text-[#09090b] font-bold text-[11px] transition-transform active:scale-95 btn-assign flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">person_add</span> Assign</button>
                     </div>
-                `;
+                `;     `;
 
                 // Wire Card Action Buttons
                 card.querySelector('.btn-preview').onclick = () => openPreviewTemplate(t);
