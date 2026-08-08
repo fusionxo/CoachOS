@@ -1,0 +1,294 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Invite Client - CoachOS</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;900&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#292b24",
+                        "on-tertiary-fixed": "#121c28",
+                        "tertiary-fixed": "#d9e3f4",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#ceee93",
+                        "on-surface": "#e3e3d9",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "surface-container-highest": "#34352f",
+                        "on-tertiary-fixed-variant": "#3e4755",
+                        "on-surface-variant": "#c5c8b7",
+                        "on-primary-fixed": "#131f00",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#e1e0ff",
+                        "primary-container": "#ceee93",
+                        "on-tertiary": "#27313e",
+                        "tertiary-fixed-dim": "#bdc7d7",
+                        "on-secondary": "#1000a9",
+                        "on-primary": "#243600",
+                        "inverse-on-surface": "#2f312a",
+                        "on-background": "#e3e3d9",
+                        "inverse-primary": "#4d661c",
+                        "secondary": "#c0c1ff",
+                        "surface-bright": "#383a33",
+                        "on-secondary-container": "#b0b2ff",
+                        "surface-dim": "#12140e",
+                        "outline-variant": "#44483b",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#b3d17a",
+                        "on-secondary-fixed": "#07006c",
+                        "surface-container": "#1f201a",
+                        "surface": "#12140e",
+                        "on-error-container": "#ffdad6",
+                        "background": "#12140e",
+                        "primary": "#ffffff",
+                        "tertiary-container": "#d9e3f4",
+                        "on-primary-fixed-variant": "#364e03",
+                        "surface-container-low": "#1b1c16",
+                        "surface-variant": "#34352f",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#5b6573",
+                        "tertiary": "#ffffff",
+                        "secondary-container": "#3131c0",
+                        "outline": "#8f9282",
+                        "on-primary-container": "#536d22",
+                        "surface-container-lowest": "#0d0f09",
+                        "surface-tint": "#b3d17a",
+                        "inverse-surface": "#e3e3d9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit-sm": "8px",
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "unit-lg": "24px",
+                        "unit-xl": "48px",
+                        "unit-xs": "4px",
+                        "unit-md": "16px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "stat-mono": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "body-base": ["Inter"],
+                        "headline-md": ["Geist"],
+                        "body-sm": ["Inter"],
+                        "display-lg-mobile": ["Geist"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "stat-mono": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                        "body-base": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Base styles mapped from guidance */
+        body {
+            background-color: #09090b; /* Level 0 Base */
+            color: #e3e3d9;
+        }
+        .card-surface {
+            background-color: #18181b; /* Level 1 Base */
+            border-color: #27272a;
+        }
+        .input-surface {
+            background-color: #09090b;
+            border-color: #27272a;
+        }
+        /* Custom Focus Ring utilizing closest config color for Indigo feel */
+        .input-surface:focus {
+            border-color: #3131c0; /* secondary-container as proxy for #6366f1 */
+            box-shadow: 0 0 0 2px rgba(49, 49, 192, 0.2);
+            outline: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Hide scrollbar for clean aesthetic */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-base text-body-base">
+<!-- Task-Focused Header (Navigation Shell Suppressed) -->
+<header class="w-full h-16 flex items-center px-gutter max-w-container-max mx-auto shrink-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30">
+<button class="flex items-center text-on-surface-variant hover:text-primary transition-colors group">
+<span class="material-symbols-outlined mr-2 text-[20px] group-hover:-translate-x-1 transition-transform" data-icon="arrow_back">arrow_back</span>
+<span class="font-body-sm text-body-sm">Back to Clients</span>
+</button>
+<div class="mx-auto font-headline-md text-headline-md font-bold text-primary tracking-tight" style="margin-left: auto; margin-right: auto; transform: translateX(-40px);">
+            CoachOS
+        </div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 flex items-center justify-center p-margin-mobile md:p-gutter relative">
+<!-- Subtle Background Glow -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-fixed/5 rounded-full blur-[100px] pointer-events-none"></div>
+<!-- Form State Container -->
+<div class="card-surface border rounded-xl w-full max-w-[480px] p-unit-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] relative z-10 fade-in" id="invite-form-container">
+<div class="mb-unit-lg">
+<h1 class="font-headline-md text-headline-md text-primary mb-2">Invite New Client</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Send a personalized onboarding link to bring them into your ecosystem.</p>
+</div>
+<form class="space-y-unit-md" id="inviteForm">
+<!-- Name Field -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-unit-sm uppercase tracking-wider" for="clientName">Client Name</label>
+<input class="w-full input-surface border rounded-lg px-4 py-3 font-body-base text-on-surface placeholder:text-on-surface-variant/50 transition-all duration-200" id="clientName" placeholder="e.g. Alex Johnson" required="" type="text">
+</div>
+<!-- Email Field -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-unit-sm uppercase tracking-wider" for="clientEmail">Email Address</label>
+<input class="w-full input-surface border rounded-lg px-4 py-3 font-body-base text-on-surface placeholder:text-on-surface-variant/50 transition-all duration-200" id="clientEmail" placeholder="alex@example.com" required="" type="email">
+</div>
+<!-- Goal Dropdown -->
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-unit-sm uppercase tracking-wider" for="clientGoal">Primary Goal</label>
+<div class="relative">
+<select class="w-full input-surface border rounded-lg px-4 py-3 font-body-base text-on-surface appearance-none cursor-pointer transition-all duration-200" id="clientGoal" required="">
+<option class="text-on-surface-variant/50" disabled="" selected="" value="">Select a goal...</option>
+<option value="fat_loss">Fat Loss</option>
+<option value="muscle_gain">Muscle Gain</option>
+<option value="strength">Strength</option>
+<option value="performance">Performance</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="pt-unit-sm mt-unit-lg border-t border-outline-variant/30 flex justify-end">
+<button class="w-full md:w-auto bg-primary-fixed text-[#09090b] font-body-base font-semibold px-6 py-3 rounded-lg hover:bg-primary-fixed-dim transition-colors duration-200 flex items-center justify-center gap-2" id="submitBtn" type="submit">
+<span>Create Invite</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Success State Container (Hidden by default) -->
+<div class="hidden card-surface border rounded-xl w-full max-w-[480px] p-unit-lg shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] relative z-10" id="success-container">
+<div class="flex flex-col items-center text-center mb-unit-lg">
+<div class="w-16 h-16 rounded-full bg-[rgba(34,197,94,0.1)] border border-[rgba(34,197,94,0.2)] flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-[#22c55e] text-3xl" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary mb-2">Invite Link Generated</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Your onboarding environment is ready for <span class="text-on-surface font-medium" id="displayClientName"></span>.</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-unit-sm flex items-center gap-2 mb-unit-lg">
+<input class="flex-1 bg-transparent border-none text-on-surface font-stat-mono text-sm focus:outline-none focus:ring-0 px-2 select-all" id="inviteLinkInput" readonly="" type="text" value="">
+<button class="shrink-0 bg-transparent border border-outline-variant text-on-surface font-body-sm font-semibold px-4 py-2 rounded-md hover:bg-surface-variant transition-colors flex items-center gap-2" id="copyBtn">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+<div class="flex flex-col sm:flex-row gap-unit-sm">
+<button class="flex-1 bg-primary-fixed text-[#09090b] font-body-base font-semibold px-6 py-3 rounded-lg hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-2" id="sendEmailBtn">
+<span class="material-symbols-outlined text-[20px]" data-icon="mail">mail</span>
+<span>Send Email</span>
+</button>
+<button class="flex-1 bg-transparent border border-outline-variant text-on-surface font-body-base font-semibold px-6 py-3 rounded-lg hover:bg-surface-variant transition-colors flex items-center justify-center" id="newInviteBtn">
+                    Invite Another
+                </button>
+</div>
+</div>
+</main>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const formContainer = document.getElementById('invite-form-container');
+            const successContainer = document.getElementById('success-container');
+            const form = document.getElementById('inviteForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const inviteLinkInput = document.getElementById('inviteLinkInput');
+            const sendEmailBtn = document.getElementById('sendEmailBtn');
+            const newInviteBtn = document.getElementById('newInviteBtn');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Simulate loading state
+                const originalBtnContent = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span> <span>Generating...</span>`;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-80');
+
+                // Simulate API Call
+                setTimeout(() => {
+                    const clientName = document.getElementById('clientName').value;
+                    document.getElementById('displayClientName').textContent = clientName;
+
+                    // Transition states
+                    formContainer.classList.add('hidden');
+                    formContainer.classList.remove('fade-in');
+                    
+                    successContainer.classList.remove('hidden');
+                    successContainer.classList.add('fade-in');
+
+                    // Reset button for next time
+                    submitBtn.innerHTML = originalBtnContent;
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-80');
+                }, 800);
+            });
+
+            copyBtn.addEventListener('click', () => {
+                inviteLinkInput.select();
+                document.execCommand('copy');
+                
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span><span>Copied</span>`;
+                copyBtn.classList.add('text-[#22c55e]', 'border-[rgba(34,197,94,0.5)]');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('text-[#22c55e]', 'border-[rgba(34,197,94,0.5)]');
+                }, 2000);
+            });
+
+            sendEmailBtn.addEventListener('click', () => {
+                 const originalText = sendEmailBtn.innerHTML;
+                 sendEmailBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]" data-icon="check">check</span><span>Sent!</span>`;
+                 setTimeout(() => {
+                    sendEmailBtn.innerHTML = originalText;
+                 }, 2000);
+            });
+
+            newInviteBtn.addEventListener('click', () => {
+                form.reset();
+                successContainer.classList.add('hidden');
+                successContainer.classList.remove('fade-in');
+                
+                formContainer.classList.remove('hidden');
+                formContainer.classList.add('fade-in');
+            });
+        });
+    </script>
+</body></html>

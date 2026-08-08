@@ -1,0 +1,59 @@
+<!-- TopAppBar (Mobile & Desktop) -->
+<header class="bg-surface/80 dark:bg-surface/80 backdrop-blur-md sticky top-0 w-full z-40 border-b border-outline-variant">
+<div class="flex justify-between items-center w-full px-gutter h-16 max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<div class="md:hidden font-display-lg text-display-lg font-black text-primary text-xl">CoachOS</div>
+<div class="hidden md:flex items-center text-primary dark:text-primary font-headline-md text-headline-md">
+                        AI Intelligence Hub
+                    </div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors Active: opacity-70">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors Active: opacity-70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img alt="Coach User Avatar" class="md:hidden w-8 h-8 rounded-full border border-outline-variant" data-alt="A professional headshot of a fitness coach against a dark, moody background with subtle rim lighting. The style is premium and corporate, conveying trust and authority in a modern digital space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDngdmbMD_6QSmhbGT03IsPCHHw5sBltWwXVGccRPTRxjwAe4Ic6YGS70oO22XKg2pYMJQfS-FCmqLbJ5Tufl584X5rPbulL4vHYZBM4J6_VLZUbyf660nGauuKlqlCsaugicTUPlzAav_ikfrZbngdtbFa0dYgoEEDkHp4MfeXw1tzkSIPw0NbYUVaZHqQDvuJTN7ZXgj-MsktlCNG4H985hubdOGvaxQmKZFGDa3h1Q_AwPfCed94woNi54N_hawGDaAULvTh80">
+</div>
+</div>
+</header>
+
+<!-- Assistant Empty State -->
+<div id="assistant-empty-state" class="hidden flex-1 flex-col items-center justify-center text-center p-8 max-w-md mx-auto my-12 bg-[#09090b] fade-in">
+    <span class="material-symbols-outlined text-[64px] text-primary-container mb-4">psychology</span>
+    <h3 class="font-headline-md text-primary font-bold mb-2">Needs client data</h3>
+    <p class="text-sm text-on-surface-variant mb-6">Onboard athlete clients to generate CoachAI alerts and enable interactive queries.</p>
+    <a href="#add-client" class="btn-primary px-6 py-2.5 rounded-lg font-body-base text-body-base font-semibold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_0_20px_rgba(217,249,157,0.2)]">
+        <span class="material-symbols-outlined text-[20px]">person_add</span>
+        <span>Add a client</span>
+    </a>
+</div>
+
+<div id="assistant-main-content" class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-container-max mx-auto w-full p-margin-mobile md:p-gutter gap-unit-lg pb-24 md:pb-gutter">
+<!-- Left Column: Insights Feed -->
+<div class="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scroll pr-2 gap-unit-md">
+    <!-- Dynamically loaded -->
+</div>
+<!-- Right Column: Conversational AI -->
+<div class="w-full lg:w-[400px] flex flex-col card-surface rounded-xl overflow-hidden shrink-0 h-[500px] lg:h-auto mt-4 lg:mt-0">
+<div class="p-unit-md border-b border-outline-variant bg-surface/50 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<h2 class="font-headline-md text-headline-md text-on-surface text-[16px]">Coach AI Assistant</h2>
+</div>
+<button class="btn-ghost p-1 rounded-md"><span class="material-symbols-outlined text-[20px]">more_horiz</span></button>
+</div>
+<div class="flex-1 p-unit-md overflow-y-auto custom-scroll flex flex-col gap-4 bg-[#09090b]/50">
+<!-- Dynamically loaded messages -->
+</div>
+<div class="p-unit-md border-t border-outline-variant bg-surface">
+<div class="relative">
+<input class="w-full input-inset rounded-lg py-3 pl-4 pr-12 font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant transition-all" placeholder="Ask AI about your clients..." type="text">
+<button class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary rounded-md text-on-primary hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>

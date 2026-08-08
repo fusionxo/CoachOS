@@ -1,0 +1,467 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Intelligence Dashboard - CoachOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;900&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#ffdad6",
+                      "error-container": "#93000a",
+                      "inverse-surface": "#e3e3d9",
+                      "surface-bright": "#383a33",
+                      "surface": "#12140e",
+                      "primary-fixed-dim": "#b3d17a",
+                      "on-tertiary-fixed-variant": "#3e4755",
+                      "inverse-primary": "#4d661c",
+                      "on-secondary-container": "#b0b2ff",
+                      "surface-container": "#1f201a",
+                      "on-primary-fixed-variant": "#364e03",
+                      "on-primary-fixed": "#131f00",
+                      "on-tertiary": "#27313e",
+                      "on-secondary-fixed": "#07006c",
+                      "surface-container-high": "#292b24",
+                      "on-tertiary-fixed": "#121c28",
+                      "on-secondary-fixed-variant": "#2f2ebe",
+                      "tertiary-container": "#d9e3f4",
+                      "surface-container-low": "#1b1c16",
+                      "primary-fixed": "#ceee93",
+                      "on-surface-variant": "#c5c8b7",
+                      "outline-variant": "#44483b",
+                      "on-primary-container": "#536d22",
+                      "on-background": "#e3e3d9",
+                      "on-tertiary-container": "#5b6573",
+                      "error": "#ffb4ab",
+                      "surface-container-highest": "#34352f",
+                      "on-secondary": "#1000a9",
+                      "secondary-container": "#3131c0",
+                      "background": "#12140e",
+                      "tertiary": "#ffffff",
+                      "outline": "#8f9282",
+                      "inverse-on-surface": "#2f312a",
+                      "tertiary-fixed-dim": "#bdc7d7",
+                      "secondary": "#c0c1ff",
+                      "surface-dim": "#12140e",
+                      "secondary-fixed": "#e1e0ff",
+                      "surface-container-lowest": "#0d0f09",
+                      "on-surface": "#e3e3d9",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#c0c1ff",
+                      "on-primary": "#243600",
+                      "primary-container": "#ceee93",
+                      "surface-variant": "#34352f",
+                      "primary": "#ffffff",
+                      "surface-tint": "#b3d17a",
+                      "tertiary-fixed": "#d9e3f4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit-xl": "48px",
+                      "unit-md": "16px",
+                      "unit-xs": "4px",
+                      "unit-sm": "8px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "unit-lg": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "display-lg-mobile": [
+                              "Geist"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-base": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Geist"
+                      ],
+                      "stat-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.04em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-base": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "stat-mono": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { background-color: #09090b; color: #fafafa; }
+        .glass-panel {
+            background-color: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .card-bg { background-color: #18181b; }
+        .border-base { border-color: #27272a; }
+        
+        /* Interactive subtle pulse for high priority */
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .pulse-critical {
+            animation: subtle-pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen font-body-base antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Desktop SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen py-unit-lg px-unit-md w-[280px] sticky top-0 left-0 border-r border-outline-variant bg-surface dark:bg-surface">
+<div class="flex items-center gap-unit-md mb-unit-xl px-unit-md">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="Coach Profile Picture" class="w-full h-full object-cover" data-alt="A professional headshot of a fitness coach wearing a sleek black athletic shirt, shot in a high-contrast studio environment with dramatic lighting. The image fits perfectly in a premium, modern dashboard context, exuding authority and precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0DKFOfi_kNxA1Oe425s2jti5Kzwp0CZ5v1PtRBIEBPUfS0qwRTRpzJI1D1BfVlnkhRNjaPzr1cgIUOpOhJEeIMnQwcefIp121SOid27dl2NiKljMr2rCfGpLbfWPznADe9rG4J4Ze-b0qxqMnYqggw9pJqDFW_q5LzaTUUCRiueCb-XVus0FOsgExLZS6Kfyhjcw8xJvXsuvoiKa09Gqidi6Ov98NrzAihYtTluhAOLcq0WnRsg6qxzRbZARuOF6Z7Nvr-pUh7E0">
+</div>
+<div>
+<h1 class="font-display-lg text-headline-md font-bold text-primary dark:text-primary leading-tight">CoachOS</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-unit-sm">
+<a class="flex items-center gap-unit-md px-unit-md py-unit-sm rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-unit-md px-unit-md py-unit-sm rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">group</span>
+                Clients
+            </a>
+<a class="flex items-center gap-unit-md px-unit-md py-unit-sm rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+                Workouts
+            </a>
+<a class="flex items-center gap-unit-md px-unit-md py-unit-sm rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+                Templates
+            </a>
+<a class="flex items-center gap-unit-md px-unit-md py-unit-sm rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">psychology</span>
+                AI Insights
+            </a>
+<a class="flex items-center gap-unit-md px-unit-md py-unit-sm rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 pb-unit-xl md:pb-0">
+<!-- Mobile TopAppBar (Simplified) -->
+<header class="md:hidden sticky top-0 w-full z-40 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant flex justify-between items-center px-margin-mobile h-16">
+<h1 class="font-display-lg-mobile text-display-lg-mobile font-black text-primary">CoachOS</h1>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<div class="flex-1 overflow-auto px-margin-mobile py-unit-lg md:px-gutter md:py-unit-xl max-w-container-max mx-auto w-full">
+<div class="mb-unit-xl">
+<h2 class="font-headline-md text-headline-md text-primary mb-unit-sm">Intelligence Dashboard</h2>
+<p class="font-body-base text-body-base text-on-surface-variant">Real-time overview of client adherence and urgent actions.</p>
+</div>
+<!-- Stats Row (Bento Grid Style) -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-unit-md mb-unit-xl">
+<div class="card-bg border border-base rounded-xl p-unit-lg flex flex-col justify-between h-32 hover:border-[#6366f1] transition-colors">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Active Clients</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-primary leading-none">84</span>
+<span class="material-symbols-outlined text-[#6366f1]">trending_up</span>
+</div>
+</div>
+<div class="card-bg border border-base rounded-xl p-unit-lg flex flex-col justify-between h-32 hover:border-[#6366f1] transition-colors">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Check-ins Today</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-primary leading-none">62</span>
+<span class="font-stat-mono text-stat-mono text-[#22c55e]">+5</span>
+</div>
+</div>
+<div class="card-bg border border-error-container/50 bg-[#18181b] rounded-xl p-unit-lg flex flex-col justify-between h-32 pulse-critical relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-error-container/10 rounded-bl-full blur-xl"></div>
+<span class="font-label-caps text-label-caps text-error uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span> Needing Attention
+                    </span>
+<div class="flex items-end justify-between relative z-10">
+<span class="font-display-lg text-display-lg text-error leading-none">12</span>
+<span class="font-body-sm text-body-sm text-error/70">Clients</span>
+</div>
+</div>
+<div class="card-bg border border-base rounded-xl p-unit-lg flex flex-col justify-between h-32 hover:border-[#6366f1] transition-colors">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Avg. Adherence</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-primary leading-none">92<span class="text-headline-md">%</span></span>
+<!-- Mini sparkline representation -->
+<div class="flex items-end gap-1 h-6">
+<div class="w-1.5 bg-[#27272a] rounded-t-sm h-[60%]"></div>
+<div class="w-1.5 bg-[#27272a] rounded-t-sm h-[80%]"></div>
+<div class="w-1.5 bg-[#27272a] rounded-t-sm h-[70%]"></div>
+<div class="w-1.5 bg-[#ceee93] rounded-t-sm h-[95%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-unit-lg">
+<!-- Main Priority Column (Wider) -->
+<div class="lg:col-span-2 space-y-unit-lg">
+<!-- High Priority Section -->
+<section>
+<div class="flex items-center gap-unit-sm mb-unit-md">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">ATTENTION REQUIRED</h3>
+</div>
+<div class="space-y-unit-md">
+<!-- High Priority Card 1 -->
+<div class="glass-panel border border-[#93000a]/30 rounded-xl p-unit-md flex flex-col sm:flex-row gap-unit-md items-start sm:items-center group">
+<div class="w-12 h-12 rounded-full bg-[#1f201a] flex-shrink-0 overflow-hidden border border-base">
+<img alt="Client Rahul" class="w-full h-full object-cover grayscale opacity-80" data-alt="A portrait of a male fitness client in his 30s, looking serious. The image is styled in moody, high-contrast black and white, fitting a dark-mode premium dashboard aesthetic where focus is on data, not bright imagery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOeRHHcn7f7ocfmwsg61bZI778Y7qZUGXsR8fojiOmTGHoUYpKrd-OkxOCz1KdYo9gdkqkYRTl3VjtbzA5BtBG_XgchDILhdzx_x6peVuAv2adhffQu1hqpLn0NBBaaOehtWRtGw1M6xxIozrGzgyWrZ7eCHiDQV6rRl6Lfg-9QSxOvlUmgiE4Tj_Nf7JGIppBZL4qYI5KBGcLi0H0jFnDNd_lc5XnFoTuTfoI2147SU-iH1_wbBcD7D3i19jO4sjHcYhukDzBMRg">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-body-base font-semibold text-primary truncate">Rahul Sharma</h4>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-stat-mono bg-error-container/20 text-error border border-error/20">Critical</span>
+</div>
+<p class="font-body-sm text-body-sm text-error/80 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> 5 days no check-in • Weight stalled
+                                    </p>
+</div>
+<div class="flex gap-unit-sm w-full sm:w-auto mt-2 sm:mt-0">
+<button class="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-transparent border border-base text-on-surface hover:bg-[#18181b] font-body-sm text-body-sm font-medium transition-colors">Message</button>
+<button class="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-[#d9f99d] text-[#09090b] font-body-sm text-body-sm font-semibold transition-transform active:scale-95">Review Plan</button>
+</div>
+</div>
+<!-- High Priority Card 2 -->
+<div class="glass-panel border border-[#93000a]/30 rounded-xl p-unit-md flex flex-col sm:flex-row gap-unit-md items-start sm:items-center group">
+<div class="w-12 h-12 rounded-full bg-[#1f201a] flex-shrink-0 overflow-hidden border border-base">
+<img alt="Client Sarah" class="w-full h-full object-cover grayscale opacity-80" data-alt="A portrait of a female fitness client looking neutral. The image is styled in moody, high-contrast black and white to match the premium, dark-mode corporate dashboard environment. Subtle lighting highlights facial features without being distracting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAILtvBJVUcoR3b_PCWUgKbWUHK1KRMXCf1CxhHYagA23GJbUifOVAPVy4ltUS8guxnBJ8eo1ZLdk3YEbeqaxft084hObcAqZHl6ZMD4qCCBCSq6U_w2jm1jPBkcbPLhDqtK8OEsmGxc9zMxfFLg1DaXtt8Nye9Gp6tLX-HZOSKvyHXKuOnFL476B5hs_3JtJaoBFc8kM0LZNfFWbyX-bCOmRZE9A-_2xuHOBMcgJGvydQxk7alLcD-_HoQPRFtJFu3y7ksLnrXbhs">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-body-base font-semibold text-primary truncate">Sarah J.</h4>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-stat-mono bg-error-container/20 text-error border border-error/20">Health Alert</span>
+</div>
+<p class="font-body-sm text-body-sm text-error/80 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bedtime</span> Sleep declining (Avg 4.5h) • HRV Drop
+                                    </p>
+</div>
+<div class="flex gap-unit-sm w-full sm:w-auto mt-2 sm:mt-0">
+<button class="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-transparent border border-base text-on-surface hover:bg-[#18181b] font-body-sm text-body-sm font-medium transition-colors">Message</button>
+<button class="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-[#d9f99d] text-[#09090b] font-body-sm text-body-sm font-semibold transition-transform active:scale-95">Adjust Load</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Medium Priority Section -->
+<section class="pt-unit-md">
+<div class="flex items-center gap-unit-sm mb-unit-md">
+<div class="w-2 h-2 rounded-full bg-[#facc15]"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">MEDIUM PRIORITY</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-unit-md">
+<!-- Medium Card 1 -->
+<div class="card-bg border border-base hover:border-[#44483b] rounded-xl p-unit-md transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#1f201a] flex items-center justify-center text-[#c5c8b7] font-stat-mono text-sm border border-base">MK</div>
+<div>
+<h4 class="font-body-base text-body-base font-medium text-primary">Marcus K.</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Missed 2 workouts</p>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_horiz</span></button>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-[10px] font-stat-mono text-on-surface-variant mb-1">
+<span>Adherence</span>
+<span class="text-[#facc15]">78%</span>
+</div>
+<div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-[#6366f1] to-[#facc15] w-[78%]"></div>
+</div>
+</div>
+<button class="w-full py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary font-body-sm text-body-sm transition-colors">Send Nudge</button>
+</div>
+<!-- Medium Card 2 -->
+<div class="card-bg border border-base hover:border-[#44483b] rounded-xl p-unit-md transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#1f201a] flex items-center justify-center text-[#c5c8b7] font-stat-mono text-sm border border-base">EL</div>
+<div>
+<h4 class="font-body-base text-body-base font-medium text-primary">Emma L.</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Macros consistently off</p>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_horiz</span></button>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-[10px] font-stat-mono text-on-surface-variant mb-1">
+<span>Adherence</span>
+<span class="text-[#facc15]">82%</span>
+</div>
+<div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-[#6366f1] to-[#facc15] w-[82%]"></div>
+</div>
+</div>
+<button class="w-full py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary font-body-sm text-body-sm transition-colors">Review Macros</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Secondary Column (Narrower) -->
+<div class="space-y-unit-lg">
+<!-- Streaks / Doing Great -->
+<section class="card-bg border border-base rounded-xl p-unit-lg flex flex-col h-full">
+<div class="flex items-center gap-unit-sm mb-unit-lg">
+<div class="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">DOING GREAT</h3>
+</div>
+<div class="space-y-unit-md flex-1">
+<!-- High Performer 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-[#1f201a] transition-colors border border-transparent hover:border-base group">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-[#1f201a] flex items-center justify-center text-primary font-stat-mono text-sm border border-[#22c55e]/30">DB</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#22c55e] border-2 border-[#18181b] flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-[#09090b]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm font-medium text-primary">David B.</h4>
+<p class="font-body-sm text-[12px] text-on-surface-variant">14 day streak</p>
+</div>
+</div>
+<span class="font-stat-mono text-stat-mono text-[#22c55e] text-sm">100%</span>
+</div>
+<!-- High Performer 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-[#1f201a] transition-colors border border-transparent hover:border-base group">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-[#1f201a] flex items-center justify-center text-primary font-stat-mono text-sm border border-[#22c55e]/30">JW</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#22c55e] border-2 border-[#18181b] flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-[#09090b]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm font-medium text-primary">Jessica W.</h4>
+<p class="font-body-sm text-[12px] text-on-surface-variant">PR on Squat</p>
+</div>
+</div>
+<span class="font-stat-mono text-stat-mono text-[#22c55e] text-sm">98%</span>
+</div>
+<!-- High Performer 3 -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-[#1f201a] transition-colors border border-transparent hover:border-base group">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-[#1f201a] flex items-center justify-center text-primary font-stat-mono text-sm border border-[#22c55e]/30">TC</div>
+</div>
+<div>
+<h4 class="font-body-sm text-body-sm font-medium text-primary">Tom C.</h4>
+<p class="font-body-sm text-[12px] text-on-surface-variant">Perfect check-in</p>
+</div>
+</div>
+<span class="font-stat-mono text-stat-mono text-[#22c55e] text-sm">95%</span>
+</div>
+</div>
+<button class="mt-4 w-full py-2 rounded-lg bg-transparent text-[#d9f99d] hover:bg-[#1f201a] font-body-sm text-body-sm font-medium transition-colors border border-dashed border-outline-variant">
+                            View All Performers
+                        </button>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-unit-sm bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant shadow-[0_-8px_32px_0_rgba(0,0,0,0.4)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-unit-md py-unit-xs active:opacity-80 scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider font-semibold">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1">exercise</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider font-semibold">Training</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 transition-all duration-200 relative" href="#">
+<div class="absolute top-0 right-2 w-2 h-2 bg-error rounded-full"></div>
+<span class="material-symbols-outlined mb-1">chat</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider font-semibold">Messages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider font-semibold">Profile</span>
+</a>
+</nav>
+</body></html>

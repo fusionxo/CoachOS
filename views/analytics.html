@@ -1,0 +1,374 @@
+<!-- TopNavBar (Mobile) -->
+
+<!-- TopNavBar (Desktop - contextual) -->
+<header class="hidden md:flex sticky top-0 w-full z-30 bg-[#09090b]/80 backdrop-blur-xl border-b border-outline-variant px-gutter h-16 justify-between items-center max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Clients</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+            <span class="text-primary font-medium" id="analytics-breadcrumb-name">Client Profile</span>
+        </div>
+    </div>
+    <div class="flex gap-4 text-on-surface-variant">
+        <button class="hover:text-primary transition-colors flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container">
+            <span class="material-symbols-outlined">search</span>
+        </button>
+        <button class="hover:text-primary transition-colors flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-primary-container rounded-full"></span>
+        </button>
+    </div>
+</header>
+<div class="p-margin-mobile md:p-gutter max-w-container-max mx-auto w-full flex-1 space-y-unit-lg">
+    <!-- Client Header Bento Box -->
+    <section class="card-base rounded-xl p-unit-lg relative overflow-hidden">
+        <!-- Decorative background elements -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row gap-unit-lg items-start md:items-center relative z-10">
+            <div class="relative">
+                <img alt="Client Profile" class="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover border-2 border-surface-container-high shadow-lg" src="">
+                <div class="absolute bottom-2 right-2 bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e] px-2 py-1 rounded-md flex items-center gap-1 font-label-caps text-label-caps backdrop-blur-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse"></span>
+                    ACTIVE
+                </div>
+            </div>
+            <div class="flex-1 space-y-2">
+                <h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary">Client Name</h2>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <div class="flex flex-col data-card px-4 py-2 rounded-lg min-w-[120px]">
+                        <span class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Goal</span>
+                        <span class="font-stat-mono text-stat-mono text-primary mt-1">Fat Loss</span>
+                    </div>
+                    <div class="flex flex-col data-card px-4 py-2 rounded-lg min-w-[120px]">
+                        <span class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Phase</span>
+                        <span class="font-stat-mono text-stat-mono text-primary-container mt-1">Maintenance</span>
+                    </div>
+                    <div class="flex flex-col data-card px-4 py-2 rounded-lg min-w-[120px]">
+                        <span class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Start Date</span>
+                        <span id="analytics-start-date" class="font-stat-mono text-stat-mono text-primary mt-1">Oct 12, '23</span>
+                    </div>
+                </div>
+            </div>
+<div class="w-full md:w-auto flex flex-row md:flex-col gap-3 mt-4 md:mt-0">
+<button id="btn-profile-message" class="flex-1 md:flex-none bg-[#d9f99d] text-[#09090b] font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                            Message
+                        </button>
+<button id="btn-profile-edit" class="flex-1 md:flex-none bg-transparent border border-outline-variant text-primary font-medium px-6 py-3 rounded-lg hover:bg-surface-container-high transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined">edit</span>
+                            Edit Plan
+                        </button>
+<button id="btn-generate-report" class="flex-1 md:flex-none bg-primary-container text-on-primary-container font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined">description</span>
+                            Generate Report
+                        </button>
+</div>
+</div>
+</section>
+<!-- Navigation Tabs -->
+<div class="flex overflow-x-auto border-b border-outline-variant hide-scrollbar gap-8" id="profile-tabs">
+    <button class="pb-3 text-primary font-semibold tab-active whitespace-nowrap px-1 transition-colors" data-tab="overview">Overview</button>
+    <button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors" data-tab="checkins">Check-ins</button>
+    <button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors" data-tab="training">Training</button>
+    <button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors" data-tab="photos">Progress Photos</button>
+    <button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors" data-tab="measurements">Measurements</button>
+    <button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors" data-tab="timeline">Timeline</button>
+    <button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors" data-tab="notes">Private Notes</button>
+</div>
+
+<!-- Tab Content Area -->
+<div id="analytics-tab-panes" class="flex-1 flex flex-col">
+    <!-- Overview Tab -->
+    <div id="tab-pane-overview" class="tab-pane grid grid-cols-1 lg:grid-cols-3 gap-unit-md md:gap-unit-lg">
+        <!-- Main Analytics Area (Col Span 2) -->
+        <div class="lg:col-span-2 space-y-unit-md md:space-y-unit-lg">
+            <!-- Weight Trend Chart Card -->
+            <section class="card-base rounded-xl p-unit-md md:p-unit-lg flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="font-headline-md text-headline-md text-primary">Weight Trend</h3>
+                        <p class="text-sm text-on-surface-variant">Last 90 Days</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="font-stat-mono text-2xl text-primary font-bold" id="overview-weight-val">82.4 <span class="text-sm text-on-surface-variant font-body-base">kg</span></div>
+                            <div class="text-xs text-[#22c55e] flex items-center justify-end gap-1 font-medium" id="overview-weight-delta">
+                                <span class="material-symbols-outlined text-[14px]">arrow_downward</span> -4.2 kg
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Simulated High-Fidelity Chart Area -->
+                <div class="relative w-full mt-4 bg-surface-container-lowest rounded-lg border border-outline-variant/50 p-4 h-[220px] md:h-[280px] overflow-hidden" id="weight-chart-container">
+                    <!-- Dynamic SVG will be rendered here -->
+                </div>
+            </section>
+            <!-- Adherence Stats Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-unit-md md:gap-unit-lg">
+                <!-- Consistency -->
+                <div class="card-base rounded-xl p-unit-md flex flex-col justify-between">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-primary-container/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary-container text-[18px]">calendar_month</span>
+                        </div>
+                        <span class="text-sm font-medium text-on-surface-variant">Workout Adherence</span>
+                    </div>
+                    <div class="font-stat-mono text-3xl font-bold text-primary mb-2" id="overview-adherence-val">92%</div>
+                    <div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#6366f1] to-[#d9f99d]" id="overview-adherence-bar" style="width: 92%"></div>
+                    </div>
+                    <div class="text-xs text-on-surface-variant mt-2 text-right">Last 4 weeks</div>
+                </div>
+                <!-- Sleep -->
+                <div class="card-base rounded-xl p-unit-md flex flex-col justify-between">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-[#818cf8]/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[#818cf8] text-[18px]">bedtime</span>
+                        </div>
+                        <span class="text-sm font-medium text-on-surface-variant">Avg Sleep</span>
+                    </div>
+                    <div class="font-stat-mono text-3xl font-bold text-primary mb-2" id="overview-sleep-val">6h 45m</div>
+                    <div class="flex items-center gap-2 text-xs text-[#f87171] font-medium" id="overview-sleep-status">
+                        <span class="material-symbols-outlined text-[14px]">warning</span> Below 7h target
+                    </div>
+                </div>
+                <!-- Steps -->
+                <div class="card-base rounded-xl p-unit-md flex flex-col justify-between">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-[#fbbf24]/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[#fbbf24] text-[18px]">directions_walk</span>
+                        </div>
+                        <span class="text-sm font-medium text-on-surface-variant">Daily Steps</span>
+                    </div>
+                    <div class="font-stat-mono text-3xl font-bold text-primary mb-2" id="overview-steps-val">11,240</div>
+                    <div class="flex items-center gap-2 text-xs text-[#22c55e] font-medium" id="overview-steps-status">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span> Target met (10k)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right Column (Col Span 1) -->
+        <div class="space-y-unit-md md:space-y-unit-lg">
+            <!-- Progress Photo Slider -->
+            <section class="card-base rounded-xl p-unit-md flex flex-col h-[350px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-headline-md text-[18px] text-primary">Visual Progress</h3>
+                    <button class="text-primary-container text-sm font-medium hover:underline btn-view-photos-tab">View All</button>
+                </div>
+                <div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg relative overflow-hidden group cursor-pointer" id="overview-photos-slider">
+                    <!-- Renders split view dynamically -->
+                </div>
+            </section>
+            <!-- Key Measurements -->
+            <section class="card-base rounded-xl p-unit-md flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-headline-md text-[18px] text-primary">Key Measurements</h3>
+                    <span class="material-symbols-outlined text-on-surface-variant">straighten</span>
+                </div>
+                <div class="space-y-4" id="overview-measurements-mount">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Check-ins Tab -->
+    <div id="tab-pane-checkins" class="tab-pane hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Log Check-in Form -->
+            <div class="lg:col-span-1 card-base border border-base rounded-xl p-unit-md h-fit">
+                <h3 class="font-headline-md text-primary font-bold mb-4">Log Daily Check-in</h3>
+                <form id="checkin-log-form" class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Date</label>
+                        <input type="date" id="checkin-date" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Weight (kg)</label>
+                            <input type="number" step="0.1" id="checkin-weight" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Sleep (hrs)</label>
+                            <input type="number" step="0.5" id="checkin-sleep" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Steps</label>
+                            <input type="number" id="checkin-steps" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Mood</label>
+                            <select id="checkin-mood" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface">
+                                <option value="🙂">🙂 Happy / Good</option>
+                                <option value="😐">😐 Neutral / Okay</option>
+                                <option value="😞">😞 Tired / Stressed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Calories (kcal)</label>
+                            <input type="number" id="checkin-calories" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Protein (g)</label>
+                            <input type="number" id="checkin-protein" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Energy (1-5)</label>
+                        <input type="range" id="checkin-energy" min="1" max="5" value="3" class="w-full accent-primary-container">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Daily Notes</label>
+                        <textarea id="checkin-notes" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface h-16 resize-none" placeholder="How did training/meals feel?"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] text-xs font-semibold rounded hover:opacity-95 transition-opacity">Save Check-in</button>
+                </form>
+            </div>
+            <!-- Check-ins History Table -->
+            <div class="lg:col-span-2 card-base border border-base rounded-xl p-unit-md overflow-x-auto">
+                <h3 class="font-headline-md text-primary font-bold mb-4">Check-in Log History</h3>
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-outline-variant/30 text-on-surface-variant font-label-caps">
+                            <th class="py-2.5">Date</th>
+                            <th class="py-2.5">Weight</th>
+                            <th class="py-2.5">Sleep</th>
+                            <th class="py-2.5">Steps</th>
+                            <th class="py-2.5">Nutrition</th>
+                            <th class="py-2.5">Mood</th>
+                            <th class="py-2.5">Energy</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checkins-history-tbody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Tab -->
+    <div id="tab-pane-training" class="tab-pane hidden space-y-6">
+        <div class="flex justify-between items-center">
+            <h3 class="font-headline-md text-primary font-bold">Active Programs & Workouts</h3>
+            <button id="btn-analytics-add-workout" class="btn-primary px-4 py-2 rounded text-xs font-semibold flex items-center gap-1.5 shadow-[0_0_15px_rgba(217,249,157,0.1)]">
+                <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Custom Workout
+            </button>
+        </div>
+        <div id="analytics-workouts-list" class="space-y-4">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+
+    <!-- Progress Photos Tab -->
+    <div id="tab-pane-photos" class="tab-pane hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Photo Upload Box -->
+            <div class="lg:col-span-1 card-base border border-base rounded-xl p-unit-md space-y-4">
+                <h3 class="font-headline-md text-primary font-bold">Upload Progress Photos</h3>
+                <form id="photos-upload-form" class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Front Photo URL</label>
+                        <input type="text" id="photo-front-url" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="https://example.com/front.jpg">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Side Photo URL</label>
+                        <input type="text" id="photo-side-url" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="https://example.com/side.jpg">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Back Photo URL</label>
+                        <input type="text" id="photo-back-url" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="https://example.com/back.jpg">
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] text-xs font-semibold rounded hover:opacity-95 transition-opacity">Upload Photos</button>
+                </form>
+            </div>
+            <!-- Photo Comparison Slider Grid -->
+            <div class="lg:col-span-2 card-base border border-base rounded-xl p-unit-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-headline-md text-primary font-bold">Before vs Current Comparison</h3>
+                    <div class="text-xs text-on-surface-variant" id="photos-compare-stats">Weight change: -4.2 kg</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="photos-gallery-mount">
+                    <!-- Before/Current images loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Measurements Tab -->
+    <div id="tab-pane-measurements" class="tab-pane hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Log Measurements Form -->
+            <div class="lg:col-span-1 card-base border border-base rounded-xl p-unit-md h-fit">
+                <h3 class="font-headline-md text-primary font-bold mb-4">Log Key Measurements</h3>
+                <form id="measurements-log-form" class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Waist (cm)</label>
+                        <input type="number" step="0.1" id="measure-waist" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 85.0" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Chest (cm)</label>
+                        <input type="number" step="0.1" id="measure-chest" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 100.0" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Arms (cm)</label>
+                        <input type="number" step="0.1" id="measure-arms" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 38.0" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Legs (cm)</label>
+                        <input type="number" step="0.1" id="measure-legs" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 58.0" required>
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] text-xs font-semibold rounded hover:opacity-95 transition-opacity">Save Measurements</button>
+                </form>
+            </div>
+            <!-- Measurements History -->
+            <div class="lg:col-span-2 card-base border border-base rounded-xl p-unit-md overflow-x-auto">
+                <h3 class="font-headline-md text-primary font-bold mb-4">Measurement Log History</h3>
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-outline-variant/30 text-on-surface-variant font-label-caps">
+                            <th class="py-2.5">Date</th>
+                            <th class="py-2.5">Waist</th>
+                            <th class="py-2.5">Chest</th>
+                            <th class="py-2.5">Arms</th>
+                            <th class="py-2.5">Legs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="measurements-history-tbody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Tab -->
+    <div id="tab-pane-timeline" class="tab-pane hidden space-y-6">
+        <div class="card-base border border-base rounded-xl p-unit-md max-w-xl mx-auto">
+            <h3 class="font-headline-md text-primary font-bold mb-6">Activity Timeline</h3>
+            <div class="relative pl-6 border-l-2 border-[#27272a] space-y-6" id="timeline-mount">
+                <!-- Timeline items loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Private Notes Tab -->
+    <div id="tab-pane-notes" class="tab-pane hidden space-y-6">
+        <div class="card-base border border-base rounded-xl p-unit-md max-w-2xl mx-auto">
+            <h3 class="font-headline-md text-primary font-bold mb-1">Coach-Only Private Notes</h3>
+            <p class="text-xs text-on-surface-variant mb-4">This notes section is completely private. Your client will not see what is written here.</p>
+            <textarea id="private-notes-textarea" class="w-full h-64 p-4 bg-[#0d0e12] border border-[#27272a] rounded-lg text-sm text-on-surface resize-none focus:outline-none focus:border-primary" placeholder="Start writing private details, assessments, or client compliance logs here..."></textarea>
+            <div class="flex justify-between items-center mt-3">
+                <span id="notes-save-status" class="text-[10px] text-on-surface-variant font-mono">Autosaved</span>
+                <button id="btn-save-notes" class="px-5 py-2.5 rounded bg-[#d9f99d] text-[#09090b] text-xs font-semibold hover:opacity-95 transition-opacity">Force Save</button>
+            </div>
+        </div>
+    </div>
+</div>

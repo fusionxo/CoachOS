@@ -1,0 +1,657 @@
+
+The strategy:
+
+> Build a **client-retention operating system for coaches**, not another fitness tracker.
+
+---
+
+# Final Tech Stack (₹0 MVP)
+
+## Core Stack
+
+| Purpose         | Tool                | Why                        |
+| --------------- | ------------------- | -------------------------- |
+| Framework       | Next.js             | Website + dashboard + APIs |
+| Language        | TypeScript          | Fewer bugs                 |
+| Styling         | Tailwind CSS        | Fast UI                    |
+| Components      | shadcn/ui           | Professional UI fast       |
+| Hosting         | Vercel              | Free deployment            |
+| Database        | Supabase PostgreSQL | Relational + RLS security  |
+| Authentication  | Supabase Auth       | Built-in users             |
+| Images          | Cloudflare R2       | Cheap/free image storage   |
+| ORM             | Prisma              | Database management        |
+| Forms           | React Hook Form     | Form handling              |
+| Validation      | Zod                 | Safe inputs                |
+| Charts          | Recharts            | Progress graphs            |
+| Emails          | Resend              | Invites/reminders          |
+| Analytics       | PostHog             | Track usage                |
+| AI              | Google AI Studio    | AI reports                 |
+| Background jobs | GitHub Actions      | Scheduled tasks            |
+| Offline cache   | IndexedDB           | Gym offline mode           |
+
+---
+
+# Final Architecture
+
+```
+                    USER
+                     |
+                     |
+                  Next.js
+                  Vercel
+
+                     |
+
+               Supabase Auth
+
+                     |
+
+        -----------------------------
+        |                           |
+        v                           v
+
+
+ Supabase PostgreSQL          Cloudflare R2
+
+
+ users                        progress photos
+ workouts                     avatars
+ check-ins                    videos
+ messages                     attachments
+ payments
+
+
+                     |
+
+               IndexedDB
+
+          offline workout storage
+```
+
+---
+
+# Database Structure
+
+## users
+
+```sql
+users
+
+id
+name
+email
+role
+
+coach/client/admin
+
+created_at
+```
+
+---
+
+## coach_clients
+
+MOST IMPORTANT TABLE.
+
+```sql
+coach_clients
+
+
+id
+
+coach_id
+client_id
+
+status
+created_at
+```
+
+---
+
+## checkins
+
+```sql
+checkins
+
+
+id
+
+client_id
+
+weight
+sleep
+steps
+mood
+notes
+
+created_at
+```
+
+---
+
+## measurements
+
+```sql
+measurements
+
+
+client_id
+
+chest
+waist
+arms
+legs
+
+date
+```
+
+---
+
+## progress_photos
+
+```sql
+progress_photos
+
+
+client_id
+
+front_image
+side_image
+back_image
+
+r2_path
+
+date
+```
+
+---
+
+## workouts
+
+```sql
+workouts
+
+
+id
+
+coach_id
+client_id
+
+name
+
+created_at
+```
+
+---
+
+## workout_exercises
+
+```sql
+exercise
+
+sets
+reps
+weight
+notes
+```
+
+---
+
+## messages
+
+```sql
+messages
+
+
+coach_id
+client_id
+
+message
+read
+
+created_at
+```
+
+---
+
+# Development Roadmap
+
+---
+
+# PHASE 0 — Setup (Week 1)
+
+Goal:
+Foundation.
+
+Build:
+
+### Project
+
+✔ Next.js setup
+✔ Tailwind
+✔ shadcn
+✔ Supabase connection
+✔ Database migrations
+✔ RLS policies
+
+---
+
+# PHASE 1 — Core MVP (Month 1-2)
+
+Goal:
+
+Replace:
+
+* WhatsApp
+* Google Sheets
+* Google Forms
+
+---
+
+## Authentication
+
+Build:
+
+```
+Signup
+
+I am:
+
+○ Coach
+○ Client
+```
+
+---
+
+## Coach Dashboard ⭐
+
+Main money screen.
+
+Not:
+
+"Your clients"
+
+Instead:
+
+```
+TODAY
+
+
+🔴 Attention Needed
+
+
+Rahul
+
+No check-in 5 days
+
+Weight stalled
+
+
+----------------
+
+
+🟢 Doing good
+
+
+Amit
+
+14 day streak
+```
+
+---
+
+## Client Management
+
+Coach:
+
+```
+Add Client
+
+Name
+Email
+
+
+Generate Invite
+```
+
+---
+
+## Daily Check-ins
+
+Client:
+
+```
+Today's update
+
+
+Weight
+
+Sleep
+
+Steps
+
+
+Mood
+
+😄 🙂 😐 😞
+
+
+Submit
+```
+
+---
+
+## Progress Photos
+
+Build:
+
+```
+Upload:
+
+Front
+Side
+Back
+```
+
+with comparison:
+
+```
+Week 1 | Week 12
+```
+
+---
+
+## Measurements
+
+Track:
+
+```
+Weight
+Chest
+Arms
+Waist
+Legs
+Bodyfat
+```
+
+---
+
+## Charts
+
+Show:
+
+```
+90kg |
+     \
+      \
+80kg |_________
+
+week1    week12
+```
+
+---
+
+# PHASE 2 — Training System (Month 3)
+
+Now become a coaching platform.
+
+---
+
+## Workout Builder
+
+Coach:
+
+```
+Push Day
+
+
+Bench Press
+
+3 sets
+10 reps
+
+
+Save Template
+```
+
+---
+
+## Client Logging
+
+Client:
+
+```
+Bench
+
+Set 1
+
+80kg x 10 ✔
+
+Set 2
+
+80kg x 9 ✔
+```
+
+---
+
+## Templates ⭐
+
+Huge feature.
+
+Coach:
+
+```
+Templates
+
+
+12 Week Cut
+
+Apply → Rahul
+```
+
+---
+
+# PHASE 3 — Retention Engine (Month 4)
+
+This beats competitors.
+
+---
+
+## Automatic Alerts
+
+System:
+
+```
+Rahul problem detected:
+
+
+No workout 7 days
+
+Weight increasing
+
+Sleep dropping
+
+
+Contact him
+```
+
+---
+
+## Streaks
+
+```
+🔥 27 days consistent
+```
+
+---
+
+## Weekly Reports
+
+Every Sunday:
+
+```
+Rahul
+
+
+Weight:
+-0.8kg
+
+
+Training:
+93% complete
+
+
+Problem:
+Low sleep
+```
+
+---
+
+# PHASE 4 — AI Coach Assistant (Month 5)
+
+Use Gemini.
+
+Not chatbot.
+
+Assistant.
+
+---
+
+Example:
+
+AI reads:
+
+```
+Weight:
+
+80
+80.1
+80.2
+80.3
+
+
+14 days
+```
+
+Outputs:
+
+```
+Possible plateau.
+
+Options:
+
++2000 steps
+
+or
+
+-150 calories
+```
+
+---
+
+# PHASE 5 — Business Features (Month 6+)
+
+This is where coaches become locked in.
+
+---
+
+## CRM
+
+```
+Leads
+
+Interested
+
+Trial
+
+Paid
+
+Cancelled
+```
+
+---
+
+## Payments
+
+Coach creates:
+
+```
+12 Week Transformation
+
+₹9999
+
+
+Payment link
+```
+
+---
+
+## Automations
+
+Example:
+
+```
+If client misses 3 days
+
+send:
+
+"Need help?"
+```
+
+---
+
+# Features NOT to build early
+
+Waste of time:
+
+❌ Pose AI
+❌ Exercise video library
+❌ Social feed
+❌ White-label apps
+❌ Meal database
+❌ Calorie tracker
+❌ Live video calls
+
+They sound good but delay launch.
+
+---
+
+# Build Order (Actual Coding)
+
+I would literally code in this order:
+
+```
+1. Database schema
+
+2. Authentication
+
+3. Coach/client relationship
+
+4. RLS security
+
+5. Coach dashboard
+
+6. Check-ins
+
+7. Images
+
+8. Measurements
+
+9. Charts
+
+10. Workout builder
+
+11. Templates
+
+12. Notifications
+
+13. AI
+```
+
+---
+
+The first version should have ONE promise:
+
+> "Open the dashboard and know exactly which clients need you today."
+
+That is the feature people pay for.

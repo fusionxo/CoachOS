@@ -1,0 +1,83 @@
+<!-- Top Header Bar -->
+<div class="bg-[#18181b] border-b border-[#27272a] p-4 flex items-center justify-between sticky top-0 z-40">
+    <button id="btn-logger-back" class="text-on-surface-variant hover:text-primary flex items-center gap-1 text-xs font-semibold">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span> Back
+    </button>
+    <div class="text-center">
+        <h2 id="logger-workout-title" class="font-headline-md text-sm font-bold text-primary truncate max-w-[200px]">Lower Body Power</h2>
+        <p id="logger-program-title" class="text-[10px] text-on-surface-variant font-mono">12-Week Hypertrophy • Week 1</p>
+    </div>
+    <div class="flex items-center gap-1 bg-[#09090b] px-2.5 py-1 rounded-full border border-[#27272a] text-xs font-mono text-[#d9f99d]">
+        <span class="material-symbols-outlined text-[14px]">timer</span>
+        <span id="logger-elapsed-timer">00:00</span>
+    </div>
+</div>
+
+<div class="p-4 space-y-5 pb-28 flex-grow overflow-y-auto">
+    <!-- Exercise Tabs Selector -->
+    <div class="flex gap-2 overflow-x-auto pb-1" id="logger-exercise-tabs">
+        <!-- Dynamic exercise pill buttons rendered here -->
+    </div>
+
+    <!-- Active Exercise Overview Card -->
+    <section class="card-bg border border-base rounded-xl p-4 space-y-3 relative overflow-hidden">
+        <div class="flex items-start justify-between">
+            <div>
+                <span id="logger-ex-counter" class="text-[#c0c1ff] font-label-caps text-[10px] tracking-widest uppercase mb-0.5 block font-bold">Exercise 1 of 4</span>
+                <h3 id="logger-ex-name" class="font-display-lg-mobile text-lg font-extrabold text-primary leading-snug">Barbell Back Squat</h3>
+            </div>
+            <span id="logger-ex-target-badge" class="bg-[#ceee93]/10 text-[#ceee93] border border-[#ceee93]/20 px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase font-mono">4 Sets • 5-8 Reps</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs text-on-surface-variant font-mono bg-[#09090b] p-2.5 rounded-lg border border-[#27272a]">
+            <div><span class="text-on-surface-variant/70">Target Load:</span> <span id="logger-ex-load" class="text-primary font-semibold">RPE 8</span></div>
+            <div><span class="text-on-surface-variant/70">Rest Period:</span> <span id="logger-ex-rest" class="text-primary font-semibold">180s</span></div>
+            <div class="col-span-2" id="logger-ex-notes-container"><span class="text-on-surface-variant/70">Coach Cue:</span> <span id="logger-ex-notes" class="text-primary-container italic">Maintain neutral spine, drive hard off hips.</span></div>
+        </div>
+    </section>
+
+    <!-- Set Logger Grid Card -->
+    <section class="card-bg border border-base rounded-xl p-4 space-y-4">
+        <div class="flex justify-between items-center border-b border-[#27272a] pb-2">
+            <h4 class="font-headline-md text-xs font-bold text-primary uppercase font-label-caps tracking-wider">Set Execution Tracker</h4>
+            <span class="text-[10px] text-on-surface-variant font-mono" id="logger-sets-summary">0 / 4 Sets Completed</span>
+        </div>
+
+        <!-- Table of Sets -->
+        <div class="space-y-3" id="logger-sets-list">
+            <!-- Rendered dynamically by workout-logger.js -->
+        </div>
+
+        <button id="btn-logger-add-set" class="w-full py-2.5 border border-dashed border-[#27272a] hover:border-primary-container text-on-surface-variant hover:text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[16px]">add</span> Add Extra Set
+        </button>
+    </section>
+</div>
+
+<!-- Floating Rest Timer Overlay -->
+<div id="logger-rest-timer-banner" class="hidden fixed bottom-20 left-4 right-4 z-40 bg-[#18181b]/95 backdrop-blur-xl border border-[#ceee93]/40 rounded-xl p-3 shadow-2xl flex items-center justify-between fade-in">
+    <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#ceee93] text-[22px] animate-pulse">timer</span>
+        <div>
+            <p class="text-[10px] text-on-surface-variant uppercase font-label-caps tracking-wider">Resting...</p>
+            <p class="font-stat-mono text-base font-bold text-primary" id="rest-timer-countdown">01:30</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-1.5">
+        <button id="btn-rest-plus30" class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-primary border border-outline-variant">+30s</button>
+        <button id="btn-rest-skip" class="px-3 py-1 bg-[#ceee93] text-[#09090b] rounded text-[10px] font-bold">Skip</button>
+    </div>
+</div>
+
+<!-- Bottom Fixed Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-[#09090b]/95 backdrop-blur-xl border-t border-[#27272a] z-30 flex items-center gap-3">
+    <button id="btn-logger-prev-ex" class="px-4 py-3 bg-[#18181b] border border-[#27272a] text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">chevron_left</span> Prev
+    </button>
+    <button id="btn-logger-next-ex" class="px-4 py-3 bg-[#18181b] border border-[#27272a] text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1">
+        Next <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+    </button>
+    <button id="btn-finish-workout" class="flex-1 py-3 bg-[#d9f99d] text-[#09090b] font-extrabold text-xs rounded-lg flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(217,249,157,0.2)] active:scale-95 transition-transform">
+        <span class="material-symbols-outlined text-[18px]">celebrate</span> Finish & Log
+    </button>
+</div>

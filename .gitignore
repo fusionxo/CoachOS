@@ -1,0 +1,6 @@
+temp_keys.txt
+.env
+.env.local
+*.log
+node_modules/
+.DS_Store

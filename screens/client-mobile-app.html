@@ -1,0 +1,195 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CoachOS - Client Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Geist:wght@600;700;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#ffdad6",
+                      "error-container": "#93000a",
+                      "inverse-surface": "#e3e3d9",
+                      "surface-bright": "#383a33",
+                      "surface": "#12140e",
+                      "primary-fixed-dim": "#b3d17a",
+                      "on-tertiary-fixed-variant": "#3e4755",
+                      "inverse-primary": "#4d661c",
+                      "on-secondary-container": "#b0b2ff",
+                      "surface-container": "#1f201a",
+                      "on-primary-fixed-variant": "#364e03",
+                      "on-primary-fixed": "#131f00",
+                      "on-tertiary": "#27313e",
+                      "on-secondary-fixed": "#07006c",
+                      "surface-container-high": "#292b24",
+                      "on-tertiary-fixed": "#121c28",
+                      "on-secondary-fixed-variant": "#2f2ebe",
+                      "tertiary-container": "#d9e3f4",
+                      "surface-container-low": "#1b1c16",
+                      "primary-fixed": "#ceee93",
+                      "on-surface-variant": "#c5c8b7",
+                      "outline-variant": "#44483b",
+                      "on-primary-container": "#536d22",
+                      "on-background": "#e3e3d9",
+                      "on-tertiary-container": "#5b6573",
+                      "error": "#ffb4ab",
+                      "surface-container-highest": "#34352f",
+                      "on-secondary": "#1000a9",
+                      "secondary-container": "#3131c0",
+                      "background": "#12140e",
+                      "tertiary": "#ffffff",
+                      "outline": "#8f9282",
+                      "inverse-on-surface": "#2f312a",
+                      "tertiary-fixed-dim": "#bdc7d7",
+                      "secondary": "#c0c1ff",
+                      "surface-dim": "#12140e",
+                      "secondary-fixed": "#e1e0ff",
+                      "surface-container-lowest": "#0d0f09",
+                      "on-surface": "#e3e3d9",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#c0c1ff",
+                      "on-primary": "#243600",
+                      "primary-container": "#ceee93",
+                      "surface-variant": "#34352f",
+                      "primary": "#ffffff",
+                      "surface-tint": "#b3d17a",
+                      "tertiary-fixed": "#d9e3f4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit-xl": "48px",
+                      "unit-md": "16px",
+                      "unit-xs": "4px",
+                      "unit-sm": "8px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "unit-lg": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Geist"],
+                      "display-lg-mobile": ["Geist"],
+                      "body-sm": ["Inter"],
+                      "body-base": ["Inter"],
+                      "headline-md": ["Geist"],
+                      "stat-mono": ["JetBrains Mono"],
+                      "label-caps": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                      "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                      "body-base": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "stat-mono": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { background-color: #09090b; color: #fafafa; }
+        .glass-panel { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid #27272a; }
+        .card-base { background-color: #18181b; border: 1px solid #27272a; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen font-body-base text-body-base pb-32">
+<!-- TopNav for Mobile (Header) -->
+<header class="sticky top-0 w-full z-40 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant flat no shadows flex justify-between items-center px-gutter h-16">
+<div class="font-display-lg-mobile text-display-lg-mobile font-black text-primary">CoachOS</div>
+<div class="flex items-center gap-4 text-primary dark:text-primary">
+<button class="hover:text-primary transition-colors Active: opacity-70">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<img alt="Coach User Avatar" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A cinematic, high-contrast portrait of a fitness professional in a modern, dark-themed gym environment. The lighting is moody with subtle neon green highlights. The focus is incredibly sharp on the subject's determined expression, reflecting a premium, elite performance atmosphere. Modern corporate meets subtle glassmorphism aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt-JiKf569gn3TNcb7W9VVkNLVad2Qz-Au1HdFW7CLhoKSdn31GTiNJzXvT5XgCa7HVrDDIZunj8NJWfoVhp4a4UHQBmdUYmkkj72knyLFHqNiECy4GkFXu2VkqZSCzJb6Zi_oVs9-hTVYJO8yCnKeNWfiHUe4V-_ARiyOCjBwN1o4Qie0fjQG5RycP6Kq6bKLLb3loXiucxRzKQlaN6t2dryBRyfbtHeVEJ0ZnK_3f7ILh6APge9sHyvBC6wlXmdcoK6n2XED6qE">
+</div>
+</header>
+<main class="px-margin-mobile pt-unit-md space-y-unit-xl">
+<!-- Welcome Section -->
+<section class="space-y-unit-xs">
+<h1 class="font-headline-md text-headline-md text-primary">Good Morning, Alex</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ready to crush it today?</p>
+</section>
+<!-- Today's Check-in Hero Card -->
+<section class="card-base rounded-xl p-unit-lg relative overflow-hidden group cursor-pointer">
+<div class="absolute inset-0 bg-gradient-to-br from-primary-container/20 to-transparent opacity-50"></div>
+<div class="relative z-10 flex flex-col justify-between h-full space-y-unit-md">
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Today's Check-in</h2>
+<p class="font-body-sm text-body-sm text-primary-container mt-1">Pending • Takes 30s</p>
+</div>
+<span class="material-symbols-outlined text-primary-container" data-icon="assignment" style="font-variation-settings: 'FILL' 1;">assignment</span>
+</div>
+<button class="w-full py-3 bg-[#d9f99d] text-[#09090b] font-semibold rounded-lg mt-unit-md hover:opacity-90 transition-opacity">
+                    Start Check-in
+                </button>
+</div>
+</section>
+<!-- Quick Links Bento -->
+<section class="grid grid-cols-2 gap-unit-md">
+<div class="card-base rounded-xl p-unit-md flex flex-col items-center justify-center text-center space-y-unit-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="exercise">exercise</span>
+</div>
+<h3 class="font-body-base text-body-base text-primary">Today's Workout</h3>
+<span class="font-stat-mono text-stat-mono text-on-surface-variant text-xs">Upper Body</span>
+</div>
+<div class="card-base rounded-xl p-unit-md flex flex-col items-center justify-center text-center space-y-unit-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="restaurant">restaurant</span>
+</div>
+<h3 class="font-body-base text-body-base text-primary">Nutrition</h3>
+<span class="font-stat-mono text-stat-mono text-on-surface-variant text-xs">Macros</span>
+</div>
+</section>
+<!-- Progress Overview -->
+<section class="space-y-unit-md">
+<h2 class="font-headline-md text-headline-md text-primary">Weekly Progress</h2>
+<div class="card-base rounded-xl p-unit-md space-y-unit-sm">
+<div class="flex justify-between items-center font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Workouts Completed</span>
+<span class="font-stat-mono text-stat-mono text-primary">3/5</span>
+</div>
+<div class="w-full h-2 bg-[#27272a] rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-[#6366f1] to-[#d9f99d] w-[60%] rounded-full"></div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-t border-outline-variant shadow-[0_-8px_32px_0_rgba(0,0,0,0.4)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-unit-sm font-label-caps text-label-caps text-primary dark:text-primary md:hidden">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-unit-md py-unit-xs Active: scale 0.95x transition-all duration-200">
+<span class="material-symbols-outlined mb-1" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+            Home
+        </button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 Active: scale 0.95x transition-all duration-200">
+<span class="material-symbols-outlined mb-1" data-icon="exercise">exercise</span>
+            Training
+        </button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 Active: scale 0.95x transition-all duration-200">
+<span class="material-symbols-outlined mb-1" data-icon="chat">chat</span>
+            Messages
+        </button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 Active: scale 0.95x transition-all duration-200">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+            Profile
+        </button>
+</nav>
+</body></html>

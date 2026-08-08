@@ -1,0 +1,465 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CoachOS - Client Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;900&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#ffdad6",
+                      "error-container": "#93000a",
+                      "inverse-surface": "#e3e3d9",
+                      "surface-bright": "#383a33",
+                      "surface": "#12140e",
+                      "primary-fixed-dim": "#b3d17a",
+                      "on-tertiary-fixed-variant": "#3e4755",
+                      "inverse-primary": "#4d661c",
+                      "on-secondary-container": "#b0b2ff",
+                      "surface-container": "#1f201a",
+                      "on-primary-fixed-variant": "#364e03",
+                      "on-primary-fixed": "#131f00",
+                      "on-tertiary": "#27313e",
+                      "on-secondary-fixed": "#07006c",
+                      "surface-container-high": "#292b24",
+                      "on-tertiary-fixed": "#121c28",
+                      "on-secondary-fixed-variant": "#2f2ebe",
+                      "tertiary-container": "#d9e3f4",
+                      "surface-container-low": "#1b1c16",
+                      "primary-fixed": "#ceee93",
+                      "on-surface-variant": "#c5c8b7",
+                      "outline-variant": "#44483b",
+                      "on-primary-container": "#536d22",
+                      "on-background": "#e3e3d9",
+                      "on-tertiary-container": "#5b6573",
+                      "error": "#ffb4ab",
+                      "surface-container-highest": "#34352f",
+                      "on-secondary": "#1000a9",
+                      "secondary-container": "#3131c0",
+                      "background": "#12140e",
+                      "tertiary": "#ffffff",
+                      "outline": "#8f9282",
+                      "inverse-on-surface": "#2f312a",
+                      "tertiary-fixed-dim": "#bdc7d7",
+                      "secondary": "#c0c1ff",
+                      "surface-dim": "#12140e",
+                      "secondary-fixed": "#e1e0ff",
+                      "surface-container-lowest": "#0d0f09",
+                      "on-surface": "#e3e3d9",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#c0c1ff",
+                      "on-primary": "#243600",
+                      "primary-container": "#ceee93",
+                      "surface-variant": "#34352f",
+                      "primary": "#ffffff",
+                      "surface-tint": "#b3d17a",
+                      "tertiary-fixed": "#d9e3f4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit-xl": "48px",
+                      "unit-md": "16px",
+                      "unit-xs": "4px",
+                      "unit-sm": "8px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "unit-lg": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Geist"],
+                      "display-lg-mobile": ["Geist"],
+                      "body-sm": ["Inter"],
+                      "body-base": ["Inter"],
+                      "headline-md": ["Geist"],
+                      "stat-mono": ["JetBrains Mono"],
+                      "label-caps": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+                      "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                      "body-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+                      "body-base": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                      "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                      "stat-mono": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                      "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { background-color: #09090b; color: #fafafa; }
+        .glass-panel { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid #27272a; }
+        .card-base { background: #18181b; border: 1px solid #27272a; }
+        .data-card { background: #12140e; border: 1px solid #27272a; }
+        
+        /* Custom scrollbar for dark mode */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #44483b; }
+        
+        .tab-active { border-bottom: 2px solid #d9f99d; color: #d9f99d; }
+    </style>
+<style>
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .hide-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            </style></head>
+<body class="font-body-base antialiased min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex w-[280px] h-screen sticky top-0 left-0 border-r border-outline-variant bg-surface flex-col py-unit-lg px-unit-md z-40">
+<div class="mb-unit-xl px-unit-sm">
+<h1 class="font-display-lg text-display-lg font-bold text-primary">CoachOS</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Elite Performance</p>
+</div>
+<div class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-unit-md py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-unit-md py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-unit-md py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">fitness_center</span>
+<span>Workouts</span>
+</a>
+<a class="flex items-center gap-3 px-unit-md py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">edit_note</span>
+<span>Templates</span>
+</a>
+<a class="flex items-center gap-3 px-unit-md py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">psychology</span>
+<span>AI Insights</span>
+</a>
+</div>
+<div class="mt-auto space-y-2 pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-unit-md py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span>Settings</span>
+</a>
+<div class="flex items-center gap-3 px-unit-md py-3 mt-4">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="Close up portrait of a professional fitness coach in a high-end gym setting. Dark background with subtle neon lighting. Sharp focus, high contrast, cinematic style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBwb8I0rZGh3rMZCEJE1G3UjAhpcXnKcVkE5TiOz9H7s18XMWQqrcfGpa4sDv1joIvD-HIMW9Hr-rUipR_LTMEtZIV1M98cdMNweot1_vm3TneLpzc5S7ycDiEtF3boQHrQhgxdd7jsBXJ5SFu5Kbz6127Icua7C1OfOoXpO4qeP9iT9B_JWTcer1QF7u2FjNART7xazvSqlGGxON4DL5kAAR5TY9G1GHKkuCaXzQFxUGmkHUjaAvNAvuW7xnvk_ziCDyKLGg4CFA">
+<div class="flex-col hidden lg:flex">
+<span class="text-sm font-semibold text-primary">Alex Turner</span>
+<span class="text-xs text-on-surface-variant">Head Coach</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-screen overflow-y-auto pb-24 md:pb-0">
+<!-- TopNavBar (Mobile) -->
+<header class="md:hidden sticky top-0 w-full z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant px-margin-mobile h-16 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<button class="text-primary hover:opacity-70 active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Rahul Sharma</h1>
+</div>
+<div class="flex gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer">notifications</span>
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer">more_vert</span>
+</div>
+</header>
+<!-- TopNavBar (Desktop - contextual) -->
+<header class="hidden md:flex sticky top-0 w-full z-30 bg-[#09090b]/80 backdrop-blur-xl border-b border-outline-variant px-gutter h-16 justify-between items-center max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Clients</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-primary font-medium">Rahul Sharma</span>
+</div>
+</div>
+<div class="flex gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="hover:text-primary transition-colors flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary-container rounded-full"></span>
+</button>
+</div>
+</header>
+<div class="p-margin-mobile md:p-gutter max-w-container-max mx-auto w-full flex-1 space-y-unit-lg">
+<!-- Client Header Bento Box -->
+<section class="card-base rounded-xl p-unit-lg relative overflow-hidden">
+<!-- Decorative background elements -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+<div class="flex flex-col md:flex-row gap-unit-lg items-start md:items-center relative z-10">
+<div class="relative">
+<img alt="Rahul Sharma Profile" class="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover border-2 border-surface-container-high shadow-lg" data-alt="Professional studio portrait of a fit South Asian man in his 30s wearing athletic gear. Dark background, dramatic side lighting emphasizing muscle definition. High-end fitness aesthetic, serious expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg5njS873sSy2xapT7Z2Tw_u8sWI0zzYJIICD9YeWQCXuvB2gju0-YzyKIgYMGjkFJMzXlMGp2BZCOmnAVHFSrmSLSCDhjEP6U1wg3_Q1JbAmsig92gIvheDAZ6fN_pw9puwe6O46Znd1LyE7XJgsqdwBW0GX87GZXtAt0KC9YJgpAZ3nskBnJgtK3UugoLAsd83HjQJ_o5IDDqZKeU2NzL8jSz-7azf70Fm2uWh2KknSn2jc2Qltu760PhMnASKU_5pwnp8_o0k8">
+<div class="absolute -bottom-2 -right-2 bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e] px-2 py-1 rounded-md flex items-center gap-1 font-label-caps text-label-caps backdrop-blur-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse"></span>
+                            ACTIVE
+                        </div>
+</div>
+<div class="flex-1 space-y-2">
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary">Rahul Sharma</h2>
+<div class="flex flex-wrap gap-3 mt-4">
+<div class="flex flex-col data-card px-4 py-2 rounded-lg min-w-[120px]">
+<span class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Goal</span>
+<span class="font-stat-mono text-stat-mono text-primary mt-1">Fat Loss</span>
+</div>
+<div class="flex flex-col data-card px-4 py-2 rounded-lg min-w-[120px]">
+<span class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Phase</span>
+<span class="font-stat-mono text-stat-mono text-primary-container mt-1">Maintenance</span>
+</div>
+<div class="flex flex-col data-card px-4 py-2 rounded-lg min-w-[120px]">
+<span class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Start Date</span>
+<span class="font-stat-mono text-stat-mono text-primary mt-1">Oct 12, '23</span>
+</div>
+</div>
+</div>
+<div class="w-full md:w-auto flex flex-row md:flex-col gap-3 mt-4 md:mt-0">
+<button class="flex-1 md:flex-none bg-[#d9f99d] text-[#09090b] font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                            Message
+                        </button>
+<button class="flex-1 md:flex-none bg-transparent border border-outline-variant text-primary font-medium px-6 py-3 rounded-lg hover:bg-surface-container-high transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined">edit</span>
+                            Edit Plan
+                        </button>
+</div>
+</div>
+</section>
+<!-- Navigation Tabs -->
+<div class="flex overflow-x-auto border-b border-outline-variant hide-scrollbar gap-8">
+<button class="pb-3 text-primary font-semibold tab-active whitespace-nowrap px-1 transition-colors">Overview</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors">Check-ins</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors">Training</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors">Progress Photos</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary whitespace-nowrap px-1 transition-colors">Measurements</button>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-unit-md md:gap-unit-lg">
+<!-- Main Analytics Area (Col Span 2) -->
+<div class="lg:col-span-2 space-y-unit-md md:space-y-unit-lg">
+<!-- Weight Trend Chart Card -->
+<section class="card-base rounded-xl p-unit-md md:p-unit-lg h-[400px] flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Weight Trend</h3>
+<p class="text-sm text-on-surface-variant">Last 90 Days</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<div class="font-stat-mono text-2xl text-primary font-bold">82.4 <span class="text-sm text-on-surface-variant font-body-base">kg</span></div>
+<div class="text-xs text-[#22c55e] flex items-center justify-end gap-1 font-medium">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+                                        -4.2 kg
+                                    </div>
+</div>
+</div>
+</div>
+<!-- Simulated High-Fidelity Chart Area -->
+<div class="flex-1 relative w-full mt-4 bg-surface-container-lowest rounded-lg border border-outline-variant/50 p-4">
+<!-- Y-Axis Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between py-4 px-2 pointer-events-none opacity-20">
+<div class="border-b border-outline-variant w-full h-0"></div>
+<div class="border-b border-outline-variant w-full h-0"></div>
+<div class="border-b border-outline-variant w-full h-0"></div>
+<div class="border-b border-outline-variant w-full h-0"></div>
+<div class="border-b border-outline-variant w-full h-0"></div>
+</div>
+<!-- Simulated SVG Line Chart -->
+<svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+<defs>
+<linearGradient id="lineGrad" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#6366f1"></stop>
+<stop offset="100%" stop-color="#d9f99d"></stop>
+</linearGradient>
+<linearGradient id="areaGrad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#d9f99d" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#d9f99d" stop-opacity="0"></stop>
+</linearGradient>
+</defs>
+<!-- Area fill -->
+<path d="M0,20 Q15,15 30,35 T60,50 T80,75 L100,75 L100,100 L0,100 Z" fill="url(#areaGrad)"></path>
+<!-- Trend Line -->
+<path d="M0,20 Q15,15 30,35 T60,50 T80,75 L100,75" fill="none" stroke="url(#lineGrad)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<!-- Plateau indicator circle -->
+<circle cx="90" cy="75" fill="#d9f99d" r="2"></circle>
+<circle class="animate-ping" cx="90" cy="75" fill="none" r="4" stroke="#d9f99d" stroke-width="0.5"></circle>
+</svg>
+<!-- Custom Tooltip Placeholder -->
+<div class="absolute bottom-1/4 right-[10%] bg-surface-container-high border border-outline-variant rounded p-2 shadow-lg transform -translate-x-1/2 -translate-y-full mb-2 z-10 hidden md:block">
+<div class="text-[10px] text-on-surface-variant uppercase">Current Plateau</div>
+<div class="font-stat-mono text-primary text-sm">82.4 kg (14 days)</div>
+</div>
+</div>
+</section>
+<!-- Adherence Stats Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-unit-md md:gap-unit-lg">
+<!-- Consistency -->
+<div class="card-base rounded-xl p-unit-md flex flex-col justify-between">
+<div class="flex items-center gap-2 mb-4">
+<div class="w-8 h-8 rounded-full bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-[18px]">calendar_month</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Workout Adherence</span>
+</div>
+<div class="font-stat-mono text-3xl font-bold text-primary mb-2">92%</div>
+<div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
+<div class="h-full w-[92%] bg-gradient-to-r from-[#6366f1] to-[#d9f99d]"></div>
+</div>
+<div class="text-xs text-on-surface-variant mt-2 text-right">Last 4 weeks</div>
+</div>
+<!-- Sleep -->
+<div class="card-base rounded-xl p-unit-md flex flex-col justify-between">
+<div class="flex items-center gap-2 mb-4">
+<div class="w-8 h-8 rounded-full bg-[#818cf8]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#818cf8] text-[18px]">bedtime</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Avg Sleep</span>
+</div>
+<div class="font-stat-mono text-3xl font-bold text-primary mb-2">6h 45m</div>
+<div class="flex items-center gap-2 text-xs text-[#f87171] font-medium">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                Below 7h target
+                            </div>
+</div>
+<!-- Steps -->
+<div class="card-base rounded-xl p-unit-md flex flex-col justify-between">
+<div class="flex items-center gap-2 mb-4">
+<div class="w-8 h-8 rounded-full bg-[#fbbf24]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#fbbf24] text-[18px]">directions_walk</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Daily Steps</span>
+</div>
+<div class="font-stat-mono text-3xl font-bold text-primary mb-2">11,240</div>
+<div class="flex items-center gap-2 text-xs text-[#22c55e] font-medium">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                Target met (10k)
+                            </div>
+</div>
+</div>
+</div>
+<!-- Right Column (Col Span 1) -->
+<div class="space-y-unit-md md:space-y-unit-lg">
+<!-- Progress Photo Slider Placeholder -->
+<section class="card-base rounded-xl p-unit-md flex flex-col h-[350px]">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-[18px] text-primary">Visual Progress</h3>
+<button class="text-primary-container text-sm font-medium hover:underline">View All</button>
+</div>
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg relative overflow-hidden group cursor-pointer">
+<!-- Split image effect simulation -->
+<div class="absolute inset-0 flex">
+<div class="w-1/2 h-full bg-[#18181b] border-r border-[#d9f99d] flex items-center justify-center relative overflow-hidden">
+<img alt="Before Photo" class="absolute inset-0 w-[200%] max-w-none h-full object-cover opacity-60 grayscale" data-alt="Black and white fitness before photo of a man in a gym setting. High contrast, moody lighting. Front facing pose." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcNme_YnSQkYty_V5lL6HrAtsgHdpKdKQ-tuwD-dRPRxEdM6EK98Wklg_C2-TjavYfK-ANi8leJ5CRtTex0ka2YIRLgEqT1hRhcrXB7yy1_atVlJqvlsuWL1_1uO7QZ6WSWWbezaPLePg3aQktN-y5G3He4lI9Tx43WT8QtgHzwx4E2rAyuXQWpkVUJY3W71R57pT2LeW96wYD9CDxcR0J_xEwKS2hCynh_7x3k_pwkZ7X5cfAWq8oyOpqa_UUUsuPuG0tWv1tVIg">
+<div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs font-stat-mono z-10 text-white">Day 1</div>
+</div>
+<div class="w-1/2 h-full bg-[#12140e] flex items-center justify-center relative overflow-hidden">
+<img alt="After Photo" class="absolute inset-0 w-[200%] max-w-none h-full object-cover -translate-x-1/2 opacity-90" data-alt="Color fitness progress photo of a man in a gym setting. Professional lighting highlighting muscle tone. Confident posture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3rJlWEZT_wH8Bvk3fZG4EeMVDY7o7bmFYzbsN1yRtEOMs5NsPDp_E-8ut46VjcyUV-rjkpbH8W3aVbPs3WvFnCLm6brnjNV8ciVfdUNKdW3Gk7bgf0QlcFCYAqltMimkx-JjUW1_sYwUyYJoKG5WrEma9tebvNk8nZFYrpvpTzbxZU_WBPrB1ykTGlCiMb21S4eKC7JjxvW9jL5BZqa-5VjCpzcHTKgq7mNuyCIloRQ-UUDOlBcjqt65AdSqlhy_Z6Vdnu1Tui8U">
+<div class="absolute bottom-2 right-2 bg-primary-container/80 text-on-primary-container px-2 py-1 rounded text-xs font-stat-mono z-10 font-bold">Week 12</div>
+</div>
+</div>
+<!-- Slider handle indicator -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-[#d9f99d] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(217,249,157,0.5)] z-20">
+<span class="material-symbols-outlined text-[#09090b] text-[16px]">swap_horiz</span>
+</div>
+</div>
+</section>
+<!-- Key Measurements Mini-Charts -->
+<section class="card-base rounded-xl p-unit-md flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-[18px] text-primary">Key Measurements</h3>
+<span class="material-symbols-outlined text-on-surface-variant">straighten</span>
+</div>
+<div class="space-y-4">
+<!-- Waist -->
+<div class="data-card p-3 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-8 bg-[#d9f99d] rounded-full"></div>
+<div>
+<div class="text-sm font-medium text-on-surface-variant">Waist</div>
+<div class="text-xs text-[#22c55e]">-3.5 cm</div>
+</div>
+</div>
+<div class="font-stat-mono text-lg text-primary">86.5<span class="text-xs text-on-surface-variant ml-1">cm</span></div>
+</div>
+<!-- Chest -->
+<div class="data-card p-3 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-8 bg-[#6366f1] rounded-full"></div>
+<div>
+<div class="text-sm font-medium text-on-surface-variant">Chest</div>
+<div class="text-xs text-[#a1a1aa]">No change</div>
+</div>
+</div>
+<div class="font-stat-mono text-lg text-primary">102.0<span class="text-xs text-on-surface-variant ml-1">cm</span></div>
+</div>
+<!-- Arms -->
+<div class="data-card p-3 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-8 bg-[#818cf8] rounded-full"></div>
+<div>
+<div class="text-sm font-medium text-on-surface-variant">Arms (R/L)</div>
+<div class="text-xs text-[#d9f99d]">+0.5 cm</div>
+</div>
+</div>
+<div class="font-stat-mono text-lg text-primary">38.5<span class="text-xs text-on-surface-variant ml-1">cm</span></div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-unit-sm bg-surface/80 backdrop-blur-xl border-t border-outline-variant shadow-[0_-8px_32px_0_rgba(0,0,0,0.4)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-caps text-label-caps text-[10px]">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-unit-md py-unit-xs w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-caps text-label-caps text-[10px]">Clients</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">chat</span>
+<span class="font-label-caps text-label-caps text-[10px]">Messages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-caps text-label-caps text-[10px]">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple script to handle hide-scrollbar utility since it's not a standard tailwind class without a plugin
+        document.addEventListener('DOMContentLoaded', () => {
+            const style = document.createElement('style');
+            style.textContent = `
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .hide-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body></html>

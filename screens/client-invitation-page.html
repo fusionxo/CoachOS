@@ -1,0 +1,215 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Accept Invitation - CoachOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;900&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#292b24",
+                        "on-tertiary-fixed": "#121c28",
+                        "tertiary-fixed": "#d9e3f4",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#ceee93",
+                        "on-surface": "#e3e3d9",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "surface-container-highest": "#34352f",
+                        "on-tertiary-fixed-variant": "#3e4755",
+                        "on-surface-variant": "#c5c8b7",
+                        "on-primary-fixed": "#131f00",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#e1e0ff",
+                        "primary-container": "#ceee93",
+                        "on-tertiary": "#27313e",
+                        "tertiary-fixed-dim": "#bdc7d7",
+                        "on-secondary": "#1000a9",
+                        "on-primary": "#243600",
+                        "inverse-on-surface": "#2f312a",
+                        "on-background": "#e3e3d9",
+                        "inverse-primary": "#4d661c",
+                        "secondary": "#c0c1ff",
+                        "surface-bright": "#383a33",
+                        "on-secondary-container": "#b0b2ff",
+                        "surface-dim": "#12140e",
+                        "outline-variant": "#44483b",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#b3d17a",
+                        "on-secondary-fixed": "#07006c",
+                        "surface-container": "#1f201a",
+                        "surface": "#12140e",
+                        "on-error-container": "#ffdad6",
+                        "background": "#12140e",
+                        "primary": "#ffffff",
+                        "tertiary-container": "#d9e3f4",
+                        "on-primary-fixed-variant": "#364e03",
+                        "surface-container-low": "#1b1c16",
+                        "surface-variant": "#34352f",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#5b6573",
+                        "tertiary": "#ffffff",
+                        "secondary-container": "#3131c0",
+                        "outline": "#8f9282",
+                        "on-primary-container": "#536d22",
+                        "surface-container-lowest": "#0d0f09",
+                        "surface-tint": "#b3d17a",
+                        "inverse-surface": "#e3e3d9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit-sm": "8px",
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "unit-lg": "24px",
+                        "unit-xl": "48px",
+                        "unit-xs": "4px",
+                        "unit-md": "16px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "stat-mono": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "body-base": ["Inter"],
+                        "headline-md": ["Geist"],
+                        "body-sm": ["Inter"],
+                        "display-lg-mobile": ["Geist"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "stat-mono": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                        "body-base": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-[#18181b]/80 backdrop-blur-[12px] border border-[#27272a] shadow-[0_8px_32px_0_rgba(0,0,0,0.4)];
+            }
+            .input-premium {
+                @apply bg-[#09090b] border border-[#27272a] text-on-surface focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-lg w-full px-4 py-3 outline-none transition-all;
+            }
+            .btn-primary {
+                @apply bg-[#d9f99d] text-[#09090b] font-semibold py-3 px-6 rounded-lg w-full hover:bg-[#ceee93] transition-colors;
+            }
+            .btn-ghost {
+                @apply bg-transparent text-zinc-400 hover:bg-[#18181b] hover:text-white py-3 px-6 rounded-lg w-full transition-colors font-body-base text-body-base;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-4 relative overflow-hidden font-body-base">
+<!-- Ambient Background Glow -->
+<div class="absolute inset-0 z-0 pointer-events-none">
+<div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-container/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[150px]"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[480px] z-10 relative">
+<!-- Brand / Header -->
+<div class="text-center mb-unit-xl">
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-2">CoachOS</h1>
+<p class="font-body-base text-body-base text-on-surface-variant">Elite Performance Ecosystem</p>
+</div>
+<!-- Invitation Card -->
+<div class="glass-panel rounded-xl p-unit-lg md:p-[32px] flex flex-col gap-unit-xl">
+<!-- Coach Identity -->
+<div class="flex flex-col items-center text-center gap-unit-sm">
+<div class="relative mb-2">
+<img alt="Coach Profile Picture" class="w-24 h-24 rounded-full border-2 border-[#27272a] object-cover" data-alt="A high-quality, professional headshot of a fitness coach. The coach looks confident and authoritative, set against a dark, moody gym background. The lighting is dramatic, highlighting their athletic physique and emphasizing the premium, high-performance aesthetic of the application. Deep blacks and subtle metallic tones dominate the scene." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkkvpynYstDI_r-E5hGdKAj5X3UGFMaqJfUXrJRJfgXSAThu4FqfNsDVDFq7PMFfk0vrkOUgpd9wJwJ4-eOEeegbiK_uMNilTdYHFrGnczf-6eTK7wTPtNBrWEnK-ctV-SL6RatsOtVFGKGuXBCHxcAurPn4yYq5hFvDIl2--cGEXjehlpSa4umBjSQqE9vEai4AjMSb2P6nFAn1mDCFMOMHpgqPgO2aNRPmiAwrkWKRE9SbN1LbLCLO8QusAP5q00Gobdwoo15iU">
+<div class="absolute bottom-0 right-0 w-6 h-6 bg-[#18181b] rounded-full flex items-center justify-center border border-[#27272a]">
+<span class="material-symbols-outlined text-[14px] text-primary-container" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary">You have been invited</h2>
+<div class="font-body-base text-body-base text-on-surface-variant flex flex-col gap-1">
+<p>by <span class="text-primary font-medium">Marcus Sterling</span></p>
+<p class="font-label-caps text-label-caps text-on-surface-variant/70 uppercase tracking-widest">Sterling Athletics</p>
+</div>
+</div>
+<hr class="border-[#27272a]">
+<!-- Setup Form -->
+<form class="flex flex-col gap-unit-lg">
+<div class="space-y-4">
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Height</label>
+<div class="relative">
+<input class="input-premium pl-10" placeholder="e.g. 180" type="text">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px]">height</span>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 font-stat-mono text-stat-mono text-[14px] text-on-surface-variant/50">cm</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Weight</label>
+<div class="relative">
+<input class="input-premium pl-10" placeholder="e.g. 75" type="text">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px]">monitor_weight</span>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 font-stat-mono text-stat-mono text-[14px] text-on-surface-variant/50">kg</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Primary Goal</label>
+<div class="relative">
+<select class="input-premium appearance-none pl-10 pr-10 cursor-pointer">
+<option disabled="" hidden="" selected="" value="">Select your goal</option>
+<option value="hypertrophy">Hypertrophy</option>
+<option value="strength">Strength &amp; Power</option>
+<option value="endurance">Endurance</option>
+<option value="recomposition">Body Recomposition</option>
+</select>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px]">flag</span>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px] pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-body-sm text-body-sm text-on-surface-variant">Experience Level</label>
+<div class="relative">
+<select class="input-premium appearance-none pl-10 pr-10 cursor-pointer">
+<option disabled="" hidden="" selected="" value="">Select experience</option>
+<option value="beginner">Beginner (&lt; 1 yr)</option>
+<option value="intermediate">Intermediate (1-3 yrs)</option>
+<option value="advanced">Advanced (3+ yrs)</option>
+</select>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px]">fitness_center</span>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[20px] pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-unit-sm mt-unit-sm">
+<button class="btn-primary flex items-center justify-center gap-2" type="button">
+<span>Accept Invitation</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="btn-ghost" type="button">
+                        Create account instead
+                    </button>
+</div>
+</form>
+</div>
+<!-- Security / Trust Indicator -->
+<div class="mt-unit-lg text-center flex items-center justify-center gap-2 text-on-surface-variant/50">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span class="font-label-caps text-label-caps text-[10px]">Secure Encrypted Onboarding</span>
+</div>
+</main>
+</body></html>

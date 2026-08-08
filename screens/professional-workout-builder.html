@@ -1,0 +1,351 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Workout Builder - CoachOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;900&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-container-high": "#292b24",
+                            "on-tertiary-fixed": "#121c28",
+                            "tertiary-fixed": "#d9e3f4",
+                            "error": "#ffb4ab",
+                            "primary-fixed": "#ceee93",
+                            "on-surface": "#e3e3d9",
+                            "on-secondary-fixed-variant": "#2f2ebe",
+                            "surface-container-highest": "#34352f",
+                            "on-tertiary-fixed-variant": "#3e4755",
+                            "on-surface-variant": "#c5c8b7",
+                            "on-primary-fixed": "#131f00",
+                            "on-error": "#690005",
+                            "secondary-fixed": "#e1e0ff",
+                            "primary-container": "#ceee93",
+                            "on-tertiary": "#27313e",
+                            "tertiary-fixed-dim": "#bdc7d7",
+                            "on-secondary": "#1000a9",
+                            "on-primary": "#243600",
+                            "inverse-on-surface": "#2f312a",
+                            "on-background": "#e3e3d9",
+                            "inverse-primary": "#4d661c",
+                            "secondary": "#c0c1ff",
+                            "surface-bright": "#383a33",
+                            "on-secondary-container": "#b0b2ff",
+                            "surface-dim": "#12140e",
+                            "outline-variant": "#44483b",
+                            "error-container": "#93000a",
+                            "primary-fixed-dim": "#b3d17a",
+                            "on-secondary-fixed": "#07006c",
+                            "surface-container": "#1f201a",
+                            "surface": "#12140e",
+                            "on-error-container": "#ffdad6",
+                            "background": "#12140e",
+                            "primary": "#ffffff",
+                            "tertiary-container": "#d9e3f4",
+                            "on-primary-fixed-variant": "#364e03",
+                            "surface-container-low": "#1b1c16",
+                            "surface-variant": "#34352f",
+                            "secondary-fixed-dim": "#c0c1ff",
+                            "on-tertiary-container": "#5b6573",
+                            "tertiary": "#ffffff",
+                            "secondary-container": "#3131c0",
+                            "outline": "#8f9282",
+                            "on-primary-container": "#536d22",
+                            "surface-container-lowest": "#0d0f09",
+                            "surface-tint": "#b3d17a",
+                            "inverse-surface": "#e3e3d9"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "unit-sm": "8px",
+                            "container-max": "1440px",
+                            "margin-mobile": "16px",
+                            "unit-lg": "24px",
+                            "unit-xl": "48px",
+                            "unit-xs": "4px",
+                            "unit-md": "16px",
+                            "gutter": "24px"
+                    },
+                    "fontFamily": {
+                            "stat-mono": ["JetBrains Mono"],
+                            "display-lg": ["Geist"],
+                            "body-base": ["Inter"],
+                            "headline-md": ["Geist"],
+                            "body-sm": ["Inter"],
+                            "display-lg-mobile": ["Geist"],
+                            "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                            "stat-mono": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                            "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                            "body-base": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                            "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom Styles for Data Density and Glassmorphism */
+        body {
+            background-color: #09090b;
+            color: #fafafa;
+        }
+        
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #27272a;
+        }
+
+        .data-input {
+            background-color: #09090b;
+            border: 1px solid #27272a;
+            color: #fafafa;
+        }
+        .data-input:focus {
+            border-color: #6366f1;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary {
+            background-color: #d9f99d;
+            color: #09090b;
+            font-weight: 600;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid #27272a;
+            color: #fafafa;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: #a1a1aa;
+        }
+        .btn-ghost:hover {
+            background-color: #18181b;
+        }
+        
+        /* Drag handle styling */
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body class="font-body-base text-body-base flex flex-col md:flex-row min-h-screen">
+<!-- TopNavBar (Mobile) -->
+<nav class="md:hidden sticky top-0 w-full z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant flex justify-between items-center px-gutter h-16">
+<div class="font-display-lg-mobile text-display-lg-mobile font-black text-primary">CoachOS</div>
+<div class="flex gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer" data-icon="search">search</span>
+</div>
+</nav>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex w-[280px] h-screen sticky top-0 left-0 bg-surface border-r border-outline-variant flex-col py-unit-lg px-unit-md z-40 shrink-0">
+<div class="mb-unit-xl px-unit-sm">
+<h1 class="font-display-lg text-display-lg font-bold text-primary">CoachOS</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Elite Performance</p>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<!-- Inactive -->
+<li><a class="flex items-center gap-3 px-unit-sm py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>Dashboard</a></li>
+<li><a class="flex items-center gap-3 px-unit-sm py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="group">group</span>Clients</a></li>
+<!-- Active -->
+<li><a class="flex items-center gap-3 px-unit-sm py-2 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-high" href="#"><span class="material-symbols-outlined" data-icon="fitness_center" style="font-variation-settings: 'FILL' 1;">fitness_center</span>Workouts</a></li>
+<li><a class="flex items-center gap-3 px-unit-sm py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>Templates</a></li>
+<li><a class="flex items-center gap-3 px-unit-sm py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="psychology">psychology</span>AI Insights</a></li>
+<li><a class="flex items-center gap-3 px-unit-sm py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span>Settings</a></li>
+</ul>
+<div class="mt-auto flex items-center gap-3 px-unit-sm py-2">
+<div class="w-10 h-10 rounded-full bg-surface-variant border border-outline-variant overflow-hidden shrink-0">
+<img alt="Coach Profile Picture" class="w-full h-full object-cover" data-alt="A close up portrait of a professional fitness coach in a dark, high end gym environment. The lighting is dramatic, highlighting their focused expression. The overall mood is serious and professional, fitting a high-performance athletic brand. Modern corporate style with deep blacks and subtle highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1uh_SA_tfF976JDvo9kM7Tw_SHuOGhznnxAuiUbkxpR4HU01MXfzVp2SJvpl34Rwp2DT8E-GJHBzFOw68r-khfypOmaHZ9JZb8RNpNuESRZRL-HxIT-EkUEsJiTKBY5BGX8qq4evas8nQ-fiA8FwOSxM4ZuA-yXvnSBkX5Zucq0VWLTUNL2asdKbYXsRAk02WWFLhUZHOd5pjLrhwfwmzSSQ7FNNlmsQePOZF5GiGm24ooMl0kKspOVky19-lGeOzyifJ7r8q4nc">
+</div>
+<div class="truncate">
+<p class="font-body-sm text-body-sm text-primary font-medium truncate">Alex Carter</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant truncate">Head Coach</p>
+</div>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col min-h-screen pb-24 md:pb-0 w-full max-w-container-max mx-auto">
+<!-- Header Area -->
+<header class="px-gutter py-unit-lg md:py-unit-xl border-b border-outline-variant glass-panel sticky top-16 md:top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex-1">
+<p class="font-label-caps text-label-caps text-primary-container mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-[16px]" data-icon="build">build</span> WORKOUT BUILDER</p>
+<input class="w-full bg-transparent border-none text-display-lg-mobile md:text-display-lg font-bold text-primary focus:ring-0 p-0 placeholder:text-on-surface-variant/50" placeholder="Workout Name (e.g., Hypertrophy Day 1)" type="text" value="Lower Body Power Focus">
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<button class="btn-ghost px-4 py-2 rounded-lg flex items-center gap-2 font-body-sm text-body-sm transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="history">history</span> History</button>
+<button class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2 font-body-sm text-body-sm transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="more_horiz">more_horiz</span></button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-gutter flex-1 flex flex-col gap-unit-md overflow-y-auto">
+<!-- Global Workout Notes -->
+<div class="glass-panel rounded-xl p-unit-md mb-unit-sm">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]" data-icon="notes">notes</span>
+<h3 class="font-body-sm text-body-sm text-on-surface-variant font-medium">Global Instructions</h3>
+</div>
+<textarea class="w-full data-input rounded-lg p-3 text-body-sm resize-none h-20" placeholder="Add general notes for this session (e.g., focus on eccentric control)..."></textarea>
+</div>
+<!-- Exercise List -->
+<div class="flex flex-col gap-4" id="exercise-list">
+<!-- Exercise Card 1 -->
+<div class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col md:flex-row group transition-all duration-200 hover:border-outline">
+<!-- Drag Handle & Visual Identity -->
+<div class="flex md:flex-col items-center justify-between md:justify-center p-3 md:w-16 bg-surface-container-low border-b md:border-b-0 md:border-r border-outline-variant">
+<div class="flex items-center gap-2 md:flex-col">
+<span class="material-symbols-outlined text-on-surface-variant drag-handle hidden md:block" data-icon="drag_indicator">drag_indicator</span>
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center font-stat-mono text-stat-mono text-primary border border-outline-variant">A</div>
+</div>
+<div class="flex items-center gap-2 md:hidden">
+<span class="material-symbols-outlined text-on-surface-variant p-1 cursor-pointer" data-icon="content_copy">content_copy</span>
+<span class="material-symbols-outlined text-error/80 p-1 cursor-pointer" data-icon="delete">delete</span>
+</div>
+</div>
+<!-- Main Data Area -->
+<div class="flex-1 p-unit-md flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<input class="data-input border-none bg-transparent p-0 font-headline-md text-headline-md font-semibold text-primary w-full max-w-md focus:ring-0" placeholder="Exercise Name" type="text" value="Barbell Back Squat">
+<div class="hidden md:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="btn-ghost p-2 rounded-lg flex items-center justify-center" title="Duplicate"><span class="material-symbols-outlined" data-icon="content_copy">content_copy</span></button>
+<button class="btn-ghost p-2 rounded-lg flex items-center justify-center text-error hover:text-error hover:bg-error/10" title="Delete"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</div>
+</div>
+<!-- Data Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Sets</label>
+<input class="data-input rounded-lg px-3 py-2 text-body-sm font-stat-mono" type="number" value="4">
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Reps</label>
+<input class="data-input rounded-lg px-3 py-2 text-body-sm font-stat-mono" type="text" value="5-8">
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Weight / RPE</label>
+<input class="data-input rounded-lg px-3 py-2 text-body-sm font-stat-mono" type="text" value="RPE 8">
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Rest</label>
+<div class="relative">
+<input class="data-input rounded-lg px-3 py-2 w-full text-body-sm font-stat-mono pl-8" type="text" value="180s">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant" data-icon="timer">timer</span>
+</div>
+</div>
+</div>
+<!-- Coach Notes -->
+<div class="mt-2">
+<input class="data-input w-full rounded-lg px-3 py-2 text-body-sm text-on-surface-variant border-dashed border-outline-variant focus:border-solid bg-transparent" placeholder="Coach notes (e.g., maintain neutral spine, explode on concentric)..." type="text" value="Deep depth, brace core hard.">
+</div>
+</div>
+</div>
+<!-- Exercise Card 2 -->
+<div class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col md:flex-row group transition-all duration-200 hover:border-outline">
+<div class="flex md:flex-col items-center justify-between md:justify-center p-3 md:w-16 bg-surface-container-low border-b md:border-b-0 md:border-r border-outline-variant">
+<div class="flex items-center gap-2 md:flex-col">
+<span class="material-symbols-outlined text-on-surface-variant drag-handle hidden md:block" data-icon="drag_indicator">drag_indicator</span>
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center font-stat-mono text-stat-mono text-primary border border-outline-variant">B1</div>
+</div>
+<div class="flex items-center gap-2 md:hidden">
+<span class="material-symbols-outlined text-on-surface-variant p-1 cursor-pointer" data-icon="content_copy">content_copy</span>
+<span class="material-symbols-outlined text-error/80 p-1 cursor-pointer" data-icon="delete">delete</span>
+</div>
+</div>
+<div class="flex-1 p-unit-md flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<input class="data-input border-none bg-transparent p-0 font-headline-md text-headline-md font-semibold text-primary w-full max-w-md focus:ring-0" placeholder="Exercise Name" type="text" value="Romanian Deadlift">
+<div class="hidden md:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="btn-ghost p-2 rounded-lg flex items-center justify-center" title="Duplicate"><span class="material-symbols-outlined" data-icon="content_copy">content_copy</span></button>
+<button class="btn-ghost p-2 rounded-lg flex items-center justify-center text-error hover:text-error hover:bg-error/10" title="Delete"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Sets</label>
+<input class="data-input rounded-lg px-3 py-2 text-body-sm font-stat-mono" type="number" value="3">
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Reps</label>
+<input class="data-input rounded-lg px-3 py-2 text-body-sm font-stat-mono" type="text" value="10-12">
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Weight / RPE</label>
+<input class="data-input rounded-lg px-3 py-2 text-body-sm font-stat-mono" type="text" value="RPE 7.5">
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant mb-1">Rest</label>
+<div class="relative">
+<input class="data-input rounded-lg px-3 py-2 w-full text-body-sm font-stat-mono pl-8" type="text" value="90s">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant" data-icon="timer">timer</span>
+</div>
+</div>
+</div>
+<div class="mt-2">
+<input class="data-input w-full rounded-lg px-3 py-2 text-body-sm text-on-surface-variant border-dashed border-outline-variant focus:border-solid bg-transparent" placeholder="Coach notes..." type="text" value="Slight bend in knees, focus on hamstring stretch.">
+</div>
+</div>
+</div>
+<!-- Add Exercise Button -->
+<button class="w-full glass-panel border-dashed border-2 border-outline hover:border-primary/50 text-on-surface-variant hover:text-primary rounded-xl py-unit-lg flex flex-col items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[32px]" data-icon="add_circle">add_circle</span>
+<span class="font-body-base text-body-base font-medium">Add Exercise</span>
+</button>
+</div>
+</div>
+<!-- Bottom Action Bar (Fixed on Desktop, Above Nav on Mobile) -->
+<div class="p-gutter border-t border-outline-variant glass-panel sticky bottom-0 md:bottom-0 z-30 flex flex-col md:flex-row items-center justify-between gap-4 mb-16 md:mb-0">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm w-full md:w-auto justify-center md:justify-start">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="check_circle">check_circle</span> Draft Saved Just Now
+            </div>
+<div class="flex flex-col md:flex-row w-full md:w-auto gap-3">
+<button class="btn-ghost px-6 py-3 rounded-lg font-body-base text-body-base transition-colors w-full md:w-auto text-center">Save as Template</button>
+<button class="btn-secondary px-6 py-3 rounded-lg font-body-base text-body-base transition-colors flex items-center justify-center gap-2 w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px]" data-icon="person_add">person_add</span> Assign Client
+                </button>
+<button class="btn-primary px-8 py-3 rounded-lg font-body-base text-body-base transition-transform active:scale-95 shadow-[0_0_20px_rgba(217,249,157,0.2)] w-full md:w-auto text-center">Save Workout</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-unit-sm bg-surface/80 backdrop-blur-xl rounded-t-xl border-t border-outline-variant shadow-[0_-8px_32px_0_rgba(0,0,0,0.4)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-unit-md py-unit-xs active:scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="exercise" style="font-variation-settings: 'FILL' 1;">exercise</span>
+<span class="font-label-caps text-label-caps font-bold">Training</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="chat">chat</span>
+<span class="font-label-caps text-label-caps">Messages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</nav>
+</body></html>

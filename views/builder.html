@@ -1,0 +1,168 @@
+<!-- Header Area -->
+<header class="px-gutter py-unit-md md:py-unit-lg border-b border-outline-variant glass-panel sticky top-16 md:top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex-1 space-y-2">
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="font-label-caps text-label-caps text-primary-container flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                <span class="material-symbols-outlined text-[16px]">fitness_center</span> PROGRAM BUILDER
+            </span>
+            <!-- Active Client Context Badge / Selector -->
+            <div class="flex items-center gap-1.5 bg-surface-container-high px-3 py-1 rounded-full border border-outline-variant/40">
+                <span class="material-symbols-outlined text-[14px] text-primary-container">person</span>
+                <span class="text-xs text-on-surface-variant">Client:</span>
+                <select id="builder-client-select" class="bg-transparent border-none text-xs text-primary font-semibold focus:ring-0 p-0 cursor-pointer">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <input id="builder-workout-name" class="w-full bg-transparent border-none text-display-lg-mobile md:text-display-lg font-bold text-primary focus:ring-0 p-0 placeholder:text-on-surface-variant/40" placeholder="Workout Session Name (e.g. Day 1 - Push Focus)" type="text" value="Lower Body Power Focus">
+
+        <div class="flex flex-wrap gap-3">
+            <div class="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-lg border border-[#27272a]">
+                <span class="material-symbols-outlined text-xs text-[#ceee93]">folder</span>
+                <span class="text-[10px] text-on-surface-variant uppercase font-label-caps tracking-wider">Program</span>
+                <input type="text" id="builder-program-name" class="bg-transparent border-none focus:ring-0 text-xs text-primary p-0 w-36 font-semibold" placeholder="e.g. 12-Week Hypertrophy">
+            </div>
+            <div class="flex items-center gap-2 bg-[#18181b] px-3 py-1.5 rounded-lg border border-[#27272a]">
+                <span class="material-symbols-outlined text-xs text-[#ceee93]">calendar_view_week</span>
+                <span class="text-[10px] text-on-surface-variant uppercase font-label-caps tracking-wider">Week</span>
+                <input type="text" id="builder-week-name" class="bg-transparent border-none focus:ring-0 text-xs text-primary p-0 w-20 font-semibold" placeholder="e.g. Week 1">
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3 shrink-0 self-start md:self-center">
+        <button id="btn-builder-import-template" class="px-3.5 py-2 rounded-lg bg-surface-container-high border border-outline-variant hover:border-primary text-xs font-semibold text-primary flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[16px]">file_download</span> Import Template
+        </button>
+        <div class="relative inline-block text-left">
+            <button id="btn-builder-history" class="btn-ghost px-3.5 py-2 rounded-lg flex items-center gap-1.5 text-xs transition-colors">
+                <span class="material-symbols-outlined text-[16px]">history</span> Sessions
+            </button>
+            <div id="builder-history-dropdown" class="hidden absolute right-0 mt-2 w-64 rounded-xl shadow-2xl bg-[#09090b] border border-[#27272a] focus:outline-none z-50">
+                <div class="p-2 border-b border-[#27272a]">
+                    <p class="text-[10px] uppercase font-label-caps text-on-surface-variant font-semibold px-2">Workouts in Program</p>
+                </div>
+                <div class="py-1 max-h-60 overflow-y-auto" id="builder-history-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+        <div class="relative inline-block text-left">
+            <button id="btn-builder-options" class="btn-secondary px-3 py-2 rounded-lg flex items-center gap-1 text-xs">
+                <span class="material-symbols-outlined text-[18px]">more_horiz</span>
+            </button>
+            <div id="builder-options-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-xl shadow-2xl bg-[#09090b] border border-[#27272a] focus:outline-none z-50 p-1">
+                <button id="btn-opt-duplicate" class="w-full text-left px-3 py-2 text-xs text-on-surface hover:bg-[#1f201a] rounded-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px]">content_copy</span> Duplicate Session
+                </button>
+                <button id="btn-opt-delete" class="w-full text-left px-3 py-2 text-xs text-error hover:bg-[#1f201a] rounded-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px]">delete</span> Delete Session
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Builder Empty State -->
+<div id="builder-empty-state" class="hidden flex-col items-center justify-center py-20 text-center card-bg border border-base rounded-xl p-8 max-w-md mx-auto my-8 fade-in">
+    <span class="material-symbols-outlined text-[64px] text-primary-container mb-4">fitness_center</span>
+    <h3 class="font-headline-md text-primary font-bold mb-2">No Workout Created Yet</h3>
+    <p class="text-sm text-on-surface-variant mb-6">Build a structured training session with exercises, sets, target reps, and coaching notes.</p>
+    <button id="btn-builder-create-first" class="btn-primary px-6 py-2.5 rounded-lg font-body-base text-body-base font-semibold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_0_20px_rgba(217,249,157,0.2)]">
+        <span class="material-symbols-outlined text-[20px]">add</span>
+        <span>Create Workout Session</span>
+    </button>
+</div>
+
+<!-- Content Area -->
+<div id="builder-main-content" class="p-gutter flex-1 flex flex-col gap-unit-md overflow-y-auto pb-24">
+    <!-- Global Workout Instructions -->
+    <div class="glass-panel rounded-xl p-unit-md border border-outline-variant/40">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-primary-container text-[18px]">notes</span>
+            <h3 class="font-body-sm text-body-sm text-primary font-semibold">Coach Instructions & Warmup Cues</h3>
+        </div>
+        <textarea id="builder-global-notes" class="w-full data-input rounded-lg p-3 text-body-sm resize-none h-16 bg-[#09090b] border border-[#27272a]" placeholder="Add general session notes (e.g. 5-min dynamic warmup, focus on full depth)..."></textarea>
+    </div>
+
+    <!-- Exercise List Header -->
+    <div class="flex items-center justify-between px-1">
+        <h3 class="text-xs font-semibold text-on-surface-variant uppercase font-label-caps tracking-wider flex items-center gap-2">
+            <span>Exercises List</span>
+            <span id="builder-exercise-count-badge" class="bg-surface-container-high px-2 py-0.5 rounded-full text-[10px] font-mono text-primary-container">0 Exercises</span>
+        </h3>
+        <button id="btn-builder-add-exercise-top" class="text-xs text-primary-container font-semibold hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Exercise
+        </button>
+    </div>
+
+    <!-- Exercise Cards Container -->
+    <div class="flex flex-col gap-4" id="exercise-list">
+        <!-- Rendered dynamically by builder.js -->
+    </div>
+</div>
+
+<!-- Bottom Action Bar -->
+<div class="p-gutter border-t border-outline-variant glass-panel fixed bottom-0 left-0 md:left-[280px] right-0 z-30 flex flex-col md:flex-row items-center justify-between gap-4 bg-surface/90 backdrop-blur-xl">
+    <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-xs w-full md:w-auto justify-center md:justify-start" id="builder-save-status">
+        <span class="material-symbols-outlined text-primary-container text-[18px]">check_circle</span> Draft Saved
+    </div>
+    <div class="flex flex-wrap w-full md:w-auto gap-3 justify-end">
+        <button class="btn-ghost px-5 py-2.5 rounded-lg text-xs font-semibold transition-colors w-full sm:w-auto text-center btn-save-template">
+            Save as Template
+        </button>
+        <button class="btn-secondary px-5 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 w-full sm:w-auto btn-assign-client">
+            <span class="material-symbols-outlined text-[16px]">person_add</span> Assign to Client
+        </button>
+        <button class="btn-primary px-7 py-2.5 rounded-lg text-xs font-bold transition-transform active:scale-95 shadow-[0_0_20px_rgba(217,249,157,0.2)] w-full sm:w-auto text-center btn-save-workout">
+            Save Workout
+        </button>
+    </div>
+</div>
+
+<!-- Assign Client Modal -->
+<div id="builder-assign-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm assign-modal-close"></div>
+    <div class="card-bg border border-[#27272a] bg-[#09090b] rounded-xl w-full max-w-sm p-unit-lg shadow-2xl relative z-10 fade-in">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-headline-md text-primary font-bold text-base">Assign Workout Session</h3>
+            <button class="text-on-surface-variant hover:text-primary assign-modal-close">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <form id="builder-assign-form" class="space-y-4">
+            <div>
+                <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase text-[10px]">Select Target Client</label>
+                <select id="builder-assign-select" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded-lg text-xs text-on-surface" required>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+            <div class="pt-4 border-t border-outline-variant/30 flex justify-end gap-3">
+                <button type="button" class="px-4 py-2 rounded-lg border border-[#27272a] text-xs text-on-surface hover:bg-surface-container-high assign-modal-close">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-[#d9f99d] text-[#09090b] text-xs font-bold">Assign Now</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Import Template Modal -->
+<div id="builder-import-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm import-modal-close"></div>
+    <div class="card-bg border border-[#27272a] bg-[#09090b] rounded-xl w-full max-w-md p-unit-lg shadow-2xl relative z-10 fade-in flex flex-col max-h-[80vh]">
+        <div class="flex justify-between items-center mb-4 shrink-0">
+            <h3 class="font-headline-md text-primary font-bold text-base flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#ceee93]">file_download</span> Import Exercises from Template
+            </h3>
+            <button class="text-on-surface-variant hover:text-primary import-modal-close">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="builder-import-templates-list">
+            <!-- Populated dynamically -->
+        </div>
+        <div class="pt-4 border-t border-outline-variant/30 flex justify-end gap-3 shrink-0 mt-3">
+            <button type="button" class="px-4 py-2 rounded-lg border border-[#27272a] text-xs text-on-surface hover:bg-surface-container-high import-modal-close">Cancel</button>
+        </div>
+    </div>
+</div>

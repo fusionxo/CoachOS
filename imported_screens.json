@@ -1,0 +1,122 @@
+[
+  {
+    "title": "Coach Dashboard - Refined",
+    "filename": "screens/coach-dashboard-refined.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "Client Invitation Page",
+    "filename": "screens/client-invitation-page.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "Client Mobile App",
+    "filename": "screens/client-mobile-app.html",
+    "deviceType": "MOBILE",
+    "width": "780",
+    "height": "1768",
+    "isText": false
+  },
+  {
+    "title": "AI Coach Assistant",
+    "filename": "screens/ai-coach-assistant.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "Coach Intelligence Dashboard",
+    "filename": "screens/coach-intelligence-dashboard.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "CoachOS Platform Flow",
+    "filename": "screens/coachos-platform-flow.html",
+    "deviceType": "DESKTOP",
+    "width": "1280",
+    "height": "1024",
+    "isText": false
+  },
+  {
+    "title": "Client Profile - Analytics",
+    "filename": "screens/client-profile-analytics.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "Coach Inbox",
+    "filename": "screens/coach-inbox.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "CoachOS PRD",
+    "filename": "screens/coachos-prd.txt",
+    "deviceType": "DESKTOP",
+    "width": "0",
+    "height": "0",
+    "isText": true
+  },
+  {
+    "title": "Add New Client",
+    "filename": "screens/add-new-client.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "Transformation Comparison",
+    "filename": "screens/transformation-comparison.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  },
+  {
+    "title": "Professional Workout Builder",
+    "filename": "screens/professional-workout-builder.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2132",
+    "isText": false
+  },
+  {
+    "title": "CoachOS Landing Page",
+    "filename": "screens/coachos-landing-page.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "3786",
+    "isText": false
+  },
+  {
+    "title": "Workout Logger - Mobile",
+    "filename": "screens/workout-logger-mobile.html",
+    "deviceType": "MOBILE",
+    "width": "780",
+    "height": "1912",
+    "isText": false
+  },
+  {
+    "title": "Coach Onboarding",
+    "filename": "screens/coach-onboarding.html",
+    "deviceType": "DESKTOP",
+    "width": "2560",
+    "height": "2048",
+    "isText": false
+  }
+]

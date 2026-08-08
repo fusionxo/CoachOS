@@ -1,0 +1,245 @@
+<div class="inbox-container flex flex-row flex-1 overflow-hidden h-full w-full relative">
+    <!-- Inbox Empty State -->
+    <div id="inbox-empty-state" class="hidden flex-1 flex-col items-center justify-center text-center p-8 bg-[#09090b]">
+        <span class="material-symbols-outlined text-[64px] text-primary-container mb-4">forum</span>
+        <h3 class="font-headline-md text-primary font-bold mb-2">No conversations yet</h3>
+        <p class="text-sm text-on-surface-variant mb-6">Onboard clients to start messaging them.</p>
+        <a href="#add-client" class="btn-primary px-6 py-2.5 rounded-lg font-body-base text-body-base font-semibold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_0_20px_rgba(217,249,157,0.2)]">
+            <span class="material-symbols-outlined text-[20px]">person_add</span>
+            <span>Invite a client</span>
+        </a>
+    </div>
+
+    <!-- Left Column: Conversations List -->
+    <aside class="inbox-list-pane w-full md:w-[320px] lg:w-[380px] h-full flex flex-col border-r border-outline-variant bg-[#18181b] z-20 shrink-0">
+        <div class="p-unit-lg border-b border-outline-variant flex items-center justify-between shrink-0">
+            <h2 class="font-headline-md text-headline-md text-primary">Inbox</h2>
+            <div class="flex gap-unit-sm">
+                <button class="p-unit-xs rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+                </button>
+                <button class="p-unit-xs rounded-lg text-[#09090b] bg-[#d9f99d] font-semibold hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined" data-icon="edit_square">edit_square</span>
+                </button>
+            </div>
+        </div>
+        <div class="p-unit-md shrink-0">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <input class="w-full bg-[#09090b] border border-[#27272a] rounded-lg py-2 pl-10 pr-4 text-body-sm focus:outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/20 transition-all text-on-surface placeholder:text-on-surface-variant" placeholder="Search clients..." type="text">
+            </div>
+        </div>
+        <div class="flex-grow overflow-y-auto p-unit-sm space-y-unit-xs">
+            <!-- Active Conversation (Default/Fallback container) -->
+            <!-- Will be populated dynamically by inbox.js -->
+        </div>
+    </aside>
+
+    <!-- Middle Column: Chat Interface -->
+    <section class="inbox-chat-pane flex-1 flex flex-col h-full bg-[#09090b] relative z-10 overflow-hidden">
+        <!-- Chat Header -->
+        <header class="h-[80px] border-b border-[#27272a] bg-[#18181b]/80 backdrop-blur-md flex items-center justify-between px-unit-lg shrink-0">
+            <div class="flex items-center gap-unit-md">
+                <button class="text-on-surface-variant p-2 -ml-2 rounded-lg hover:bg-surface-container btn-inbox-back flex items-center justify-center">
+                    <span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+                </button>
+                <div>
+                    <h2 class="font-headline-md text-body-base font-semibold text-primary flex items-center gap-2">
+                        Client Chat
+                        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                    </h2>
+                    <p class="font-body-sm text-[12px] text-on-surface-variant flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+                        Last active: 2 hours ago
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-unit-sm">
+                <button class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+                </button>
+                <button class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors lg:hidden btn-inbox-info">
+                    <span class="material-symbols-outlined" data-icon="info">info</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Message History -->
+        <div class="flex-grow overflow-y-auto p-unit-lg space-y-unit-lg flex flex-col">
+            <!-- Date Divider -->
+            <div class="flex items-center justify-center relative my-unit-sm shrink-0">
+                <hr class="w-full border-[#27272a] absolute">
+                <span class="px-3 py-1 bg-[#18181b] rounded-full text-[10px] font-label-caps text-on-surface-variant tracking-wider relative z-10 border border-[#27272a]">TODAY</span>
+            </div>
+            <div class="messages-flow flex flex-col gap-unit-lg flex-1">
+                <!-- Messages populated dynamically -->
+            </div>
+            
+            <!-- AI Suggestion Container -->
+            <div class="my-unit-md p-unit-md rounded-xl bg-surface-container-high border border-[#4d661c] relative overflow-hidden group shrink-0" id="ai-suggestion-box">
+                <div class="absolute top-0 left-0 w-1 h-full bg-[#d9f99d]"></div>
+                <div class="flex items-start gap-unit-sm">
+                    <div class="p-1.5 rounded-md bg-[#d9f99d]/10 text-[#d9f99d] shrink-0 mt-0.5">
+                        <span class="material-symbols-outlined text-[18px]" data-icon="temp_preferences_custom">temp_preferences_custom</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-body-sm text-[12px] text-on-surface-variant font-medium mb-2 uppercase tracking-wider flex items-center justify-between">
+                            CoachAI Assistant
+                            <span class="px-2 py-0.5 rounded-full bg-error/10 text-error text-[9px]">High Priority</span>
+                        </p>
+                        <p class="font-body-sm text-sm text-on-surface mb-3 border-l-2 border-[#27272a] pl-3 py-1 italic text-on-surface-variant" id="ai-suggestion-reason">
+                            Analyzing client compliance and checking for recent updates...
+                        </p>
+                        <div class="bg-[#09090b] p-3 rounded-lg border border-[#27272a] text-sm text-on-surface mb-3" id="ai-suggestion-text">
+                            Generating suggested reply...
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-4 py-1.5 bg-[#d9f99d] text-[#09090b] font-semibold text-xs rounded-md hover:bg-[#ceee93] transition-colors flex items-center gap-1 shadow-lg shadow-[#d9f99d]/10" id="btn-use-ai-reply">
+                                <span class="material-symbols-outlined text-[16px]" data-icon="send">send</span> Use Reply
+                            </button>
+                            <button class="px-4 py-1.5 bg-transparent border border-[#27272a] text-on-surface font-medium text-xs rounded-md hover:bg-[#18181b] transition-colors btn-edit-ai-reply">
+                                Edit
+                            </button>
+                            <button class="px-2 py-1.5 bg-transparent text-on-surface-variant hover:text-error transition-colors ml-auto btn-close-ai-reply">
+                                <span class="material-symbols-outlined text-[16px]" data-icon="close">close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-unit-lg bg-[#18181b]/80 backdrop-blur-md border-t border-[#27272a] shrink-0">
+            <div class="flex items-end gap-unit-sm bg-[#09090b] border border-[#27272a] rounded-xl p-2 focus-within:border-[#6366f1] focus-within:ring-2 focus-within:ring-[#6366f1]/20 transition-all">
+                <button class="p-2 text-on-surface-variant hover:text-primary transition-colors shrink-0">
+                    <span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                </button>
+                <textarea class="flex-1 bg-transparent border-none focus:ring-0 text-on-surface text-body-sm resize-none max-h-32 min-h-[44px] py-3 px-2 placeholder:text-on-surface-variant/50" placeholder="Type a message..." rows="1"></textarea>
+                <button class="p-3 bg-[#d9f99d] text-[#09090b] rounded-lg font-semibold hover:opacity-90 transition-opacity shrink-0 flex items-center justify-center h-[44px] w-[44px] btn-send-message">
+                    <span class="material-symbols-outlined" data-icon="send">send</span>
+                </button>
+            </div>
+            <div class="flex items-center justify-between mt-2 px-2">
+                <p class="text-[10px] text-on-surface-variant font-stat-mono flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#22c55e]"></span> System Online
+                </p>
+                <div class="flex gap-3 text-[11px] text-on-surface-variant font-medium">
+                    <button class="hover:text-primary transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="assignment">assignment</span> Send Template</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Right Column: Client Summary (Desktop/Large Only) -->
+    <aside id="desktop-client-profile" class="hidden lg:flex flex-col w-[320px] xl:w-[380px] h-full border-l border-outline-variant bg-[#18181b] z-20 overflow-y-auto shrink-0">
+        <div class="p-unit-lg border-b border-[#27272a] sticky top-0 bg-[#18181b]/95 backdrop-blur z-10">
+            <h3 class="font-headline-md text-[18px] text-primary">Client Profile</h3>
+        </div>
+        <div class="p-unit-lg space-y-unit-xl">
+            <!-- Bio & Goal -->
+            <div class="flex flex-col items-center text-center">
+                <div class="w-24 h-24 rounded-full border-2 border-[#27272a] mb-4 overflow-hidden relative flex items-center justify-center">
+                    <img alt="Client Avatar Large" class="w-full h-full object-cover profile-avatar" src="">
+                </div>
+                <h4 class="font-headline-md text-[20px] text-on-surface mb-1 profile-name">Client Profile</h4>
+                <p class="font-body-sm text-on-surface-variant mb-4 profile-bio">32 yrs • Male • 178cm</p>
+                <div class="w-full bg-[#09090b] border border-[#27272a] rounded-xl p-unit-md text-left">
+                    <p class="font-label-caps text-[10px] text-on-surface-variant mb-1 uppercase">Primary Goal</p>
+                    <p class="font-body-base text-primary font-medium profile-goal">Hypertrophy &amp; Recomp</p>
+                    <div class="w-full h-1 bg-[#27272a] rounded-full mt-3 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#6366f1] to-[#d9f99d] w-[65%] rounded-full profile-adherence-bar"></div>
+                    </div>
+                    <p class="text-[10px] font-stat-mono text-on-surface-variant mt-2 text-right profile-adherence-percent">65% to milestone</p>
+                </div>
+            </div>
+            <!-- Vital Stats Bento -->
+            <div class="grid grid-cols-2 gap-unit-sm">
+                <div class="bg-[#09090b] border border-[#27272a] rounded-xl p-unit-md flex flex-col justify-between">
+                    <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">Adherence</p>
+                    <div class="flex items-end gap-2">
+                        <span class="font-stat-mono text-headline-md text-error profile-adherence-val">42%</span>
+                        <span class="material-symbols-outlined text-[16px] text-error mb-1">trending_down</span>
+                    </div>
+                    <p class="text-[10px] text-on-surface-variant mt-1 font-stat-mono">Last 7 days</p>
+                </div>
+                <div class="bg-[#09090b] border border-[#27272a] rounded-xl p-unit-md flex flex-col justify-between">
+                    <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">Current Wt</p>
+                    <div class="flex items-end gap-2">
+                        <span class="font-stat-mono text-headline-md text-primary profile-weight-val">84.2</span>
+                        <span class="text-[12px] text-on-surface-variant mb-1 font-stat-mono">kg</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Actions -->
+            <div class="pt-4 border-t border-[#27272a] flex flex-col gap-2">
+                <button class="w-full py-2.5 bg-transparent border border-[#27272a] rounded-lg text-on-surface font-medium text-sm hover:bg-[#27272a] transition-colors flex items-center justify-center gap-2 btn-profile-schedule">
+                    <span class="material-symbols-outlined text-[18px]">calendar_month</span> View Schedule
+                </button>
+                <button class="w-full py-2.5 bg-transparent border border-[#27272a] rounded-lg text-on-surface font-medium text-sm hover:bg-[#27272a] transition-colors flex items-center justify-center gap-2 btn-profile-metrics">
+                    <span class="material-symbols-outlined text-[18px]">analytics</span> Full Metrics
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile/Tablet Client Profile Drawer -->
+    <div id="inbox-profile-drawer" class="hidden fixed inset-0 z-50 flex justify-end">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm drawer-close-trigger"></div>
+        <div class="drawer-container card-bg border-l border-outline-variant bg-[#18181b] w-full max-w-[360px] h-full shadow-2xl relative z-10 flex flex-col overflow-y-auto transform transition-transform duration-300 translate-x-full">
+            <!-- Drawer Header -->
+            <div class="p-unit-lg border-b border-[#27272a] flex justify-between items-center sticky top-0 bg-[#18181b]/95 backdrop-blur z-10">
+                <h3 class="font-headline-md text-[18px] text-primary">Client Profile</h3>
+                <button class="text-on-surface-variant hover:text-primary drawer-close-trigger">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <!-- Drawer Content -->
+            <div class="p-unit-lg space-y-unit-xl">
+                <!-- Bio & Goal -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-24 h-24 rounded-full border-2 border-[#27272a] mb-4 overflow-hidden relative flex items-center justify-center">
+                        <img alt="Client Avatar Drawer" class="w-full h-full object-cover profile-avatar" src="">
+                    </div>
+                    <h4 class="font-headline-md text-[20px] text-on-surface mb-1 profile-name">Client Profile</h4>
+                    <p class="font-body-sm text-on-surface-variant mb-4 profile-bio">32 yrs • Male • 178cm</p>
+                    <div class="w-full bg-[#09090b] border border-[#27272a] rounded-xl p-unit-md text-left">
+                        <p class="font-label-caps text-[10px] text-on-surface-variant mb-1 uppercase">Primary Goal</p>
+                        <p class="font-body-base text-primary font-medium profile-goal">Hypertrophy &amp; Recomp</p>
+                        <div class="w-full h-1 bg-[#27272a] rounded-full mt-3 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-[#6366f1] to-[#d9f99d] w-[65%] rounded-full profile-adherence-bar"></div>
+                        </div>
+                        <p class="text-[10px] font-stat-mono text-on-surface-variant mt-2 text-right profile-adherence-percent">65% to milestone</p>
+                    </div>
+                </div>
+                <!-- Vital Stats Bento -->
+                <div class="grid grid-cols-2 gap-unit-sm">
+                    <div class="bg-[#09090b] border border-[#27272a] rounded-xl p-unit-md flex flex-col justify-between">
+                        <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">Adherence</p>
+                        <div class="flex items-end gap-2">
+                            <span class="font-stat-mono text-headline-md text-error profile-adherence-val">42%</span>
+                            <span class="material-symbols-outlined text-[16px] text-error mb-1">trending_down</span>
+                        </div>
+                        <p class="text-[10px] text-on-surface-variant mt-1 font-stat-mono">Last 7 days</p>
+                    </div>
+                    <div class="bg-[#09090b] border border-[#27272a] rounded-xl p-unit-md flex flex-col justify-between">
+                        <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">Current Wt</p>
+                        <div class="flex items-end gap-2">
+                            <span class="font-stat-mono text-headline-md text-primary profile-weight-val">84.2</span>
+                            <span class="text-[12px] text-on-surface-variant mb-1 font-stat-mono">kg</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quick Actions -->
+                <div class="pt-4 border-t border-[#27272a] flex flex-col gap-2">
+                    <button class="w-full py-2.5 bg-transparent border border-[#27272a] rounded-lg text-on-surface font-medium text-sm hover:bg-[#27272a] transition-colors flex items-center justify-center gap-2 btn-profile-schedule">
+                        <span class="material-symbols-outlined text-[18px]">calendar_month</span> View Schedule
+                    </button>
+                    <button class="w-full py-2.5 bg-transparent border border-[#27272a] rounded-lg text-on-surface font-medium text-sm hover:bg-[#27272a] transition-colors flex items-center justify-center gap-2 btn-profile-metrics">
+                        <span class="material-symbols-outlined text-[18px]">analytics</span> Full Metrics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

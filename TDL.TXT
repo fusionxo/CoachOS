@@ -1,0 +1,2 @@
+[x] in the mobile view, we can't see training, templates, assistant in the bottom navigation bar.
+    -> Resolved: Bottom navigation replaced with: Dashboard, Clients, Inbox, Training, and More. The More screen/sheet displays Templates, Assistant, and Settings.

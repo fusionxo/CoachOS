@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>CoachOS Platform</title>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Consolidated Global Stylesheet -->
+    <link href="css/app.css" rel="stylesheet">
+    <!-- Design System Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#e3e3d9",
+                        "surface-bright": "#383a33",
+                        "surface": "#12140e",
+                        "primary-fixed-dim": "#b3d17a",
+                        "on-tertiary-fixed-variant": "#3e4755",
+                        "inverse-primary": "#4d661c",
+                        "on-secondary-container": "#b0b2ff",
+                        "surface-container": "#1f201a",
+                        "on-primary-fixed-variant": "#364e03",
+                        "on-primary-fixed": "#131f00",
+                        "on-tertiary": "#27313e",
+                        "on-secondary-fixed": "#07006c",
+                        "surface-container-high": "#292b24",
+                        "on-tertiary-fixed": "#121c28",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "tertiary-container": "#d9e3f4",
+                        "surface-container-low": "#1b1c16",
+                        "primary-fixed": "#ceee93",
+                        "on-surface-variant": "#c5c8b7",
+                        "outline-variant": "#44483b",
+                        "on-primary-container": "#536d22",
+                        "on-background": "#e3e3d9",
+                        "on-tertiary-container": "#5b6573",
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#34352f",
+                        "on-secondary": "#1000a9",
+                        "secondary-container": "#3131c0",
+                        "background": "#12140e",
+                        "tertiary": "#ffffff",
+                        "outline": "#8f9282",
+                        "inverse-on-surface": "#2f312a",
+                        "tertiary-fixed-dim": "#bdc7d7",
+                        "secondary": "#c0c1ff",
+                        "surface-dim": "#12140e",
+                        "secondary-fixed": "#e1e0ff",
+                        "surface-container-lowest": "#0d0f09",
+                        "on-surface": "#e3e3d9",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-primary": "#243600",
+                        "primary-container": "#ceee93",
+                        "surface-variant": "#34352f",
+                        "primary": "#ffffff",
+                        "surface-tint": "#b3d17a",
+                        "tertiary-fixed": "#d9e3f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit-xl": "48px",
+                        "unit-md": "16px",
+                        "unit-xs": "4px",
+                        "unit-sm": "8px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "unit-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Geist", "sans-serif"],
+                        "display-lg-mobile": ["Geist", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "body-base": ["Inter", "sans-serif"],
+                        "headline-md": ["Geist", "sans-serif"],
+                        "stat-mono": ["JetBrains Mono", "monospace"],
+                        "label-caps": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                        "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "body-base": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "stat-mono": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="font-body-base bg-background text-on-background antialiased selection:bg-primary-container selection:text-on-primary-container">
+    
+    <!-- Mount point for the SPA Layout & View contents -->
+    <div id="app-mount"></div>
+
+    <!-- SPA Application Scripts -->
+    <script src="js/supabase.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/router.js"></script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!-- Mobile TopAppBar (Simplified) -->
+
+<div class="flex-grow overflow-auto px-margin-mobile py-unit-lg md:px-gutter md:py-unit-xl max-w-container-max mx-auto w-full">
+<div class="mb-unit-xl">
+<h2 class="font-headline-md text-headline-md text-primary mb-unit-sm">Intelligence Dashboard</h2>
+<p class="font-body-base text-body-base text-on-surface-variant">Real-time overview of client adherence and urgent actions.</p>
+</div>
+
+<!-- Dashboard Empty State -->
+<div id="dashboard-empty-state" class="hidden flex-col items-center justify-center text-center p-8 py-16 card-bg border border-base rounded-xl max-w-md mx-auto my-8 gap-4">
+    <div class="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container">
+        <span class="material-symbols-outlined text-[36px]">group</span>
+    </div>
+    <div class="space-y-1">
+        <h3 class="font-headline-md text-xl font-bold text-primary">No clients yet</h3>
+        <p class="text-sm text-on-surface-variant">Once you onboard clients, their compliance, check-ins, and priority alerts will appear here.</p>
+    </div>
+    <a href="#add-client" class="mt-2 px-6 py-3 rounded-lg bg-[#d9f99d] text-[#09090b] text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-[0_0_20px_rgba(217,249,157,0.2)]">
+        <span class="material-symbols-outlined text-[18px]">person_add</span>
+        <span>Add your first client</span>
+    </a>
+</div>
+
+<div id="dashboard-main-content">
+<!-- Stats Row (Bento Grid Style) -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-unit-md mb-unit-xl">
+<div class="card-bg border border-base rounded-xl p-unit-lg flex flex-col justify-between h-32 hover:border-[#6366f1] hover:shadow-[0_4px_20px_rgba(99,102,241,0.15)] transition-all cursor-pointer" id="metric-card-active-clients" tabindex="0">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Active Clients</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-primary leading-none">84</span>
+<span class="material-symbols-outlined text-[#6366f1]">trending_up</span>
+</div>
+</div>
+<div class="card-bg border border-base rounded-xl p-unit-lg flex flex-col justify-between h-32 hover:border-[#6366f1] hover:shadow-[0_4px_20px_rgba(99,102,241,0.15)] transition-all cursor-pointer" id="metric-card-checkins-today" tabindex="0">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Check-ins Today</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-primary leading-none">62</span>
+<span class="font-stat-mono text-stat-mono text-[#22c55e]">+5</span>
+</div>
+</div>
+<div class="card-bg border border-error-container/50 bg-[#18181b] rounded-xl p-unit-lg flex flex-col justify-between h-32 pulse-critical relative overflow-hidden hover:border-error hover:shadow-[0_4px_20px_rgba(220,38,38,0.15)] transition-all cursor-pointer" id="metric-card-needing-attention" tabindex="0">
+<div class="absolute top-0 right-0 w-16 h-16 bg-error-container/10 rounded-bl-full blur-xl"></div>
+<span class="font-label-caps text-label-caps text-error uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span> Needing Attention
+                    </span>
+<div class="flex items-end justify-between relative z-10">
+<span class="font-display-lg text-display-lg text-error leading-none">12</span>
+<span class="font-body-sm text-body-sm text-error/70">Clients</span>
+</div>
+</div>
+<div class="card-bg border border-base rounded-xl p-unit-lg flex flex-col justify-between h-32 hover:border-[#6366f1] hover:shadow-[0_4px_20px_rgba(99,102,241,0.15)] transition-all cursor-pointer" id="metric-card-avg-adherence" tabindex="0">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Avg. Adherence</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-primary leading-none">92<span class="text-headline-md">%</span></span>
+<!-- Mini sparkline representation -->
+<div class="flex items-end gap-1 h-6">
+<div class="w-1.5 bg-[#27272a] rounded-t-sm h-[60%]"></div>
+<div class="w-1.5 bg-[#27272a] rounded-t-sm h-[80%]"></div>
+<div class="w-1.5 bg-[#27272a] rounded-t-sm h-[70%]"></div>
+<div class="w-1.5 bg-[#ceee93] rounded-t-sm h-[95%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-unit-lg">
+<!-- Main Priority Column (Wider) -->
+<div class="lg:col-span-2 space-y-unit-lg">
+<!-- High Priority Section -->
+<section>
+<div class="flex items-center gap-unit-sm mb-unit-md">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">ATTENTION REQUIRED</h3>
+</div>
+        <div class="space-y-unit-md" id="attention-active-mount">
+            <!-- Dynamic Attention Required cards mounted here -->
+        </div>
+</section>
+<!-- Medium Priority Section -->
+<section class="pt-unit-md">
+<div class="flex items-center gap-unit-sm mb-unit-md">
+<div class="w-2 h-2 rounded-full bg-[#facc15]"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">MEDIUM PRIORITY</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-unit-md" id="monitoring-active-mount">
+<!-- Dynamic Medium Priority cards mounted here -->
+</div>
+</section>
+</div>
+<!-- Secondary Column (Narrower) -->
+<div class="space-y-unit-lg">
+<!-- Streaks / Doing Great -->
+<section class="card-bg border border-base rounded-xl p-unit-lg flex flex-col h-full">
+<div class="flex items-center gap-unit-sm mb-unit-lg">
+<div class="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">DOING GREAT</h3>
+</div>
+<div class="space-y-unit-md flex-1" id="doing-great-mount">
+<!-- Dynamic Performing performers list mounted here -->
+</div>
+<button id="btn-view-all-performers" class="mt-4 w-full py-2 rounded-lg bg-transparent text-[#d9f99d] hover:bg-[#1f201a] font-body-sm text-body-sm font-medium transition-colors border border-dashed border-outline-variant">
+                            View All Performers
+                        </button>
+</section>
+</div>
+</div>
+</div>
+</div> <!-- End #dashboard-main-content -->
+
+<div id="dashboard-empty-state" class="hidden flex-col items-center justify-center py-20 text-center card-bg border border-base rounded-xl p-8 max-w-md mx-auto fade-in">
+    <span class="material-symbols-outlined text-[64px] text-primary-container mb-4">group_add</span>
+    <h3 class="font-headline-md text-primary font-bold mb-2">No Clients Yet</h3>
+    <p class="text-sm text-on-surface-variant mb-6">Build your business by adding your first athlete client. Generate an invite link to onboard them.</p>
+    <a href="#add-client" class="btn-primary px-6 py-3 rounded-lg font-body-base text-body-base font-semibold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_0_20px_rgba(217,249,157,0.2)]">
+        <span class="material-symbols-outlined text-[20px]">person_add</span>
+        <span>Add Your First Client</span>
+    </a>
+</div>
+
+<!-- Resolve Alert Modal -->
+<div id="resolve-alert-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm modal-close-trigger"></div>
+    <div class="card-bg border border-[#27272a] bg-[#09090b] rounded-xl w-full max-w-md p-unit-lg shadow-2xl relative z-10 fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-headline-md text-primary font-bold">Resolve Client Alert</h3>
+            <button class="text-on-surface-variant hover:text-primary modal-close-trigger">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-xs text-on-surface-variant uppercase tracking-wider font-label-caps">Client</p>
+                <h4 class="text-body-base font-semibold text-primary" id="resolve-client-name">Client Name</h4>
+            </div>
+            <div class="p-3 bg-[#18181b] border border-[#27272a] rounded-lg">
+                <p class="text-xs text-error font-semibold flex items-center gap-1.5 mb-1">
+                    <span class="material-symbols-outlined text-[16px]">warning</span> Alert Details
+                </p>
+                <p class="text-sm text-on-surface" id="resolve-alert-details">No check-in for 5 days</p>
+            </div>
+            <div class="p-3 bg-[#18181b] border border-[#27272a] rounded-lg">
+                <p class="text-xs text-[#d9f99d] font-semibold flex items-center gap-1.5 mb-1">
+                    <span class="material-symbols-outlined text-[16px]">lightbulb</span> Suggested Action
+                </p>
+                <p class="text-sm text-on-surface" id="resolve-suggested-action">Send follow-up message</p>
+            </div>
+
+            <div class="pt-4 border-t border-outline-variant/30 space-y-3">
+                <button id="resolve-action-message" class="w-full py-2.5 px-4 rounded-lg bg-[#d9f99d] text-[#09090b] text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[18px]">chat</span> Send Message
+                </button>
+                <button id="resolve-action-adjust" class="w-full py-2.5 px-4 rounded-lg bg-[#18181b] border border-[#27272a] text-on-surface text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#27272a] transition-all">
+                    <span class="material-symbols-outlined text-[18px]">edit</span> Adjust Plan
+                </button>
+                <div class="flex gap-2">
+                    <button id="resolve-action-snooze" class="flex-1 py-2 px-3 rounded-lg border border-[#27272a] text-on-surface-variant hover:text-on-surface hover:bg-[#1f201a] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+                        <span class="material-symbols-outlined text-[16px]">snooze</span> Snooze Alert
+                    </button>
+                    <button id="resolve-action-complete" class="flex-1 py-2 px-3 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+                        <span class="material-symbols-outlined text-[16px]">check_circle</span> Mark Resolved
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Plan Sub-Modal -->
+<div id="adjust-plan-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm adjust-close-trigger"></div>
+    <div class="card-bg border border-[#27272a] bg-[#09090b] rounded-xl w-full max-w-sm p-unit-lg shadow-2xl relative z-10 fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-headline-md text-primary font-bold">Adjust Client Plan</h3>
+            <button class="text-on-surface-variant hover:text-primary adjust-close-trigger">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="adjust-plan-form" class="space-y-4">
+            <input type="hidden" id="adjust-client-id">
+            <div>
+                <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Adjust Target Calories</label>
+                <input type="number" id="adjust-calories" class="w-full px-4 py-2.5 bg-[#0d0e12] border border-[#27272a] rounded-lg text-on-surface" placeholder="e.g. 1800" required>
+            </div>
+            <div>
+                <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Adjust Target Protein (g)</label>
+                <input type="number" id="adjust-protein" class="w-full px-4 py-2.5 bg-[#0d0e12] border border-[#27272a] rounded-lg text-on-surface" placeholder="e.g. 150" required>
+            </div>
+            <div class="pt-4 border-t border-outline-variant/30 flex justify-end gap-3">
+                <button type="button" class="px-5 py-2.5 rounded-lg border border-[#27272a] text-on-surface hover:bg-surface-container-high adjust-close-trigger">Cancel</button>
+                <button type="submit" class="px-5 py-2.5 rounded-lg bg-[#d9f99d] text-[#09090b] font-semibold">Save Adjustments</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Check-ins Today Modal -->
+<div id="checkins-today-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm checkins-modal-close-trigger"></div>
+    <div class="card-bg border border-[#27272a] bg-[#09090b] rounded-xl w-full max-w-lg p-unit-lg shadow-2xl relative z-10 fade-in flex flex-col max-h-[80vh]">
+        <div class="flex justify-between items-center mb-6 shrink-0">
+            <h3 class="font-headline-md text-primary font-bold">Check-ins Today Status</h3>
+            <button class="text-on-surface-variant hover:text-primary checkins-modal-close-trigger">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="space-y-4 overflow-y-auto pr-2 flex-1">
+            <!-- Completed Today -->
+            <div>
+                <h4 class="text-xs font-semibold text-[#22c55e] mb-2 uppercase tracking-wider flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">check_circle</span> Completed Today
+                </h4>
+                <div class="space-y-2" id="completed-today-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <!-- Missing Today / Pending -->
+            <div class="pt-4 border-t border-outline-variant/30">
+                <h4 class="text-xs font-semibold text-[#facc15] mb-2 uppercase tracking-wider flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">pending</span> Pending Check-in
+                </h4>
+                <div class="space-y-2" id="pending-today-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Average Adherence Analytics Modal -->
+<div id="adherence-analytics-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm adherence-modal-close-trigger"></div>
+    <div class="card-bg border border-[#27272a] bg-[#09090b] rounded-xl w-full max-w-lg p-unit-lg shadow-2xl relative z-10 fade-in flex flex-col max-h-[80vh]">
+        <div class="flex justify-between items-center mb-6 shrink-0">
+            <h3 class="font-headline-md text-primary font-bold">Adherence Analytics</h3>
+            <button class="text-on-surface-variant hover:text-primary adherence-modal-close-trigger">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="space-y-6 overflow-y-auto pr-2 flex-1">
+            <!-- Distribution -->
+            <div>
+                <h4 class="text-xs font-semibold text-primary mb-2 uppercase tracking-wider">Adherence Distribution</h4>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs text-on-surface-variant">
+                        <span>High Adherence (>= 85%)</span>
+                        <span class="font-stat-mono font-bold text-[#22c55e]" id="high-adherence-count">0 clients</span>
+                    </div>
+                    <div class="w-full h-2 bg-[#27272a] rounded-full overflow-hidden">
+                        <div class="h-full bg-[#22c55e]" id="high-adherence-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-on-surface-variant pt-1">
+                        <span>Medium Adherence (75% - 84%)</span>
+                        <span class="font-stat-mono font-bold text-[#facc15]" id="med-adherence-count">0 clients</span>
+                    </div>
+                    <div class="w-full h-2 bg-[#27272a] rounded-full overflow-hidden">
+                        <div class="h-full bg-[#facc15]" id="med-adherence-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-on-surface-variant pt-1">
+                        <span>Low Adherence (< 75%)</span>
+                        <span class="font-stat-mono font-bold text-error" id="low-adherence-count">0 clients</span>
+                    </div>
+                    <div class="w-full h-2 bg-[#27272a] rounded-full overflow-hidden">
+                        <div class="h-full bg-error" id="low-adherence-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Best Performing Clients -->
+            <div class="border-t border-outline-variant/30 pt-4">
+                <h4 class="text-xs font-semibold text-[#22c55e] mb-2 uppercase tracking-wider">Best Performing Clients</h4>
+                <div class="space-y-2" id="best-adherence-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Declining Clients -->
+            <div class="border-t border-outline-variant/30 pt-4">
+                <h4 class="text-xs font-semibold text-error mb-2 uppercase tracking-wider">Declining / Low Adherence Clients</h4>
+                <div class="space-y-2" id="declining-adherence-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

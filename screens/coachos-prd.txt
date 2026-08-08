@@ -1,0 +1,20 @@
+# CoachOS Product Requirements Document (PRD)
+
+## Vision
+"Manage 100 fitness clients as easily as managing 10." A platform focused on coach efficiency and client retention through AI-powered insights and rapid logging.
+
+## Core User Personas
+1. **The Coach:** High-volume professional needing a "command center" to spot clients needing attention.
+2. **The Client:** Everyday user needing to log data in <30 seconds to maintain streaks.
+
+## Key Modules & Workflows
+- **Intelligence Dashboard (Coach):** Priority-based client management (Attention Required vs. Doing Great).
+- **Client Profile & Analytics:** Deep dive into trends (Weight, Adherence, Sleep) with Before/After comparisons.
+- **Rapid Check-in (Client Mobile):** 30-second daily logging flow.
+- **Workout Builder & Logger:** Template-based program design and touch-friendly exercise logging.
+- **AI Coach Assistant:** Proactive alerts on plateaus and suggestions for protocol adjustments.
+
+## Design Language
+- Dark mode, Minimalist, Data-dense but clear.
+- Rounded corners, subtle glass effects.
+- High-fidelity charts and streak indicators.

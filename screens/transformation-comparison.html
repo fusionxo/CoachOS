@@ -1,0 +1,229 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Progress Photo Comparison | CoachOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;900&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#292b24",
+                        "on-tertiary-fixed": "#121c28",
+                        "tertiary-fixed": "#d9e3f4",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#ceee93",
+                        "on-surface": "#e3e3d9",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "surface-container-highest": "#34352f",
+                        "on-tertiary-fixed-variant": "#3e4755",
+                        "on-surface-variant": "#c5c8b7",
+                        "on-primary-fixed": "#131f00",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#e1e0ff",
+                        "primary-container": "#ceee93",
+                        "on-tertiary": "#27313e",
+                        "tertiary-fixed-dim": "#bdc7d7",
+                        "on-secondary": "#1000a9",
+                        "on-primary": "#243600",
+                        "inverse-on-surface": "#2f312a",
+                        "on-background": "#e3e3d9",
+                        "inverse-primary": "#4d661c",
+                        "secondary": "#c0c1ff",
+                        "surface-bright": "#383a33",
+                        "on-secondary-container": "#b0b2ff",
+                        "surface-dim": "#12140e",
+                        "outline-variant": "#44483b",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#b3d17a",
+                        "on-secondary-fixed": "#07006c",
+                        "surface-container": "#1f201a",
+                        "surface": "#12140e",
+                        "on-error-container": "#ffdad6",
+                        "background": "#12140e",
+                        "primary": "#ffffff",
+                        "tertiary-container": "#d9e3f4",
+                        "on-primary-fixed-variant": "#364e03",
+                        "surface-container-low": "#1b1c16",
+                        "surface-variant": "#34352f",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#5b6573",
+                        "tertiary": "#ffffff",
+                        "secondary-container": "#3131c0",
+                        "outline": "#8f9282",
+                        "on-primary-container": "#536d22",
+                        "surface-container-lowest": "#0d0f09",
+                        "surface-tint": "#b3d17a",
+                        "inverse-surface": "#e3e3d9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit-sm": "8px",
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "unit-lg": "24px",
+                        "unit-xl": "48px",
+                        "unit-xs": "4px",
+                        "unit-md": "16px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "stat-mono": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "body-base": ["Inter"],
+                        "headline-md": ["Geist"],
+                        "body-sm": ["Inter"],
+                        "display-lg-mobile": ["Geist"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "stat-mono": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+                        "body-base": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .glass-panel { background: rgba(24, 24, 27, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid theme('colors.outline-variant'); }
+        .chart-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(68, 72, 59, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(68, 72, 59, 0.1) 1px, transparent 1px); }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- Desktop SideNav (Suppressed on Mobile, Suppressed here due to highly focused visual comparison task, but we'll include shell for structure if needed. Wait, instruction says: "Automatic Suppression: You MUST exclude the navigation shell if the page intent is: Linear/Transactional... Task-Focused: Any sub-page featuring a 'Close' or 'Back' action that implies a temporary departure from the main navigation flow." This is a deep dive comparison view, likely opened from "Clients" or "Profile". We will provide a simple back-nav canvas.) -->
+<!-- Top Navigation Area (Focused Task View) -->
+<header class="fixed top-0 w-full z-40 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant hidden md:flex justify-between items-center px-gutter h-16 max-w-container-max mx-auto">
+<div class="flex items-center gap-unit-md">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-primary">Progress Comparison</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Alex Johnson</span>
+</div>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="px-unit-lg py-unit-sm rounded-lg bg-primary-container text-on-primary-container font-body-base text-body-base font-semibold hover:opacity-90 transition-opacity">
+                Share Report
+            </button>
+</div>
+</header>
+<!-- Mobile Top Bar -->
+<header class="md:hidden fixed top-0 w-full z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant flex justify-between items-center px-margin-mobile h-16">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<span class="font-headline-md text-headline-md text-primary truncate">Comparison</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-primary">
+<span class="material-symbols-outlined">share</span>
+</button>
+</header>
+<main class="flex-1 w-full max-w-container-max mx-auto pt-20 md:pt-24 px-margin-mobile md:px-gutter pb-24 md:pb-gutter flex flex-col gap-unit-xl">
+<!-- Hero Split Comparison -->
+<section class="relative w-full aspect-[4/5] md:aspect-[21/9] rounded-xl overflow-hidden glass-panel flex flex-col md:flex-row group">
+<!-- Left Image (Week 1) -->
+<div class="relative w-full md:w-1/2 h-1/2 md:h-full bg-surface-container-low overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-700" data-alt="A gritty, high-contrast, black and white portrait of a male fitness client before starting a training program. The lighting is harsh overhead gym lighting, casting deep shadows that emphasize a softer physique. The setting is a raw, industrial gym environment. The aesthetic is documentary-style, moody, and intense, establishing a baseline for a dramatic transformation narrative within a premium fitness app." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD8Ky6YBPWoJ_sMN-Wml0NmwTrPeTCUPi2wwfMUslPw2KgZH1prLgn-d6Y5_oKOYLbEhUAYu-k14h184k8Xk_jwz8ETA1w0m_RlMZ2zDWB2Gzz5itowG6jBO1xI2_qzYw2wws3mzheHUCjKPME2FsufReTr-UNnX7LOr7jpZSmJwUa1DExB_gRhdkJYH-FRca41PaL3tvJDWQmBmk_RrtnQs2uYMqPGh1hfhev7B-2YnYS05JK7jNw8oGx-ifwrp6EUcblfyLXiSyo');">
+</div>
+<div class="absolute top-unit-md left-unit-md glass-panel px-unit-md py-unit-xs rounded-lg flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+<span class="font-label-caps text-label-caps text-on-surface">WEEK 1</span>
+<span class="font-stat-mono text-stat-mono text-on-surface-variant ml-2">92.5 KG</span>
+</div>
+<!-- Divider Line Mobile -->
+<div class="md:hidden absolute bottom-0 left-0 w-full h-[2px] bg-primary-container z-10"></div>
+</div>
+<!-- Divider Line Desktop -->
+<div class="hidden md:block absolute top-0 left-1/2 w-[2px] h-full bg-primary-container z-10 -translate-x-1/2 shadow-[0_0_15px_rgba(206,238,147,0.5)]">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface border-2 border-primary-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-sm">swap_horiz</span>
+</div>
+</div>
+<!-- Right Image (Current) -->
+<div class="relative w-full md:w-1/2 h-1/2 md:h-full bg-surface-container-low overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" data-alt="A striking, high-definition portrait of the same male fitness client, now showing significant muscle definition and vascularity after a 120-day training program. The lighting is dramatic, directional studio lighting that highlights muscular contours and sweat, creating a triumphant, powerful mood. The setting is dark and abstract to maintain focus on the physique. The aesthetic is premium, high-energy, and cinematic, reflecting peak physical performance." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDuNxoFxtLRklTpPbQ0DewBDFziPHz3BeBNSSj8uwLrDvfqSZYm3ui-oYT6tiEf7B_24HYfLZxVTv9uUfw6sdmyzUxJf2ZFWidN4viUBpQw3KrvgbDFDRReXBMAQGmsNgOnYXqXfDWC-nWq-vwJG7f9vb6dkUIiUxtWo96tNXIE_boRGfkAXxr9PFgynmYbLpuASmNaVFwU4l4IQT43dq8qf5RgsC3qV1XVovrlR81SohhzTFjbtIHSN7jOMFwNaYNJLk_4KjnDngw');">
+</div>
+<div class="absolute top-unit-md right-unit-md glass-panel px-unit-md py-unit-xs rounded-lg flex items-center gap-2 border-primary-container/30">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-primary-container">CURRENT</span>
+<span class="font-stat-mono text-stat-mono text-primary ml-2">80.5 KG</span>
+</div>
+</div>
+<!-- Center Stats Overlay (Absolute on Desktop, flows naturally or absolute center) -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-unit-sm">
+<div class="glass-panel rounded-xl p-unit-md flex flex-col items-center justify-center text-center backdrop-blur-xl border-primary-container/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.6)]">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">TIME ELAPSED</span>
+<span class="font-display-lg text-display-lg text-primary">120<span class="text-headline-md text-on-surface-variant">d</span></span>
+</div>
+</div>
+</section>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-unit-md md:gap-gutter">
+<!-- Primary Metric Card -->
+<div class="glass-panel rounded-xl p-unit-lg flex flex-col relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-unit-md opacity-20 group-hover:opacity-40 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary-container">monitor_weight</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-unit-xs">TOTAL WEIGHT LOSS</span>
+<div class="flex items-baseline gap-2 mt-auto pt-unit-xl">
+<span class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary tracking-tighter">-12.0</span>
+<span class="font-body-base text-body-base text-on-surface-variant">kg</span>
+</div>
+<div class="mt-unit-sm flex items-center gap-2 text-primary-container bg-primary-container/10 w-fit px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+<span class="font-stat-mono text-stat-mono text-sm">13% Body Mass</span>
+</div>
+</div>
+<!-- Secondary Metric Card -->
+<div class="glass-panel rounded-xl p-unit-lg flex flex-col relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-unit-md opacity-20 group-hover:opacity-40 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary-container">straighten</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-unit-xs">WAIST CIRCUMFERENCE</span>
+<div class="flex items-baseline gap-2 mt-auto pt-unit-xl">
+<span class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary tracking-tighter">-10.0</span>
+<span class="font-body-base text-body-base text-on-surface-variant">cm</span>
+</div>
+<div class="mt-unit-sm flex items-center gap-2 text-primary-container bg-primary-container/10 w-fit px-2 py-1 rounded">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+<span class="font-stat-mono text-stat-mono text-sm">Navel measurement</span>
+</div>
+</div>
+<!-- Mini Chart Card -->
+<div class="glass-panel rounded-xl p-unit-lg flex flex-col">
+<div class="flex justify-between items-center mb-unit-md">
+<span class="font-label-caps text-label-caps text-on-surface-variant">WEIGHT TREND</span>
+<span class="font-stat-mono text-stat-mono text-sm text-primary-container">92.5 → 80.5</span>
+</div>
+<div class="flex-1 relative chart-grid rounded-lg border border-outline-variant/30 flex items-end p-2 gap-1 mt-unit-sm">
+<!-- Faux Sparkline / Bar Chart -->
+<div class="w-full h-full flex items-end justify-between gap-1">
+<div class="w-1/6 bg-surface-variant rounded-t-sm" style="height: 100%;"></div>
+<div class="w-1/6 bg-surface-variant rounded-t-sm" style="height: 95%;"></div>
+<div class="w-1/6 bg-surface-variant rounded-t-sm" style="height: 85%;"></div>
+<div class="w-1/6 bg-surface-variant rounded-t-sm" style="height: 70%;"></div>
+<div class="w-1/6 bg-surface-variant rounded-t-sm" style="height: 55%;"></div>
+<div class="w-1/6 bg-primary-container rounded-t-sm relative shadow-[0_0_10px_rgba(206,238,147,0.3)]" style="height: 40%;">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 font-stat-mono text-[10px] text-primary-container">NOW</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

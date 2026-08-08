@@ -1,0 +1,434 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CoachOS - AI Insights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#ffdad6",
+                    "error-container": "#93000a",
+                    "inverse-surface": "#e3e3d9",
+                    "surface-bright": "#383a33",
+                    "surface": "#12140e",
+                    "primary-fixed-dim": "#b3d17a",
+                    "on-tertiary-fixed-variant": "#3e4755",
+                    "inverse-primary": "#4d661c",
+                    "on-secondary-container": "#b0b2ff",
+                    "surface-container": "#1f201a",
+                    "on-primary-fixed-variant": "#364e03",
+                    "on-primary-fixed": "#131f00",
+                    "on-tertiary": "#27313e",
+                    "on-secondary-fixed": "#07006c",
+                    "surface-container-high": "#292b24",
+                    "on-tertiary-fixed": "#121c28",
+                    "on-secondary-fixed-variant": "#2f2ebe",
+                    "tertiary-container": "#d9e3f4",
+                    "surface-container-low": "#1b1c16",
+                    "primary-fixed": "#ceee93",
+                    "on-surface-variant": "#c5c8b7",
+                    "outline-variant": "#44483b",
+                    "on-primary-container": "#536d22",
+                    "on-background": "#e3e3d9",
+                    "on-tertiary-container": "#5b6573",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#34352f",
+                    "on-secondary": "#1000a9",
+                    "secondary-container": "#3131c0",
+                    "background": "#12140e",
+                    "tertiary": "#ffffff",
+                    "outline": "#8f9282",
+                    "inverse-on-surface": "#2f312a",
+                    "tertiary-fixed-dim": "#bdc7d7",
+                    "secondary": "#c0c1ff",
+                    "surface-dim": "#12140e",
+                    "secondary-fixed": "#e1e0ff",
+                    "surface-container-lowest": "#0d0f09",
+                    "on-surface": "#e3e3d9",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#c0c1ff",
+                    "on-primary": "#243600",
+                    "primary-container": "#ceee93",
+                    "surface-variant": "#34352f",
+                    "primary": "#ffffff",
+                    "surface-tint": "#b3d17a",
+                    "tertiary-fixed": "#d9e3f4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "unit-xl": "48px",
+                    "unit-md": "16px",
+                    "unit-xs": "4px",
+                    "unit-sm": "8px",
+                    "margin-mobile": "16px",
+                    "container-max": "1440px",
+                    "unit-lg": "24px"
+            },
+            "fontFamily": {
+                    "display-lg": [
+                            "Geist"
+                    ],
+                    "display-lg-mobile": [
+                            "Geist"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "body-base": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Geist"
+                    ],
+                    "stat-mono": [
+                            "JetBrains Mono"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.04em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "display-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0em",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-base": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "0em",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "stat-mono": [
+                            "18px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #09090b;
+            color: #e3e3d9;
+        }
+        .card-surface {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+        }
+        .glass-overlay {
+            background-color: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .btn-primary {
+            background-color: #d9f99d;
+            color: #09090b;
+            font-weight: 600;
+        }
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid #27272a;
+            color: #fafafa;
+        }
+        .btn-ghost {
+            background-color: transparent;
+            color: #a1a1aa;
+        }
+        .btn-ghost:hover {
+            background-color: #18181b;
+        }
+        .input-inset {
+            background-color: #09090b;
+            border: 1px solid #27272a;
+        }
+        .input-inset:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+        .badge-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #27272a;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="font-body-base text-body-base antialiased flex h-screen overflow-hidden bg-background">
+<!-- SideNavBar -->
+<nav class="hidden md:flex bg-surface dark:bg-surface w-[280px] h-screen sticky top-0 left-0 border-r border-outline-variant flex-col py-unit-lg px-unit-md shrink-0">
+<div class="flex items-center gap-3 mb-unit-xl px-3">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a fitness coach against a dark, moody background with subtle rim lighting. The style is premium and corporate, conveying trust and authority in a modern digital space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATxksLtEjbOqVAKo1VVV9i9xNzm3bDFODjoq6n4BsKKvtoeeH77_GwiBW6l4JSOKTmqataIGLtInHDEZ-Fq3rsXD7bz11oygAoj1GB8ZhOdWwPrHdxh45svuN_VG_YOhFtiHOPWm16pl9UfOmmvT2pSus9r_f29tkYl-K9iWl-n5_F_HKSOGvbk71QrEYP-_IRpgMZ763isZrx4jq6So_yj203TwCmWajfTu9ApxOrbikpJPZmPMxnKRPedGMua8Qt4ayXHQ3cXeg">
+<div>
+<h1 class="font-display-lg text-display-lg font-bold text-primary dark:text-primary text-[20px] leading-tight">CoachOS</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Elite Performance</p>
+</div>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Workouts</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span>Templates</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-primary font-bold border-r-4 border-primary hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150 bg-surface-container-low" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span>AI Insights</span>
+</a>
+</li>
+<li class="mt-auto">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200 scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<!-- TopAppBar (Mobile & Desktop) -->
+<header class="bg-surface/80 dark:bg-surface/80 backdrop-blur-md sticky top-0 w-full z-40 border-b border-outline-variant">
+<div class="flex justify-between items-center w-full px-gutter h-16 max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<div class="md:hidden font-display-lg text-display-lg font-black text-primary text-xl">CoachOS</div>
+<div class="hidden md:flex items-center text-primary dark:text-primary font-headline-md text-headline-md">
+                        AI Intelligence Hub
+                    </div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors Active: opacity-70">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors Active: opacity-70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img alt="Coach User Avatar" class="md:hidden w-8 h-8 rounded-full border border-outline-variant" data-alt="A professional headshot of a fitness coach against a dark, moody background with subtle rim lighting. The style is premium and corporate, conveying trust and authority in a modern digital space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDngdmbMD_6QSmhbGT03IsPCHHw5sBltWwXVGccRPTRxjwAe4Ic6YGS70oO22XKg2pYMJQfS-FCmqLbJ5Tufl584X5rPbulL4vHYZBM4J6_VLZUbyf660nGauuKlqlCsaugicTUPlzAav_ikfrZbngdtbFa0dYgoEEDkHp4MfeXw1tzkSIPw0NbYUVaZHqQDvuJTN7ZXgj-MsktlCNG4H985hubdOGvaxQmKZFGDa3h1Q_AwPfCed94woNi54N_hawGDaAULvTh80">
+</div>
+</div>
+</header>
+<div class="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-container-max mx-auto w-full p-margin-mobile md:p-gutter gap-unit-lg pb-24 md:pb-gutter">
+<!-- Left Column: Insights Feed -->
+<div class="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scroll pr-2 gap-unit-md">
+<div class="flex justify-between items-center mb-2">
+<h2 class="font-headline-md text-headline-md text-on-surface">Priority Alerts</h2>
+<span class="badge-warning font-label-caps text-label-caps px-2 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                        3 Actions Req
+                    </span>
+</div>
+<!-- Alert Card 1 -->
+<div class="card-surface rounded-xl p-unit-lg flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-warning text-yellow-500">trending_down</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">Alert: Rahul Sharma may be plateauing.</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">High Confidence Analysis</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">2H AGO</span>
+</div>
+<div class="bg-[#09090b] rounded-lg p-4 border border-[#27272a] flex flex-col gap-2">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant">EVIDENCE</h4>
+<ul class="font-body-sm text-body-sm text-on-surface list-disc list-inside">
+<li>Weight unchanged for <span class="font-stat-mono text-stat-mono text-primary-fixed">14 days</span>.</li>
+<li>Steps decreased <span class="font-stat-mono text-stat-mono text-error">20%</span> compared to previous week.</li>
+<li>Reported stress levels elevated in daily check-in.</li>
+</ul>
+</div>
+<div class="flex flex-wrap gap-2 mt-2">
+<button class="btn-primary px-4 py-2 rounded-lg font-body-sm text-body-sm transition-transform active:scale-95">Adjust Calories</button>
+<button class="btn-secondary px-4 py-2 rounded-lg font-body-sm text-body-sm transition-transform active:scale-95">Message Rahul</button>
+<button class="btn-secondary px-4 py-2 rounded-lg font-body-sm text-body-sm transition-transform active:scale-95">Increase Step Goal</button>
+</div>
+</div>
+<!-- Alert Card 2 -->
+<div class="card-surface rounded-xl p-unit-lg flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-primary-fixed">verified</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">Insight: Sarah Jenkins crushing consistency.</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Positive Trend</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">5H AGO</span>
+</div>
+<div class="bg-[#09090b] rounded-lg p-4 border border-[#27272a] flex flex-col gap-2">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant">EVIDENCE</h4>
+<ul class="font-body-sm text-body-sm text-on-surface list-disc list-inside">
+<li>Hit macro targets 10/10 days.</li>
+<li>Sleep improved to avg <span class="font-stat-mono text-stat-mono text-primary-fixed">7.8h</span>.</li>
+</ul>
+</div>
+<div class="flex flex-wrap gap-2 mt-2">
+<button class="btn-primary px-4 py-2 rounded-lg font-body-sm text-body-sm transition-transform active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">thumb_up</span> Send Kudos
+                        </button>
+<button class="btn-secondary px-4 py-2 rounded-lg font-body-sm text-body-sm transition-transform active:scale-95">Increase Intensity</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Conversational AI -->
+<div class="w-full lg:w-[400px] flex flex-col card-surface rounded-xl overflow-hidden shrink-0 h-[500px] lg:h-auto mt-4 lg:mt-0">
+<div class="p-unit-md border-b border-outline-variant bg-surface/50 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<h2 class="font-headline-md text-headline-md text-on-surface text-[16px]">Coach AI Assistant</h2>
+</div>
+<button class="btn-ghost p-1 rounded-md"><span class="material-symbols-outlined text-[20px]">more_horiz</span></button>
+</div>
+<div class="flex-1 p-unit-md overflow-y-auto custom-scroll flex flex-col gap-4 bg-[#09090b]/50">
+<!-- AI Message -->
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-container text-[16px]" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div class="bg-surface-container rounded-2xl rounded-tl-sm p-3 border border-outline-variant max-w-[85%]">
+<p class="font-body-sm text-body-sm text-on-surface">Good morning, Coach. I've analyzed your roster. You have 3 priority alerts today. How can I assist you further?</p>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-3 flex-row-reverse">
+<img alt="Coach Avatar" class="w-8 h-8 rounded-full shrink-0 border border-outline-variant" data-alt="A professional headshot of a fitness coach against a dark, moody background with subtle rim lighting. The style is premium and corporate, conveying trust and authority in a modern digital space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5TasnsUoK7pDeldWqlUWBVJZDiHnkVOITz13h2WchbDKaot0LVvI3P-3nqARMtsOdUgtzhVgaCGxRgm53drIlITQEeQKMdzCjQkfJRl4f2csEVaoP3KE82CMeY_UXSozM8vsy3XSBEXKzTFVgNP_ZkyFXHfV_SAM8sV2hdsTWic5BqBp_p4dvEv8O1kSM_HB-K2a9Ap9P14WkIbM46wZnMHmyXW5sL-7M5ur2xl76S5gz6IXz094HlosLnkwVkDbbEYbkAq_ewbk">
+<div class="bg-[#27272a] rounded-2xl rounded-tr-sm p-3 border border-[#44483b] max-w-[85%]">
+<p class="font-body-sm text-body-sm text-on-surface">Which clients missed their protein goal this week?</p>
+</div>
+</div>
+<!-- AI Response -->
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-container text-[16px]" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div class="bg-surface-container rounded-2xl rounded-tl-sm p-3 border border-outline-variant max-w-[85%] flex flex-col gap-2">
+<p class="font-body-sm text-body-sm text-on-surface">Here are the clients who missed their protein targets by more than 15% this week:</p>
+<ul class="font-body-sm text-body-sm text-on-surface-variant list-disc list-inside">
+<li>Marcus D. (Missed 3 days)</li>
+<li>Elena V. (Avg 85g / 120g goal)</li>
+</ul>
+<div class="mt-2 flex gap-2">
+<button class="btn-secondary text-[12px] px-2 py-1 rounded-md">Draft Message to All</button>
+</div>
+</div>
+</div>
+</div>
+<div class="p-unit-md border-t border-outline-variant bg-surface">
+<div class="relative">
+<input class="w-full input-inset rounded-lg py-3 pl-4 pr-12 font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant transition-all" placeholder="Ask AI about your clients..." type="text">
+<button class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary rounded-md text-on-primary hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant shadow-[0_-8px_32px_0_rgba(0,0,0,0.4)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-unit-sm bg-surface/80 dark:bg-surface/80 backdrop-blur-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 Active: scale 0.95x transition-all duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 Active: scale 0.95x transition-all duration-200" href="#">
+<span class="material-symbols-outlined">exercise</span>
+<span class="font-label-caps text-label-caps mt-1">Training</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-unit-md py-unit-xs active:opacity-80 Active: scale 0.95x transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-label-caps text-label-caps mt-1 font-bold">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:opacity-80 Active: scale 0.95x transition-all duration-200" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span class="font-label-caps text-label-caps mt-1">Messages</span>
+</a>
+</nav>
+</body></html>
