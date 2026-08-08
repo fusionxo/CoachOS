@@ -136,10 +136,16 @@ window.init_templates = function(params) {
         }
 
         if (filtered.length === 0) {
-            if (emptyState) emptyState.classList.remove('hidden');
+            if (emptyState) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            }
             gridMount.classList.add('hidden');
         } else {
-            if (emptyState) emptyState.classList.add('hidden');
+            if (emptyState) {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
             gridMount.classList.remove('hidden');
 
             filtered.forEach(t => {

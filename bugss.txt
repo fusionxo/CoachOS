@@ -1,0 +1,56 @@
+## Layout Analysis: Button Centering Issue
+
+**Context**
+Analysis of the `button#btn-templates-create-first` element within the `div#templates-empty-state` container to determine why the button is not horizontally centered.
+
+**Diagnostics**
+The investigation identified a mismatch between the parent’s layout mode and the button's display properties.
+
+| Element | Selector | Display (Computed) | Key Computed Styles |
+| :--- | :--- | :--- | :--- |
+| **Parent** | `#templates-empty-state` | `block` | `text-align: center`, `padding: 80px 32px` |
+| **Button** | `#btn-templates-create-first` | `flex` | `margin: 0px` |
+| **Icon** | `span.material-symbols-outlined` | `inline-block` | Successfully centered via `text-align` |
+
+**Actionable Findings**
+*   **Block-Level Conflict:** The button's `display: flex` causes it to behave as a block-level element. Because the parent uses `display: block`, the `text-align: center` property only affects inline/inline-block siblings and does not center the button.
+*   **Inactive Flex Properties:** The parent has authored flexbox properties (`align-items: center`, `flex-direction: column`), but they are ignored because the parent's effective display mode is `block`.
+*   **Offset Calculation:** The button is currently aligned to the left edge of the parent's content area, resulting in a -37.5px offset from the true center.
+
+**Actionable Recommendations**
+
+The following changes were identified as potential fixes to achieve proper alignment:
+
+**Option 1: Convert Parent to Flexbox (Recommended)**
+Activating flexbox on the container allows the existing alignment properties to function.
+
+`````css
+#templates-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+`````
+
+
+**Option 2: Use Inline-Flex for the Button**
+Changing the button's display mode allows it to respond to the parent's `text-align: center`.
+
+`````css
+#btn-templates-create-first {
+  display: inline-flex;
+}
+`````
+
+
+**Option 3: Apply Auto Margins**
+Centering the button as a block-level element using horizontal margins.
+
+`````css
+#btn-templates-create-first {
+  margin-left: auto;
+  margin-right: auto;
+}
+`````
+
+*Note: The code fixes and findings above were identified on a live page in DevTools. When applying them to your codebase, please adapt them to your project's specific technical stack (e.g., Tailwind CSS classes, CSS modules, framework components) rather than applying them as literal CSS overrides.*
