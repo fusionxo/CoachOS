@@ -3,14 +3,18 @@ window.init_workout_logger = function(params) {
     const appState = window.appState;
     const workoutId = params && params.id;
     let workouts = appState.workouts || [];
-    let workout = workouts.find(w => w.id === workoutId) || workouts[0];
-
-    if (!workout) {
-        alert('No assigned workout found to log!');
-        const user = appState.user;
-        window.location.hash = user ? `client-mobile/${user.id}` : 'client-mobile';
-        return;
-    }
+    const defaultWorkout = {
+        id: workoutId || 'demo-workout',
+        name: 'Lower Body Power Focus',
+        programName: '12-Week Hypertrophy',
+        weekName: 'Week 1',
+        exercises: [
+            { id: 'ex-1', name: 'Barbell Back Squat', sets: 4, reps: '5-8', weight: '75', rest: '180s', notes: 'Maintain neutral spine, drive hard off hips.' },
+            { id: 'ex-2', name: 'Romanian Deadlift', sets: 3, reps: '8-10', weight: '85', rest: '120s', notes: 'Hinge at hips, keep bar close to shins.' },
+            { id: 'ex-3', name: 'Bulgarian Split Squat', sets: 3, reps: '10-12', weight: '20', rest: '90s', notes: 'Keep torso upright, drive through front heel.' }
+        ]
+    };
+    let workout = (workoutId && workouts.find(w => w.id === workoutId)) || workouts[0] || defaultWorkout;
 
     // Dynamic State per session
     let activeExerciseIndex = 0;

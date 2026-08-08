@@ -95,19 +95,12 @@ class Router {
                 return;
             }
 
-            // Role-based view containment
+            // Role-based view containment: block clients from coach management screens only
             if (role === 'client') {
-                const clientRoutes = ['client-mobile', 'client', 'workout-logger', 'invitation'];
+                const clientRoutes = ['client-mobile', 'client', 'workout-logger', 'invitation', 'landing', 'onboarding'];
                 if (!clientRoutes.includes(routeKey)) {
                     console.log('Client blocked from coach views. Redirecting to portal.');
                     window.location.hash = `client-mobile/${user.id}`;
-                    return;
-                }
-            } else if (role === 'coach') {
-                const clientOnlyRoutes = ['client-mobile', 'workout-logger'];
-                if (clientOnlyRoutes.includes(routeKey)) {
-                    console.log('Coach blocked from mobile client portal. Redirecting to dashboard.');
-                    window.location.hash = 'dashboard';
                     return;
                 }
             }
