@@ -3,7 +3,8 @@
 window.logEvent = function(level, message, details = null) {
     try {
         const userEmail = window.appState && window.appState.user ? window.appState.user.email : null;
-        
+        const webhookUrl = window.APP_CONFIG && window.APP_CONFIG.DISCORD_WEBHOOK_URL ? window.APP_CONFIG.DISCORD_WEBHOOK_URL : null;
+
         fetch('/api/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -12,6 +13,7 @@ window.logEvent = function(level, message, details = null) {
                 message: message || '',
                 details: details,
                 user: userEmail,
+                webhookUrl: webhookUrl,
                 timestamp: new Date().toISOString()
             })
         }).catch(() => {

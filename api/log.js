@@ -14,16 +14,15 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+    const { level = 'info', message = 'App Event', details = null, user = null, timestamp = new Date().toISOString(), webhookUrl = null } = req.body || {};
+    const DISCORD_WEBHOOK_URL = webhookUrl || process.env.DISCORD_WEBHOOK_URL;
 
-    // If webhook URL is not configured, exit silently without error
+    // Return clear missing status if webhook URL is not configured anywhere
     if (!DISCORD_WEBHOOK_URL) {
-        return res.status(200).json({ status: 'ignored', reason: 'DISCORD_WEBHOOK_URL not configured' });
+        return res.status(200).json({ status: 'missing_webhook', reason: 'DISCORD_WEBHOOK_URL is not configured in process.env or APP_CONFIG' });
     }
 
     try {
-        const { level = 'info', message = 'App Event', details = null, user = null, timestamp = new Date().toISOString() } = req.body || {};
-
         let color = 0x3b82f6; // Blue (info)
         if (level === 'warn') color = 0xf59e0b; // Amber (warning)
         if (level === 'error') color = 0xef4444; // Red (error)
@@ -48,16 +47,27 @@ module.exports = async function handler(req, res) {
 
         const discordRes = await fetch(DISCORD_WEBHOOK_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ embeds: [embed] })
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'CoachOS-Logger/1.0 (https://coachosp.vercel.app)'
+            },
+            body: JSON.stringify({
+                username: 'CoachOS Monitor',
+                avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB0DKFOfi_kNxA1Oe425s2jti5Kzwp0CZ5v1PtRBIEBPUfS0qwRTRpzJI1D1BfVlnkhRNjaPzr1cgIUOpOhJEeIMnQwcefIp121SOid27dl2NiKljMr2rCfGpLbfWPznADe9rG4J4Ze-b0qxqMnYqggw9pJqDFW_q5LzaTUUCRiueCb-XVus0FOsgExLZS6Kfyhjcw8xJvXsuvoiKa09Gqidi6Ov98NrzAihYtTluhAOLcq0WnRsg6qxzRbZARuOF6Z7Nvr-pUh7E0',
+                embeds: [embed]
+            })
         });
 
-        if (discordRes.ok) {
+        // Discord returns HTTP 204 No Content or 200 on successful webhook delivery
+        if (discordRes.ok || discordRes.status === 204) {
             return res.status(200).json({ status: 'success' });
         } else {
-            return res.status(500).json({ error: `Discord returned status ${discordRes.status}` });
+            const errText = await discordRes.text().catch(() => '');
+            console.warn(`Discord API error status ${discordRes.status}: ${errText}`);
+            return res.status(500).json({ error: `Discord returned status ${discordRes.status}: ${errText}` });
         }
     } catch (err) {
+        console.error('Logger handler error:', err);
         return res.status(500).json({ error: err.message || 'Internal Logger Error' });
     }
 };
