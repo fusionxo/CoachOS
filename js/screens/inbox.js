@@ -102,7 +102,7 @@ STRICT RULES:
         let replyText = '';
 
         try {
-            console.log("⚡ Generating Inbox Smart Reply via Vercel Secure AI Proxy (/api/ai)...");
+            if (typeof window.logEvent === 'function') window.logEvent('info', 'Generating Inbox Smart Reply via AI Proxy');
             const res = await fetch('/api/ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -115,7 +115,7 @@ STRICT RULES:
             if (res.ok) {
                 const data = await res.json();
                 replyText = data.text || '';
-                console.log("✅ Received Smart Reply from Vercel AI Proxy");
+                if (typeof window.logEvent === 'function') window.logEvent('success', 'Smart Reply generated successfully');
             } else {
                 console.warn("Vercel AI Proxy returned non-ok status for smart reply:", res.status);
             }

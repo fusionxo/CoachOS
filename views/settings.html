@@ -33,8 +33,24 @@
         </div>
 
         <div>
-            <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Profile Avatar URL</label>
-            <input type="url" id="settings-avatar" class="w-full px-4 py-2.5 bg-[#0d0e12] border border-[#27272a] rounded-lg text-on-surface" placeholder="e.g. https://example.com/avatar.png">
+            <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Profile Avatar</label>
+            <div class="flex items-center gap-3">
+                <div id="settings-avatar-preview-container" class="w-12 h-12 rounded-full bg-[#18181b] border border-[#27272a] flex items-center justify-center overflow-hidden shrink-0">
+                    <img id="settings-avatar-preview" class="w-full h-full object-cover hidden" alt="Avatar Preview">
+                    <span id="settings-avatar-placeholder" class="material-symbols-outlined text-2xl text-on-surface-variant">account_circle</span>
+                </div>
+                <div class="flex-1 space-y-2">
+                    <input type="url" id="settings-avatar" class="w-full px-4 py-2 bg-[#0d0e12] border border-[#27272a] rounded-lg text-on-surface text-xs" placeholder="Paste image URL (https://...) or upload below">
+                    <div class="flex items-center gap-2">
+                        <label class="px-3 py-1.5 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-on-surface text-xs font-semibold cursor-pointer border border-[#44483b] transition-all flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]">upload_file</span>
+                            <span>Upload Avatar Photo</span>
+                            <input type="file" id="settings-avatar-file" accept="image/*" class="hidden">
+                        </label>
+                        <span id="settings-avatar-upload-status" class="text-[11px] text-on-surface-variant italic">Max 1080px (Auto Compressed)</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="border-t border-outline-variant/30 pt-6">
@@ -124,6 +140,20 @@
                     </div>
                     <button type="button" id="btn-clear-db" class="px-4 py-2 rounded-lg border border-error/30 text-error hover:bg-error/10 text-xs font-semibold transition-all">Reset Database</button>
                 </div>
+            </div>
+        </div>
+
+        <div class="border-t border-outline-variant/30 pt-6">
+            <h4 class="font-body-base text-primary font-semibold mb-3">Account Session</h4>
+            <div class="flex items-center justify-between p-4 bg-[#18181b] border border-red-500/20 rounded-xl">
+                <div>
+                    <span class="text-xs font-bold text-on-surface block">Sign Out of CoachOS</span>
+                    <span class="text-[11px] text-on-surface-variant">Safely terminate active session on this device.</span>
+                </div>
+                <button type="button" id="btn-settings-logout" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95">
+                    <span class="material-symbols-outlined text-[16px]">logout</span>
+                    <span>Log Out</span>
+                </button>
             </div>
         </div>
 

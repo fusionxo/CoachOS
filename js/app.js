@@ -1300,6 +1300,11 @@ class AppState {
         }
 
         try {
+            // Compress image client-side to limit quality/size (max 1080px resolution, 0.78 JPEG quality)
+            const compressedFile = typeof window.compressImage === 'function' 
+                ? await window.compressImage(file, { maxWidth: 1080, maxHeight: 1080, quality: 0.78 })
+                : file;
+
             // Validate workspace
             let workspaceId = this.workspace ? this.workspace.id : null;
             if (!workspaceId) {
@@ -1308,12 +1313,12 @@ class AppState {
             }
 
             if (workspaceId) {
-                const fileName = `${poseType}_${Date.now()}.${fileExt}`;
+                const fileName = `${poseType}_${Date.now()}.jpg`;
                 const filePath = `${workspaceId}/${clientId}/${fileName}`;
 
                 const { error: uploadErr } = await window.supabaseClient.storage
                     .from('progress-photos')
-                    .upload(filePath, file, { upsert: true });
+                    .upload(filePath, compressedFile, { upsert: true });
 
                 if (!uploadErr) {
                     await window.supabaseClient
@@ -1487,7 +1492,7 @@ class AppState {
         if (this.realtimeChannel) return;
         if (!window.supabaseClient || !this.user) return;
 
-        console.log('Setting up global realtime subscription...');
+        if (typeof window.logEvent === 'function') window.logEvent('info', 'Realtime subscription initialized');
         this.realtimeChannel = window.supabaseClient.channel('global-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
                 // Direct high-performance handling for incoming chat messages
@@ -1609,4 +1614,4 @@ class AppState {
 
 // Instantiate globally
 window.appState = new AppState();
-console.log('AppState Supabase persistence driver initialized.');
+if (typeof window.logEvent === 'function') window.logEvent('info', 'AppState initialized');

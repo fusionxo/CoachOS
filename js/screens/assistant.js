@@ -192,7 +192,7 @@ Your Job:
 4. Keep responses concise, direct, visually clean, and authoritative.`;
 
         try {
-            console.log("⚡ Calling Vercel Secure AI Proxy (/api/ai)...");
+            if (typeof window.logEvent === 'function') window.logEvent('info', 'Calling AI Assistant Proxy');
             const res = await fetch('/api/ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -205,7 +205,7 @@ Your Job:
             if (res.ok) {
                 const data = await res.json();
                 if (data.text) {
-                    console.log("✅ Received AI Response from Vercel Serverless Function");
+                    if (typeof window.logEvent === 'function') window.logEvent('success', 'AI Assistant response received');
                     return cleanAiResponse(data.text);
                 }
             } else {
@@ -490,12 +490,10 @@ Your Job:
     const cache = window.appState.assistantCache;
 
     if (cache && cache.chatMessages && cache.chatMessages.length > 0) {
-        console.log("⚡ Restoring Assistant Insights & Chat History from Session Cache (0 API calls)...");
         cache.chatMessages.forEach(msg => {
             appendMessage(msg.sender, msg.text, msg.actionButtons, false); // false = don't duplicate in cache array
         });
     } else {
-        console.log("⚡ First Visit: Calling AI Engine to generate daily priority insight...");
         const initialAiPrompt = `Analyze the current active roster of ${clients.length} clients (${clients.map(c => c.name).join(', ')}). Summarize top priority insights for the coach today in 2-3 sentences.`;
         
         // Call real LLM API only on first visit

@@ -291,7 +291,6 @@ class Router {
 
         const initFuncName = `init_${routeKey.replace(/-/g, '_')}`;
         if (typeof window[initFuncName] === 'function') {
-            console.log(`Realtime refresh: Re-initializing ${initFuncName}`);
             window[initFuncName](params);
         }
     }

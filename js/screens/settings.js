@@ -16,15 +16,92 @@ window.init_settings = function(params) {
         document.getElementById('settings-threshold').value = settings.thresholdAdherence || 75;
         
         // New fields
+        // Avatar preview & upload handling
         const avatarInput = document.getElementById('settings-avatar');
-        if (avatarInput) avatarInput.value = settings.avatar || '';
-        
+        const avatarFileInput = document.getElementById('settings-avatar-file');
+        const avatarPreview = document.getElementById('settings-avatar-preview');
+        const avatarPlaceholder = document.getElementById('settings-avatar-placeholder');
+        const avatarStatus = document.getElementById('settings-avatar-upload-status');
+
+        function updateAvatarPreview(url) {
+            if (url && avatarPreview) {
+                avatarPreview.src = url;
+                avatarPreview.classList.remove('hidden');
+                if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+            } else if (avatarPreview) {
+                avatarPreview.classList.add('hidden');
+                if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+            }
+        }
+
+        if (avatarInput) {
+            avatarInput.value = settings.avatar || '';
+            updateAvatarPreview(settings.avatar);
+
+            avatarInput.oninput = function() {
+                updateAvatarPreview(this.value.trim());
+            };
+        }
+
+        if (avatarFileInput) {
+            avatarFileInput.onchange = async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (avatarStatus) avatarStatus.textContent = 'Compressing image (max 1080px)...';
+
+                try {
+                    // 1. Client-side Canvas Image Compression
+                    const compressedFile = typeof window.compressImage === 'function'
+                        ? await window.compressImage(file, { maxWidth: 1080, maxHeight: 1080, quality: 0.78 })
+                        : file;
+
+                    if (avatarStatus) avatarStatus.textContent = 'Uploading to storage...';
+
+                    // 2. Upload to Supabase Storage or convert to data URL fallback
+                    let avatarUrl = '';
+                    if (window.supabaseClient && window.appState.user) {
+                        const fileExt = compressedFile.name.split('.').pop() || 'jpg';
+                        const filePath = `avatars/${window.appState.user.id}_${Date.now()}.${fileExt}`;
+
+                        const { error: uploadErr } = await window.supabaseClient.storage
+                            .from('progress-photos')
+                            .upload(filePath, compressedFile, { upsert: true });
+
+                        if (!uploadErr) {
+                            const { data: pubUrlData } = window.supabaseClient.storage
+                                .from('progress-photos')
+                                .getPublicUrl(filePath);
+                            avatarUrl = pubUrlData?.publicUrl || '';
+                        }
+                    }
+
+                    // Fallback to data URL if storage upload not configured
+                    if (!avatarUrl) {
+                        avatarUrl = await new Promise((res) => {
+                            const r = new FileReader();
+                            r.onload = (evt) => res(evt.target.result);
+                            r.readAsDataURL(compressedFile);
+                        });
+                    }
+
+                    if (avatarInput) avatarInput.value = avatarUrl;
+                    updateAvatarPreview(avatarUrl);
+                    if (avatarStatus) avatarStatus.textContent = '✅ Compressed & Uploaded!';
+                    showToast('Avatar photo uploaded successfully!', 'success', 'Photo Uploaded');
+                } catch (err) {
+                    if (avatarStatus) avatarStatus.textContent = 'Upload failed';
+                    showToast(`Avatar upload failed: ${err.message}`, 'error', 'Upload Error');
+                }
+            };
+        }
+
         const timezoneInput = document.getElementById('settings-timezone');
         if (timezoneInput) timezoneInput.value = settings.timezone || 'Asia/Kolkata';
-        
+
         const notifyEmailInput = document.getElementById('settings-notify-email');
         if (notifyEmailInput) notifyEmailInput.checked = settings.notifyEmail !== false;
-        
+
         const notifyAdherenceInput = document.getElementById('settings-notify-adherence');
         if (notifyAdherenceInput) notifyAdherenceInput.checked = settings.notifyAdherence !== false;
 
@@ -42,7 +119,7 @@ window.init_settings = function(params) {
             const email = document.getElementById('settings-email').value;
             const currency = document.getElementById('settings-currency').value;
             const thresholdAdherence = parseInt(document.getElementById('settings-threshold').value);
-            
+
             const avatar = document.getElementById('settings-avatar') ? document.getElementById('settings-avatar').value : '';
             const timezone = document.getElementById('settings-timezone') ? document.getElementById('settings-timezone').value : 'Asia/Kolkata';
             const notifyEmail = document.getElementById('settings-notify-email') ? document.getElementById('settings-notify-email').checked : true;
@@ -107,6 +184,29 @@ window.init_settings = function(params) {
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = originalBtnText;
+                }
+            }
+        };
+    }
+
+    // Log Out Button Handler
+    const logoutBtn = document.getElementById('btn-settings-logout');
+    if (logoutBtn) {
+        logoutBtn.onclick = async function() {
+            if (await showConfirm('Are you sure you want to sign out of CoachOS?', 'Log Out', 'Sign Out', 'Cancel')) {
+                try {
+                    if (window.supabaseClient) {
+                        await window.supabaseClient.auth.signOut();
+                    }
+                    if (window.appState) {
+                        window.appState.user = null;
+                        window.appState.profile = null;
+                        window.appState.workspace = null;
+                    }
+                    showToast('Successfully logged out.', 'info', 'Logged Out');
+                    window.location.hash = 'login';
+                } catch (err) {
+                    showToast(`Logout error: ${err.message}`, 'error', 'Error');
                 }
             }
         };

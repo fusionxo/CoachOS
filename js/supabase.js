@@ -31,4 +31,5 @@ window.supabaseClient = supabase.createClient(supabaseUrl, supabaseAnonKey, {
     }
 });
 
-console.log('Supabase client initialized successfully.');
+if (typeof window.logEvent === 'function') window.logEvent('info', 'Supabase client initialized');
+
