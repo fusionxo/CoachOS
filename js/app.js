@@ -375,18 +375,29 @@ class AppState {
                 if (msgs) {
                     msgs.forEach(m => {
                         const conversationId = m.conversation_id;
-                        if (!this.inbox[conversationId]) {
-                            this.inbox[conversationId] = [];
+                        const targetClient = this.clients ? this.clients.find(c => c.id === conversationId || c.user_id === conversationId || c.user_id === m.sender_id || c.id === m.sender_id) : null;
+                        const key = targetClient ? targetClient.id : conversationId;
+
+                        if (!this.inbox[key]) {
+                            this.inbox[key] = [];
                         }
+                        if (targetClient && targetClient.user_id) {
+                            this.inbox[targetClient.user_id] = this.inbox[key];
+                        }
+
                         const isCoach = m.sender_id === this.user.id;
-                        this.inbox[conversationId].push({
+                        const msgObj = {
                             id: m.id,
                             sender: isCoach ? 'coach' : 'client',
                             sender_id: m.sender_id,
                             text: m.content,
                             time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                             created_at: m.created_at
-                        });
+                        };
+
+                        if (!this.inbox[key].some(existing => existing.id === m.id)) {
+                            this.inbox[key].push(msgObj);
+                        }
                     });
                 }
             } else {
@@ -1196,21 +1207,14 @@ class AppState {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
-        const conversationId = clientId;
         const targetClient = (this.clients && this.clients.find(c => c.id === clientId || c.user_id === clientId)) || (this.clients && this.clients[0]);
-        const senderId = sender === 'coach' 
-            ? this.user.id 
-            : (targetClient && targetClient.user_id ? targetClient.user_id : this.user.id);
-        
-        if (!senderId) {
-            console.error('Sender ID cannot be determined.');
-            return null;
-        }
+        const conversationId = targetClient ? targetClient.id : clientId;
+        const senderId = this.user.id;
 
         const nowIso = new Date().toISOString();
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const tempMsgObj = {
-            id: 'msg-' + Date.now(),
+            id: 'temp-' + Date.now(),
             sender,
             text,
             time: timeStr,
@@ -1219,14 +1223,16 @@ class AppState {
         };
 
         // Optimistically append message to in-memory state
-        if (!this.inbox[clientId]) {
-            this.inbox[clientId] = [];
+        if (!this.inbox[conversationId]) {
+            this.inbox[conversationId] = [];
         }
-        this.inbox[clientId].push(tempMsgObj);
+        this.inbox[conversationId].push(tempMsgObj);
+        if (targetClient && targetClient.user_id) {
+            this.inbox[targetClient.user_id] = this.inbox[conversationId];
+        }
 
         // Update local client status
-        const client = this.clients.find(c => c.id === clientId);
-        if (client) client.status = 'Healthy';
+        if (targetClient) targetClient.status = 'Healthy';
 
         try {
             const { data, error } = await window.supabaseClient
@@ -1246,10 +1252,12 @@ class AppState {
                 tempMsgObj.created_at = data.created_at;
             }
 
-            await window.supabaseClient
-                .from('clients')
-                .update({ status: 'Healthy' })
-                .eq('id', clientId);
+            if (targetClient) {
+                await window.supabaseClient
+                    .from('clients')
+                    .update({ status: 'Healthy' })
+                    .eq('id', targetClient.id);
+            }
 
         } catch(err) {
             console.warn('Supabase message sync warning:', err.message);
@@ -1540,6 +1548,9 @@ class AppState {
                 if (payload.table === 'messages' && payload.eventType === 'INSERT') {
                     const m = payload.new;
                     const convId = m.conversation_id;
+                    const targetClient = (this.clients && this.clients.find(c => c.id === convId || c.user_id === convId || c.user_id === m.sender_id || c.id === m.sender_id)) || (this.clients && this.clients[0]);
+                    const key = targetClient ? targetClient.id : convId;
+
                     const isCoachMode = this.profile && this.profile.role === 'coach';
                     const isSenderCurrentUser = m.sender_id === this.user.id;
                     const sender = isCoachMode 
@@ -1548,21 +1559,24 @@ class AppState {
 
                     const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     
-                    if (!this.inbox[convId]) this.inbox[convId] = [];
+                    if (!this.inbox[key]) this.inbox[key] = [];
+                    if (targetClient && targetClient.user_id) {
+                        this.inbox[targetClient.user_id] = this.inbox[key];
+                    }
                     
-                    const existingMsg = this.inbox[convId].find(existing => existing.id === m.id || (existing.text === m.content && existing.sender === sender && Math.abs(new Date(existing.created_at || 0) - new Date(m.created_at)) < 5000));
+                    const existingMsg = this.inbox[key].find(existing => existing.id === m.id || (existing.text === m.content && existing.sender === sender && Math.abs(new Date(existing.created_at || 0) - new Date(m.created_at)) < 5000));
                     
                     const newMsg = {
                         id: m.id,
                         sender: sender,
                         text: m.content,
                         time: timeStr,
-                        conversation_id: convId,
+                        conversation_id: key,
                         created_at: m.created_at
                     };
 
                     if (!existingMsg) {
-                        this.inbox[convId].push(newMsg);
+                        this.inbox[key].push(newMsg);
                     } else {
                         existingMsg.id = m.id;
                     }

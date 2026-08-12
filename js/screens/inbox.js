@@ -169,17 +169,33 @@ STRICT RULES:
         });
     }
 
+    let searchQuery = '';
+    const searchInput = document.getElementById('inbox-client-search');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.oninput = (e) => {
+            searchQuery = e.target.value;
+            renderContacts();
+        };
+    }
+
     function renderContacts() {
         if (!contactListContainer) return;
         contactListContainer.innerHTML = '';
 
-        clients.forEach(client => {
+        let list = clients;
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = clients.filter(c => c.name.toLowerCase().includes(q) || (c.email && c.email.toLowerCase().includes(q)));
+        }
+
+        list.forEach(client => {
             const btn = document.createElement('button');
             const isActive = client.id === activeClientId;
             btn.className = `w-full text-left p-unit-md rounded-xl border transition-all flex gap-unit-md items-start ${isActive ? 'bg-surface-container-high border-outline-variant' : 'hover:bg-surface-container-low border-transparent'
                 }`;
 
-            const history = window.appState.inbox[client.id] || [];
+            const history = window.appState.inbox[client.id] || (client.user_id && window.appState.inbox[client.user_id]) || [];
             const lastMessage = history.length > 0
                 ? history[history.length - 1].text
                 : 'No messages yet';
@@ -252,7 +268,7 @@ STRICT RULES:
         if (messageHistoryContainer) {
             messageHistoryContainer.innerHTML = '';
 
-            const history = window.appState.inbox[client.id] || [];
+            const history = window.appState.inbox[client.id] || (client.user_id && window.appState.inbox[client.user_id]) || [];
             if (history.length === 0) {
                 const emptyMsg = document.createElement('p');
                 emptyMsg.className = 'text-center text-xs text-on-surface-variant italic py-8';
