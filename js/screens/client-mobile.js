@@ -795,11 +795,29 @@ window.init_client_mobile = function(params) {
 
         function appendClientMsgBubble(msg) {
             if (!chatHistoryMount) return;
+
+            // 1. Exact ID match check
+            if (msg.id && chatHistoryMount.querySelector(`[data-msg-id="${msg.id}"]`)) {
+                return;
+            }
+
+            // 2. Optimistic temp ID match -> update ID to real DB UUID without adding second bubble
+            const existingTemp = Array.from(chatHistoryMount.children).find(el => {
+                const textEl = el.querySelector('p');
+                return textEl && textEl.textContent.trim() === (msg.text || '').trim() && el.getAttribute('data-msg-id')?.startsWith('temp-');
+            });
+
+            if (existingTemp && msg.id && !msg.id.startsWith('temp-')) {
+                existingTemp.setAttribute('data-msg-id', msg.id);
+                return;
+            }
+
             const emptyMsg = chatHistoryMount.querySelector('p.text-center');
             if (emptyMsg) emptyMsg.remove();
 
             const isClient = msg.sender === 'client';
             const wrapper = document.createElement('div');
+            wrapper.setAttribute('data-msg-id', msg.id || ('temp-' + Date.now()));
             wrapper.className = `flex flex-col gap-0.5 max-w-[85%] ${isClient ? 'self-end items-end ml-auto' : 'items-start mr-auto'}`;
 
             wrapper.innerHTML = `
@@ -850,6 +868,11 @@ window.init_client_mobile = function(params) {
                 }
             };
         }
+
+        // Realtime message handler on client mobile view
+        window.onRealtimeMessageReceived = (msg) => {
+            appendClientMsgBubble(msg);
+        };
 
         populateHistory();
     }

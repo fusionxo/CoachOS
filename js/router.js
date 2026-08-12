@@ -154,8 +154,8 @@ class Router {
                         <!-- Desktop SideNavBar -->
                         <aside class="hidden md:flex flex-col h-screen py-unit-lg px-unit-md w-[280px] sticky top-0 left-0 border-r border-outline-variant bg-surface shrink-0">
                             <div class="flex items-center gap-unit-md mb-unit-xl px-unit-md">
-                                <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
-                                    <img alt="Coach Profile Picture" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0DKFOfi_kNxA1Oe425s2jti5Kzwp0CZ5v1PtRBIEBPUfS0qwRTRpzJI1D1BfVlnkhRNjaPzr1cgIUOpOhJEeIMnQwcefIp121SOid27dl2NiKljMr2rCfGpLbfWPznADe9rG4J4Ze-b0qxqMnYqggw9pJqDFW_q5LzaTUUCRiueCb-XVus0FOsgExLZS6Kfyhjcw8xJvXsuvoiKa09Gqidi6Ov98NrzAihYtTluhAOLcq0WnRsg6qxzRbZARuOF6Z7Nvr-pUh7E0">
+                                <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden shrink-0 border border-[#27272a]">
+                                    <img id="coach-display-avatar" alt="Coach Profile Picture" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0DKFOfi_kNxA1Oe425s2jti5Kzwp0CZ5v1PtRBIEBPUfS0qwRTRpzJI1D1BfVlnkhRNjaPzr1cgIUOpOhJEeIMnQwcefIp121SOid27dl2NiKljMr2rCfGpLbfWPznADe9rG4J4Ze-b0qxqMnYqggw9pJqDFW_q5LzaTUUCRiueCb-XVus0FOsgExLZS6Kfyhjcw8xJvXsuvoiKa09Gqidi6Ov98NrzAihYtTluhAOLcq0WnRsg6qxzRbZARuOF6Z7Nvr-pUh7E0">
                                 </div>
                                 <div>
                                     <h1 class="font-display-lg text-headline-md font-bold text-primary leading-tight" id="coach-display-name">CoachOS</h1>
@@ -273,8 +273,12 @@ class Router {
         if (window.appState && window.appState.settings) {
             const nameEl = document.getElementById('coach-display-name');
             const bizEl = document.getElementById('coach-display-business');
+            const avatarEl = document.getElementById('coach-display-avatar');
             if (nameEl) nameEl.textContent = window.appState.settings.name || 'CoachOS';
             if (bizEl) bizEl.textContent = window.appState.settings.businessName || 'Client Management';
+            if (avatarEl && window.appState.settings.avatar) {
+                avatarEl.src = window.appState.settings.avatar;
+            }
         }
     }
 

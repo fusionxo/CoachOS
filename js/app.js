@@ -378,11 +378,10 @@ class AppState {
                         if (!this.inbox[conversationId]) {
                             this.inbox[conversationId] = [];
                         }
-                        const targetClient = this.clients.find(c => c.id === conversationId);
-                        const isClient = targetClient && m.sender_id === targetClient.user_id;
+                        const isCoach = m.sender_id === this.user.id;
                         this.inbox[conversationId].push({
                             id: m.id,
-                            sender: isClient ? 'client' : 'coach',
+                            sender: isCoach ? 'coach' : 'client',
                             sender_id: m.sender_id,
                             text: m.content,
                             time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -580,7 +579,7 @@ class AppState {
                 this.inbox[clientVal.id] = [];
                 if (msgs) {
                     msgs.forEach(m => {
-                        const isClient = m.sender_id === clientVal.user_id;
+                        const isClient = m.sender_id === this.user.id;
                         this.inbox[clientVal.id].push({
                             id: m.id,
                             sender: isClient ? 'client' : 'coach',
@@ -1449,6 +1448,48 @@ class AppState {
         }
     }
 
+    async updateClientDetails(clientId, updates) {
+        if (!this.user || !this.user.id) {
+            throw new Error("Authentication not initialized");
+        }
+
+        const client = this.clients.find(c => c.id === clientId);
+        if (client) {
+            if (updates.name) client.name = updates.name;
+            if (updates.email) client.email = updates.email;
+            if (updates.goal) client.goal = updates.goal;
+            if (updates.status) client.status = updates.status;
+        }
+
+        const updatePayload = {};
+        if (updates.name) updatePayload.name = updates.name;
+        if (updates.email) updatePayload.email = updates.email;
+        if (updates.goal) updatePayload.goal = updates.goal;
+        if (updates.status) updatePayload.status = updates.status;
+
+        if (window.supabaseClient) {
+            const { error: clientErr } = await window.supabaseClient
+                .from('clients')
+                .update(updatePayload)
+                .eq('id', clientId);
+
+            if (clientErr) throw clientErr;
+
+            if (updates.email) {
+                try {
+                    await window.supabaseClient
+                        .from('client_invites')
+                        .update({ email: updates.email })
+                        .eq('client_id', clientId);
+                } catch (invErr) {
+                    console.warn('client_invites email sync notice:', invErr.message);
+                }
+            }
+        }
+
+        await this.refresh();
+    }
+
     async resolveClientAlert(clientId, status = 'Healthy') {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
@@ -1499,9 +1540,12 @@ class AppState {
                 if (payload.table === 'messages' && payload.eventType === 'INSERT') {
                     const m = payload.new;
                     const convId = m.conversation_id;
-                    const targetClient = (this.clients && this.clients.find(c => c.id === convId || c.user_id === m.sender_id)) || (this.clients && this.clients[0]);
-                    const isClient = targetClient && m.sender_id === targetClient.user_id;
-                    const sender = isClient ? 'client' : 'coach';
+                    const isCoachMode = this.profile && this.profile.role === 'coach';
+                    const isSenderCurrentUser = m.sender_id === this.user.id;
+                    const sender = isCoachMode 
+                        ? (isSenderCurrentUser ? 'coach' : 'client')
+                        : (isSenderCurrentUser ? 'client' : 'coach');
+
                     const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     
                     if (!this.inbox[convId]) this.inbox[convId] = [];

@@ -193,21 +193,18 @@ window.init_clients = function(params) {
         editForm.onsubmit = async function(e) {
             e.preventDefault();
             const id = document.getElementById('edit-client-id').value;
-            const client = clients.find(c => c.id === id);
-            if (client) {
-                client.name = document.getElementById('edit-client-name').value;
-                client.email = document.getElementById('edit-client-email').value;
-                client.goal = document.getElementById('edit-client-goal').value;
-                client.status = document.getElementById('edit-client-status').value;
-                
-                try {
-                    await window.appState.save();
-                    closeEditModal();
-                    renderClients();
-                    showToast(`Client details saved successfully!`, 'success', 'Client Updated');
-                } catch (err) {
-                    showToast(`Failed to save client details: ${err.message}`, 'error', 'Save Error');
-                }
+            const name = document.getElementById('edit-client-name').value;
+            const email = document.getElementById('edit-client-email').value;
+            const goal = document.getElementById('edit-client-goal').value;
+            const status = document.getElementById('edit-client-status').value;
+
+            try {
+                await window.appState.updateClientDetails(id, { name, email, goal, status });
+                closeEditModal();
+                renderClients();
+                showToast(`Client details saved successfully!`, 'success', 'Client Updated');
+            } catch (err) {
+                showToast(`Failed to save client details: ${err.message}`, 'error', 'Save Error');
             }
         };
     }
