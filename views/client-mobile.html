@@ -49,17 +49,17 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Weight (kg)</label>
-                            <input type="number" step="0.1" id="mobile-checkin-weight" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="82.5" required>
+                            <input type="number" step="0.1" id="mobile-checkin-weight" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 75.0" required>
                         </div>
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Sleep (hrs)</label>
-                            <input type="number" step="0.5" id="mobile-checkin-sleep" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="7.5" required>
+                            <input type="number" step="0.5" id="mobile-checkin-sleep" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 7.5" required>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Steps</label>
-                            <input type="number" id="mobile-checkin-steps" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="10000" required>
+                            <input type="number" id="mobile-checkin-steps" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 10000" required>
                         </div>
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Mood</label>
@@ -67,6 +67,16 @@
                                 <option value="🙂">🙂 Energetic & Strong</option>
                                 <option value="😐">😐 Moderate</option>
                                 <option value="😞">😞 Tired / Sore</option>
+                            </select>
+                        </div>
+                        <div class="min-w-0">
+                            <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">⚡ Energy</label>
+                            <select id="mobile-checkin-energy" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface">
+                                <option value="5">★★★★★ High (5/5)</option>
+                                <option value="4" selected>★★★★☆ Good (4/5)</option>
+                                <option value="3">★★★☆☆ Moderate (3/5)</option>
+                                <option value="2">★★☆☆☆ Low (2/5)</option>
+                                <option value="1">★☆☆☆☆ Exhausted (1/5)</option>
                             </select>
                         </div>
                     </div>
@@ -86,10 +96,10 @@
                 <div class="card-bg border border-base rounded-xl p-3.5 space-y-2">
                     <div class="flex justify-between items-center font-body-sm text-xs">
                         <span class="text-on-surface-variant text-[11px]">Adherence Rate</span>
-                        <span class="font-stat-mono text-primary-container font-bold" id="mobile-checkin-streak-text">4/7 Days</span>
+                        <span class="font-stat-mono text-primary-container font-bold" id="mobile-checkin-streak-text">0/7 Days</span>
                     </div>
                     <div class="w-full h-2 bg-[#27272a] rounded-full overflow-hidden">
-                        <div id="mobile-checkin-streak-bar" class="h-full bg-gradient-to-r from-[#6366f1] to-[#d9f99d] rounded-full" style="width: 57%"></div>
+                        <div id="mobile-checkin-streak-bar" class="h-full bg-gradient-to-r from-[#6366f1] to-[#d9f99d] rounded-full" style="width: 0%"></div>
                     </div>
                 </div>
             </section>
@@ -99,7 +109,7 @@
         <div id="client-tab-training" class="client-tab-pane hidden space-y-5">
             <section class="space-y-1">
                 <h1 class="font-headline-md text-xl font-bold text-primary">Training Program</h1>
-                <p class="font-body-sm text-xs text-on-surface-variant" id="mobile-program-subtitle">12-Week Lean Bulk • Phase 1</p>
+                <p class="font-body-sm text-xs text-on-surface-variant" id="mobile-program-subtitle">Phase 1 Training</p>
             </section>
 
             <!-- Week Selector Tabs -->
@@ -134,10 +144,10 @@
                 <div class="space-y-1.5">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-on-surface-variant">Calories Intake</span>
-                        <span class="font-bold text-primary" id="nutrition-cals-val">1,850 / 2,200 kcal</span>
+                        <span class="font-bold text-primary" id="nutrition-cals-val">0 / 2,000 kcal</span>
                     </div>
                     <div class="w-full h-2.5 bg-[#27272a] rounded-full overflow-hidden">
-                        <div id="nutrition-cals-bar" class="h-full bg-[#d9f99d] rounded-full" style="width: 84%"></div>
+                        <div id="nutrition-cals-bar" class="h-full bg-[#d9f99d] rounded-full" style="width: 0%"></div>
                     </div>
                 </div>
 
@@ -146,27 +156,27 @@
                     <!-- Protein -->
                     <div class="bg-[#09090b] p-3 rounded-lg border border-[#27272a] space-y-1.5 min-w-0">
                         <span class="text-[9px] uppercase font-label-caps text-on-surface-variant font-bold">Protein</span>
-                        <p class="text-xs font-mono font-bold text-primary truncate" id="nutrition-protein-val">140g / 160g</p>
+                        <p class="text-xs font-mono font-bold text-primary truncate" id="nutrition-protein-val">0g / 150g</p>
                         <div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
-                            <div id="nutrition-protein-bar" class="h-full bg-[#6366f1] rounded-full" style="width: 87%"></div>
+                            <div id="nutrition-protein-bar" class="h-full bg-[#6366f1] rounded-full" style="width: 0%"></div>
                         </div>
                     </div>
 
                     <!-- Carbs -->
                     <div class="bg-[#09090b] p-3 rounded-lg border border-[#27272a] space-y-1.5 min-w-0">
                         <span class="text-[9px] uppercase font-label-caps text-on-surface-variant font-bold">Carbs</span>
-                        <p class="text-xs font-mono font-bold text-primary truncate" id="nutrition-carbs-val">190g / 220g</p>
+                        <p class="text-xs font-mono font-bold text-primary truncate" id="nutrition-carbs-val">0g / 200g</p>
                         <div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
-                            <div id="nutrition-carbs-bar" class="h-full bg-[#38bdf8] rounded-full" style="width: 86%"></div>
+                            <div id="nutrition-carbs-bar" class="h-full bg-[#38bdf8] rounded-full" style="width: 0%"></div>
                         </div>
                     </div>
 
                     <!-- Fats -->
                     <div class="bg-[#09090b] p-3 rounded-lg border border-[#27272a] space-y-1.5 min-w-0">
                         <span class="text-[9px] uppercase font-label-caps text-on-surface-variant font-bold">Fats</span>
-                        <p class="text-xs font-mono font-bold text-primary truncate" id="nutrition-fats-val">55g / 70g</p>
+                        <p class="text-xs font-mono font-bold text-primary truncate" id="nutrition-fats-val">0g / 60g</p>
                         <div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden">
-                            <div id="nutrition-fats-bar" class="h-full bg-[#f59e0b] rounded-full" style="width: 78%"></div>
+                            <div id="nutrition-fats-bar" class="h-full bg-[#f59e0b] rounded-full" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
@@ -179,21 +189,21 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Total Calories (kcal)</label>
-                            <input type="number" id="mobile-nutr-calories" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="2200" required>
+                            <input type="number" id="mobile-nutr-calories" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 2000" required>
                         </div>
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Protein (g)</label>
-                            <input type="number" id="mobile-nutr-protein" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="160" required>
+                            <input type="number" id="mobile-nutr-protein" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 150" required>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Carbs (g)</label>
-                            <input type="number" id="mobile-nutr-carbs" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="220">
+                            <input type="number" id="mobile-nutr-carbs" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 200">
                         </div>
                         <div class="min-w-0">
                             <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Fats (g)</label>
-                            <input type="number" id="mobile-nutr-fats" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="70">
+                            <input type="number" id="mobile-nutr-fats" class="w-full min-w-0 px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 60">
                         </div>
                     </div>
                     <button type="submit" class="w-full py-2.5 bg-[#d9f99d] text-[#09090b] font-bold rounded-lg text-xs hover:opacity-90 transition-opacity">
@@ -213,7 +223,39 @@
             <div class="space-y-4">
                 <!-- Weight Logs -->
                 <div class="card-bg border border-base rounded-xl p-4 space-y-3">
-                    <h3 class="text-xs font-semibold text-primary uppercase font-label-caps tracking-wider border-b border-[#27272a] pb-1.5">Weight Log History</h3>
+                    <div class="flex justify-between items-center border-b border-[#27272a] pb-2">
+                        <h3 class="text-xs font-semibold text-primary uppercase font-label-caps tracking-wider">Weight Log History</h3>
+                        <button id="btn-mobile-log-weight" class="px-3 py-1 bg-[#d9f99d] text-[#09090b] text-xs font-bold rounded-lg flex items-center gap-1 hover:opacity-90 transition-all shadow-[0_0_10px_rgba(217,249,157,0.2)]">
+                            <span class="material-symbols-outlined text-[14px]">add</span>
+                            <span>Log Weight</span>
+                        </button>
+                    </div>
+
+                    <!-- Collapsible Weight Logger Form -->
+                    <div id="mobile-log-weight-container" class="hidden bg-[#09090b] border border-[#ceee93]/30 rounded-xl p-3.5 space-y-3 mb-3">
+                        <div class="flex justify-between items-center border-b border-[#27272a] pb-1.5">
+                            <span class="text-xs font-bold text-[#ceee93] flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[16px]">monitor_weight</span> Record Daily Weight
+                            </span>
+                            <button id="btn-close-log-weight" type="button" class="text-on-surface-variant hover:text-primary text-xs font-bold">✕</button>
+                        </div>
+                        <form id="mobile-weight-form" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Weight (kg)</label>
+                                    <input type="number" step="0.1" id="mobile-input-weight" class="w-full px-3 py-2 bg-[#18181b] border border-[#27272a] rounded-lg text-xs text-on-surface focus:border-[#ceee93]" placeholder="e.g. 75.0" required>
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Date</label>
+                                    <input type="date" id="mobile-input-weight-date" class="w-full px-3 py-2 bg-[#18181b] border border-[#27272a] rounded-lg text-xs text-on-surface focus:border-[#ceee93]" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] font-bold rounded-lg text-xs hover:opacity-90 transition-opacity">
+                                Save Weight Log
+                            </button>
+                        </form>
+                    </div>
+
                     <div id="mobile-weight-logs" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                         <!-- Populated dynamically -->
                     </div>
@@ -227,11 +269,104 @@
                     </div>
                 </div>
 
+                <!-- Log Measurements Form -->
+                <div class="card-bg border border-[#ceee93]/20 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center gap-2 border-b border-[#27272a] pb-2">
+                        <span class="material-symbols-outlined text-[#ceee93] text-[18px]">straighten</span>
+                        <h3 class="text-xs font-semibold text-primary uppercase font-label-caps tracking-wider">Log Body Measurements</h3>
+                    </div>
+                    <form id="mobile-measurements-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Waist (cm)</label>
+                                <input type="number" step="0.1" id="mobile-measure-waist" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 85.0" required>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Chest (cm)</label>
+                                <input type="number" step="0.1" id="mobile-measure-chest" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 100.0" required>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Arms (cm)</label>
+                                <input type="number" step="0.1" id="mobile-measure-arms" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 38.0" required>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">Legs (cm)</label>
+                                <input type="number" step="0.1" id="mobile-measure-legs" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface" placeholder="e.g. 58.0" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-[#d9f99d] text-[#09090b] font-bold rounded-lg text-xs hover:opacity-90 transition-opacity">
+                            Save Measurements
+                        </button>
+                    </form>
+                </div>
+
                 <!-- Progress Photos -->
                 <div class="card-bg border border-base rounded-xl p-4 space-y-3">
-                    <h3 class="text-xs font-semibold text-primary uppercase font-label-caps tracking-wider border-b border-[#27272a] pb-1.5">Visual Progress</h3>
+                    <div class="flex justify-between items-center border-b border-[#27272a] pb-1.5">
+                        <h3 class="text-xs font-semibold text-primary uppercase font-label-caps tracking-wider">Visual Progress</h3>
+                        <span class="text-[9px] text-on-surface-variant font-mono">Before & Current</span>
+                    </div>
                     <div id="mobile-photos-gallery" class="grid grid-cols-2 gap-2">
                         <!-- Photos comparisons populated dynamically -->
+                    </div>
+                    <!-- Before / Current Upload Buttons -->
+                    <div class="grid grid-cols-2 gap-2 mt-1">
+                        <button id="btn-upload-before-photo" class="py-2 bg-[#27272a] border border-[#ceee93]/30 text-[#ceee93] font-bold text-xs rounded-lg flex items-center justify-center gap-1 hover:bg-[#3f3f46] transition-all active:scale-95">
+                            <span class="material-symbols-outlined text-[13px]">history</span>
+                            <span>Upload Before</span>
+                        </button>
+                        <button id="btn-upload-current-photo" class="py-2 bg-[#d9f99d] text-[#09090b] font-bold text-xs rounded-lg flex items-center justify-center gap-1 hover:opacity-90 transition-all active:scale-95">
+                            <span class="material-symbols-outlined text-[13px]">add_a_photo</span>
+                            <span>Upload Current</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daily Wellness Quick Log -->
+                <div class="card-bg border border-[#ceee93]/30 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center gap-2 border-b border-[#27272a] pb-2">
+                        <span class="material-symbols-outlined text-[#ceee93] text-[18px]">favorite</span>
+                        <h3 class="text-xs font-semibold text-primary uppercase font-label-caps tracking-wider">Daily Wellness Log</h3>
+                    </div>
+                    <p class="text-[10px] text-on-surface-variant">Log your sleep, steps, mood & energy for today. This syncs to your coach's dashboard.</p>
+                    <form id="mobile-wellness-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">😴 Sleep (hrs)</label>
+                                <input type="number" step="0.5" id="mobile-wellness-sleep" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface focus:border-[#ceee93]" placeholder="e.g. 7.5">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">👟 Steps</label>
+                                <input type="number" id="mobile-wellness-steps" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface focus:border-[#ceee93]" placeholder="e.g. 10000">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">😊 Mood</label>
+                                <select id="mobile-wellness-mood" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface focus:border-[#ceee93]">
+                                    <option value="🙂">🙂 Energetic & Strong</option>
+                                    <option value="😐">😐 Moderate</option>
+                                    <option value="😞">😞 Tired / Sore</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-label-caps text-on-surface-variant mb-1 uppercase">⚡ Energy</label>
+                                <select id="mobile-wellness-energy" class="w-full px-3 py-2 bg-[#09090b] border border-[#27272a] rounded-lg text-xs text-on-surface focus:border-[#ceee93]">
+                                    <option value="5">★★★★★ High (5/5)</option>
+                                    <option value="4" selected>★★★★☆ Good (4/5)</option>
+                                    <option value="3">★★★☆☆ Moderate (3/5)</option>
+                                    <option value="2">★★☆☆☆ Low (2/5)</option>
+                                    <option value="1">★☆☆☆☆ Exhausted (1/5)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-[#d9f99d] text-[#09090b] font-bold rounded-lg text-xs hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(217,249,157,0.2)]">
+                            <span class="material-symbols-outlined text-[14px]">save</span>
+                            Save Wellness Log
+                        </button>
+                    </form>
+                    <div id="wellness-saved-msg" class="hidden text-xs text-[#22c55e] font-semibold flex items-center gap-1.5 py-0.5">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span> Wellness data saved!
                     </div>
                 </div>
             </div>
@@ -281,8 +416,9 @@
             <span class="material-symbols-outlined text-[20px] pointer-events-none">monitoring</span>
             <span class="text-[8px] mt-0.5 font-bold leading-none pointer-events-none">Progress</span>
         </button>
-        <button type="button" class="flex flex-col items-center justify-center text-on-surface-variant px-1 py-1 flex-1 btn-client-tab cursor-pointer" data-tab="messages">
+        <button type="button" class="flex flex-col items-center justify-center text-on-surface-variant px-1 py-1 flex-1 btn-client-tab cursor-pointer relative" data-tab="messages">
             <span class="material-symbols-outlined text-[20px] pointer-events-none">chat</span>
+            <span id="client-msg-unread-badge" class="hidden absolute top-1 right-3 w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
             <span class="text-[8px] mt-0.5 font-bold leading-none pointer-events-none">Messages</span>
         </button>
     </nav>

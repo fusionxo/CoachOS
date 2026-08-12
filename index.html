@@ -12,7 +12,7 @@
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Consolidated Global Stylesheet -->
-    <link href="css/app.css" rel="stylesheet">
+    <link href="css/app.css?v=20260811f" rel="stylesheet">
     <!-- Design System Configuration -->
     <script id="tailwind-config">
         tailwind.config = {
@@ -113,8 +113,11 @@
     <div id="app-mount"></div>
 
     <!-- SPA Application Scripts -->
-    <script src="js/supabase.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/router.js"></script>
+    <script>window.APP_CONFIG = { GEMINI_API_KEY: '', GROQ_API_KEY: '' };</script>
+    <script src="js/config.js?v=20260811f" onerror="console.warn('js/config.js not found. Using empty keys.')"></script>
+    <script src="js/toast.js?v=20260811f"></script>
+    <script src="js/supabase.js?v=20260811f"></script>
+    <script src="js/app.js?v=20260811f"></script>
+    <script src="js/router.js?v=20260811f"></script>
 </body>
 </html>

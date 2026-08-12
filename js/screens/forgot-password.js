@@ -35,11 +35,11 @@ window.init_forgot_password = async function(params) {
 
                 if (error) throw error;
 
-                alert(`A password reset link has been successfully sent to ${email}!`);
+                showToast(`A password reset link has been successfully sent to ${email}!`, 'success', 'Reset Link Sent');
                 window.location.hash = 'login';
             } catch (err) {
                 console.error(err);
-                alert(`Request Failed: ${err.message}`);
+                showToast(`Request Failed: ${err.message}`, 'error', 'Request Failed');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }
@@ -64,11 +64,11 @@ window.init_forgot_password = async function(params) {
 
                 if (error) throw error;
 
-                alert('Your password has been updated successfully! Directing you to your dashboard.');
+                showToast('Your password has been updated successfully! Directing you to your dashboard.', 'success', 'Password Updated');
                 window.location.hash = 'dashboard';
             } catch (err) {
                 console.error(err);
-                alert(`Update Failed: ${err.message}`);
+                showToast(`Update Failed: ${err.message}`, 'error', 'Update Failed');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }

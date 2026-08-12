@@ -47,7 +47,7 @@ window.init_builder = function(params) {
                         window.location.hash = 'builder';
                     }
                 } catch (err) {
-                    alert(`Failed to create workout: ${err.message}`);
+                    showToast(`Failed to create workout: ${err.message}`, 'error', 'Create Error');
                 }
             };
         }
@@ -415,7 +415,7 @@ window.init_builder = function(params) {
     if (btnSaveWorkout) {
         btnSaveWorkout.onclick = () => {
             syncExercisesFromDOM();
-            alert(`Workout "${currentWorkout.name}" saved successfully!`);
+            showToast(`Workout "${currentWorkout.name}" saved successfully!`, 'success', 'Workout Saved');
             const defaultId = clients[0] ? clients[0].id : '';
             window.location.hash = `analytics/${currentWorkout.clientId || defaultId}`;
         };
@@ -430,10 +430,10 @@ window.init_builder = function(params) {
                     notes: currentWorkout.notes,
                     exercises: currentWorkout.exercises.map(e => ({...e, id: 'te-' + Math.random().toString(36).substr(2, 9)}))
                 });
-                alert(`Workout saved as a reusable Template!`);
+                showToast(`Workout saved as a reusable Template!`, 'success', 'Template Saved');
                 window.location.hash = `templates`;
             } catch (err) {
-                alert(`Failed to save template: ${err.message}`);
+                showToast(`Failed to save template: ${err.message}`, 'error', 'Save Error');
             }
         };
     }
@@ -468,10 +468,10 @@ window.init_builder = function(params) {
                         exercises: currentWorkout.exercises.map(e => ({...e, id: 'e-' + Math.random().toString(36).substr(2, 9)}))
                     });
                     closeModals();
-                    alert(`Workout successfully assigned to client!`);
+                    showToast(`Workout successfully assigned to client!`, 'success', 'Workout Assigned');
                     window.location.hash = `analytics/${clientId}`;
                 } catch (err) {
-                    alert(`Failed to assign workout: ${err.message}`);
+                    showToast(`Failed to assign workout: ${err.message}`, 'error', 'Assign Error');
                 }
             }
         };
@@ -511,7 +511,7 @@ window.init_builder = function(params) {
                                 });
                             });
                             closeModals();
-                            alert(`Imported ${t.exercises.length} exercises from template "${t.name}"!`);
+                            showToast(`Imported ${t.exercises.length} exercises from template "${t.name}"!`, 'success', 'Import Successful');
                         };
 
                         importTemplatesList.appendChild(item);
@@ -575,10 +575,10 @@ window.init_builder = function(params) {
             if (dropdownOptions) dropdownOptions.classList.add('hidden');
             try {
                 const newW = await appState.duplicateWorkout(currentWorkout.id);
-                alert(`Workout duplicated successfully!`);
+                showToast(`Workout duplicated successfully!`, 'success', 'Workout Duplicated');
                 window.location.hash = `builder/${newW.id}`;
             } catch (err) {
-                alert(`Failed to duplicate workout: ${err.message}`);
+                showToast(`Failed to duplicate workout: ${err.message}`, 'error', 'Duplicate Error');
             }
         };
     }
@@ -586,13 +586,13 @@ window.init_builder = function(params) {
     if (btnOptDelete) {
         btnOptDelete.onclick = async () => {
             if (dropdownOptions) dropdownOptions.classList.add('hidden');
-            if (confirm(`Are you sure you want to delete "${currentWorkout.name}"?`)) {
+            if (await showConfirm(`Are you sure you want to delete "${currentWorkout.name}"?`, 'Delete Workout', 'Delete', 'Cancel')) {
                 try {
                     await appState.deleteWorkout(currentWorkout.id);
-                    alert(`Workout deleted successfully!`);
+                    showToast(`Workout deleted successfully!`, 'success', 'Workout Deleted');
                     window.location.hash = 'builder';
                 } catch (err) {
-                    alert(`Failed to delete workout: ${err.message}`);
+                    showToast(`Failed to delete workout: ${err.message}`, 'error', 'Delete Error');
                 }
             }
         };

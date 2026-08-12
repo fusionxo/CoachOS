@@ -151,18 +151,20 @@ class AppState {
                     const { data: checkins } = await window.supabaseClient
                         .from('check_ins')
                         .select('*')
-                        .in('client_id', clientIds);
+                        .in('client_id', clientIds)
+                        .order('created_at', { ascending: false });
                     this.checkins = (checkins || []).map(c => ({
                         id: c.id,
                         clientId: c.client_id,
                         date: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                        createdAt: c.created_at,
                         weight: c.weight,
                         sleep: c.sleep_hours,
                         steps: c.steps,
-                        calories: c.calories || 2000,
-                        protein: c.protein || 150,
-                        carbs: c.carbs || (c.calories ? Math.round((c.calories * 0.45) / 4) : 220),
-                        fats: c.fats || (c.calories ? Math.round((c.calories * 0.25) / 9) : 65),
+                        calories: c.calories !== null && c.calories !== undefined ? c.calories : 0,
+                        protein: c.protein !== null && c.protein !== undefined ? c.protein : 0,
+                        carbs: c.carbs !== null && c.carbs !== undefined ? c.carbs : 0,
+                        fats: c.fats !== null && c.fats !== undefined ? c.fats : 0,
                         mood: c.mood,
                         notes: c.notes,
                         energy: 4
@@ -212,13 +214,15 @@ class AppState {
                                     date: dateStr,
                                     front: null,
                                     side: null,
-                                    back: null
+                                    back: null,
+                                    before: null
                                 };
                             }
                             const signedUrl = signedUrlMap[p.storage_path] || '';
                             if (p.pose_type === 'front') photosMap[key].front = signedUrl;
                             else if (p.pose_type === 'side') photosMap[key].side = signedUrl;
                             else if (p.pose_type === 'back') photosMap[key].back = signedUrl;
+                            else if (p.pose_type === 'before') photosMap[key].before = signedUrl;
                         });
                         this.progressPhotos = Object.values(photosMap);
                     }
@@ -248,12 +252,26 @@ class AppState {
                     .eq('coach_id', user.id);
                 
                 this.workouts = [];
+                let localCompleted = [];
+                try {
+                    localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
+                } catch(e) {}
+
                 if (programs) {
                     programs.forEach(p => {
                         if (p.program_weeks) {
                             p.program_weeks.forEach(w => {
                                 if (w.workouts) {
                                     w.workouts.forEach(wk => {
+                                        const isCompletedLocally = localCompleted.includes(wk.id);
+                                        let sessionLogs = wk.session_logs || null;
+                                        if (!sessionLogs) {
+                                            try {
+                                                const rawLogs = localStorage.getItem('coachos_workout_logs_' + wk.id);
+                                                if (rawLogs) sessionLogs = JSON.parse(rawLogs);
+                                            } catch(e) {}
+                                        }
+
                                         this.workouts.push({
                                             id: wk.id,
                                             clientId: p.client_id,
@@ -261,10 +279,12 @@ class AppState {
                                             weekId: w.id,
                                             weekNumber: w.week_number,
                                             name: wk.name,
-                                            status: wk.status || 'Scheduled',
+                                            status: (isCompletedLocally || wk.status === 'Completed' || (sessionLogs && Object.keys(sessionLogs).length > 0)) ? 'Completed' : (wk.status || 'Scheduled'),
                                             notes: wk.instructions,
                                             programName: p.name,
                                             weekName: `Week ${w.week_number}`,
+                                            sessionLogs: sessionLogs,
+                                            loggedAt: wk.completed_at || null,
                                             exercises: wk.exercises ? wk.exercises.map(e => ({
                                                 id: e.id,
                                                 name: e.name,
@@ -283,6 +303,8 @@ class AppState {
                         }
                     });
                 }
+
+                this.clients = rawClients.map(client => {
                     const clientCheckins = this.checkins.filter(ch => ch.clientId === client.id);
                     const clientPrograms = programs ? programs.filter(p => p.client_id === client.id) : [];
                     
@@ -302,6 +324,12 @@ class AppState {
 
                     return {
                         ...client,
+                        // Targets read directly from clients table columns
+                        target_calories: parseInt(client.target_calories) || 2000,
+                        target_protein: parseInt(client.target_protein) || 150,
+                        target_carbs: parseInt(client.target_carbs) || 200,
+                        target_fats: parseInt(client.target_fats) || 60,
+                        target_steps: parseInt(client.target_steps) || 10000,
                         avatar: client.profiles?.avatar_url || null,
                         adherence: adherence || 100,
                         phase: clientPrograms.length > 0 ? clientPrograms[0].name : 'Phase 1',
@@ -350,10 +378,15 @@ class AppState {
                         if (!this.inbox[conversationId]) {
                             this.inbox[conversationId] = [];
                         }
+                        const targetClient = this.clients.find(c => c.id === conversationId);
+                        const isClient = targetClient && m.sender_id === targetClient.user_id;
                         this.inbox[conversationId].push({
-                            sender: m.sender_id === user.id ? 'coach' : 'client',
+                            id: m.id,
+                            sender: isClient ? 'client' : 'coach',
+                            sender_id: m.sender_id,
                             text: m.content,
-                            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            created_at: m.created_at
                         });
                     });
                 }
@@ -381,16 +414,20 @@ class AppState {
                 const { data: checkins } = await window.supabaseClient
                     .from('check_ins')
                     .select('*')
-                    .eq('client_id', clientVal.id);
+                    .eq('client_id', clientVal.id)
+                    .order('created_at', { ascending: false });
                 this.checkins = (checkins || []).map(c => ({
                     id: c.id,
                     clientId: c.client_id,
                     date: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                    createdAt: c.created_at,
                     weight: c.weight,
                     sleep: c.sleep_hours,
                     steps: c.steps,
                     calories: c.calories,
                     protein: c.protein,
+                    carbs: c.carbs,
+                    fats: c.fats,
                     mood: c.mood,
                     notes: c.notes,
                     energy: 4
@@ -440,16 +477,48 @@ class AppState {
                                 date: dateStr,
                                 front: null,
                                 side: null,
-                                back: null
+                                back: null,
+                                before: null
                             };
                         }
                         const signedUrl = signedUrlMap[p.storage_path] || '';
                         if (p.pose_type === 'front') photosMap[key].front = signedUrl;
                         else if (p.pose_type === 'side') photosMap[key].side = signedUrl;
                         else if (p.pose_type === 'back') photosMap[key].back = signedUrl;
+                        else if (p.pose_type === 'before') photosMap[key].before = signedUrl;
                     });
                     this.progressPhotos = Object.values(photosMap);
                 }
+
+                // Merge localStorage cached photos for all clients
+                try {
+                    clientIds.forEach(cId => {
+                        const localPhotos = JSON.parse(localStorage.getItem(`coachos_photos_${cId}`) || '[]');
+                        localPhotos.forEach(lp => {
+                            let rec = this.progressPhotos.find(p => p.clientId === lp.clientId && p.date === lp.date);
+                            if (!rec) {
+                                rec = { id: 'photo-local-' + Date.now(), clientId: lp.clientId, date: lp.date, front: null, side: null, back: null, before: null };
+                                this.progressPhotos.push(rec);
+                            }
+                            if (lp.poseType === 'front' && !rec.front) rec.front = lp.dataUrl;
+                            else if (lp.poseType === 'before' && !rec.before) rec.before = lp.dataUrl;
+                        });
+                    });
+                } catch(e) {}
+
+                // Merge localStorage cached photos
+                try {
+                    const localPhotos = JSON.parse(localStorage.getItem(`coachos_photos_${clientVal.id}`) || '[]');
+                    localPhotos.forEach(lp => {
+                        let rec = this.progressPhotos.find(p => p.clientId === lp.clientId && p.date === lp.date);
+                        if (!rec) {
+                            rec = { id: 'photo-local-' + Date.now(), clientId: lp.clientId, date: lp.date, front: null, side: null, back: null, before: null };
+                            this.progressPhotos.push(rec);
+                        }
+                        if (lp.poseType === 'front' && !rec.front) rec.front = lp.dataUrl;
+                        else if (lp.poseType === 'before' && !rec.before) rec.before = lp.dataUrl;
+                    });
+                } catch(e) {}
 
                 // Fetch client workouts
                 const { data: programs } = await window.supabaseClient
@@ -458,12 +527,18 @@ class AppState {
                     .eq('client_id', clientVal.id);
                 
                 this.workouts = [];
+                let localCompleted = [];
+                try {
+                    localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
+                } catch(e) {}
+
                 if (programs) {
                     programs.forEach(p => {
                         if (p.program_weeks) {
                             p.program_weeks.forEach(w => {
                                 if (w.workouts) {
                                     w.workouts.forEach(wk => {
+                                        const isCompletedLocally = localCompleted.includes(wk.id);
                                         this.workouts.push({
                                             id: wk.id,
                                             clientId: clientVal.id,
@@ -471,7 +546,7 @@ class AppState {
                                             weekId: w.id,
                                             weekNumber: w.week_number,
                                             name: wk.name,
-                                            status: wk.status || 'Scheduled',
+                                            status: (isCompletedLocally || wk.status === 'Completed') ? 'Completed' : (wk.status || 'Scheduled'),
                                             notes: wk.instructions,
                                             programName: p.name,
                                             weekName: `Week ${w.week_number}`,
@@ -505,10 +580,14 @@ class AppState {
                 this.inbox[clientVal.id] = [];
                 if (msgs) {
                     msgs.forEach(m => {
+                        const isClient = m.sender_id === clientVal.user_id;
                         this.inbox[clientVal.id].push({
-                            sender: m.sender_id === user.id ? 'client' : 'coach',
+                            id: m.id,
+                            sender: isClient ? 'client' : 'coach',
+                            sender_id: m.sender_id,
                             text: m.content,
-                            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            created_at: m.created_at
                         });
                     });
                 }
@@ -532,6 +611,12 @@ class AppState {
 
                 this.clients = [{
                     ...clientVal,
+                    // Targets come directly from clients table columns (set by coach via saveClientTargets)
+                    target_calories: parseInt(clientVal.target_calories) || 2000,
+                    target_protein: parseInt(clientVal.target_protein) || 150,
+                    target_carbs: parseInt(clientVal.target_carbs) || 200,
+                    target_fats: parseInt(clientVal.target_fats) || 60,
+                    target_steps: parseInt(clientVal.target_steps) || 10000,
                     avatar: clientVal.profiles?.avatar_url || null,
                     adherence: adherence || 100,
                     phase: clientPrograms.length > 0 ? clientPrograms[0].name : 'Phase 1',
@@ -625,35 +710,127 @@ class AppState {
     }
 
     async saveCheckIn(clientId, checkin) {
-        if (!this.user || !this.user.id) {
-            throw new Error("Authentication not initialized");
-        }
-        const { error } = await window.supabaseClient
-            .from('check_ins')
-            .insert({
-                client_id: clientId,
-                weight: parseFloat(checkin.weight),
-                sleep_hours: parseFloat(checkin.sleep),
-                steps: parseInt(checkin.steps),
-                calories: checkin.calories ? parseInt(checkin.calories) : null,
-                protein: checkin.protein ? parseInt(checkin.protein) : null,
-                mood: checkin.mood || '😐',
+        const todayStr = checkin.date || new Date().toISOString().split('T')[0];
+
+        // 1. Update in-memory state immediately for responsive local updates
+        let existingLocal = this.checkins.find(c => c.clientId === clientId && c.date === todayStr);
+        if (existingLocal) {
+            if (checkin.weight !== undefined) existingLocal.weight = parseFloat(checkin.weight);
+            if (checkin.sleep !== undefined) existingLocal.sleep = parseFloat(checkin.sleep);
+            if (checkin.steps !== undefined) existingLocal.steps = parseInt(checkin.steps);
+            if (checkin.calories !== undefined) existingLocal.calories = parseInt(checkin.calories);
+            if (checkin.protein !== undefined) existingLocal.protein = parseInt(checkin.protein);
+            if (checkin.carbs !== undefined) existingLocal.carbs = parseInt(checkin.carbs);
+            if (checkin.fats !== undefined) existingLocal.fats = parseInt(checkin.fats);
+            if (checkin.mood) existingLocal.mood = checkin.mood;
+            if (checkin.energy !== undefined) existingLocal.energy = parseInt(checkin.energy);
+            if (checkin.notes) existingLocal.notes = checkin.notes;
+        } else {
+            existingLocal = {
+                id: 'ci-' + Date.now(),
+                clientId: clientId,
+                date: todayStr,
+                createdAt: new Date().toISOString(),
+                weight: parseFloat(checkin.weight) || 75.0,
+                sleep: parseFloat(checkin.sleep) || 7.0,
+                steps: parseInt(checkin.steps) || 10000,
+                calories: checkin.calories !== undefined && checkin.calories !== null ? parseInt(checkin.calories) : 0,
+                protein: checkin.protein !== undefined && checkin.protein !== null ? parseInt(checkin.protein) : 0,
+                carbs: checkin.carbs !== undefined && checkin.carbs !== null ? parseInt(checkin.carbs) : 0,
+                fats: checkin.fats !== undefined && checkin.fats !== null ? parseInt(checkin.fats) : 0,
+                mood: checkin.mood || '🙂',
+                energy: checkin.energy !== undefined ? parseInt(checkin.energy) : 4,
                 notes: checkin.notes || ''
-            });
+            };
+            this.checkins.push(existingLocal);
+        }
 
-        if (error) throw error;
+        const client = this.clients.find(c => c.id === clientId);
+        if (client && checkin.weight) {
+            client.weight = checkin.weight.toString();
+        }
 
-        // Update current client parameters
-        await window.supabaseClient
-            .from('clients')
-            .update({
-                starting_weight: checkin.weight.toString(),
-                status: 'Healthy'
-            })
-            .eq('id', clientId);
+        // 2. Persist to Supabase if authenticated
+        if (this.user && this.user.id && window.supabaseClient) {
+            try {
+                const { data: existingCheckins } = await window.supabaseClient
+                    .from('check_ins')
+                    .select('*')
+                    .eq('client_id', clientId)
+                    .order('created_at', { ascending: false });
 
-        await this.refresh();
+                const existingToday = (existingCheckins || []).find(c => {
+                    const dateStr = c.created_at ? c.created_at.split('T')[0] : '';
+                    return dateStr === todayStr;
+                });
+
+                const payload = {
+                    client_id: clientId,
+                    weight: parseFloat(checkin.weight),
+                    sleep_hours: parseFloat(checkin.sleep),
+                    steps: parseInt(checkin.steps),
+                    calories: checkin.calories !== undefined && checkin.calories !== null ? parseInt(checkin.calories) : null,
+                    protein: checkin.protein !== undefined && checkin.protein !== null ? parseInt(checkin.protein) : null,
+                    carbs: checkin.carbs !== undefined && checkin.carbs !== null ? parseInt(checkin.carbs) : null,
+                    fats: checkin.fats !== undefined && checkin.fats !== null ? parseInt(checkin.fats) : null,
+                    mood: checkin.mood || '🙂',
+                    notes: checkin.notes || ''
+                };
+
+                if (existingToday) {
+                    await window.supabaseClient
+                        .from('check_ins')
+                        .update(payload)
+                        .eq('id', existingToday.id);
+                } else {
+                    await window.supabaseClient
+                        .from('check_ins')
+                        .insert(payload);
+                }
+
+                await window.supabaseClient
+                    .from('clients')
+                    .update({
+                        starting_weight: checkin.weight ? checkin.weight.toString() : undefined,
+                        status: 'Healthy'
+                    })
+                    .eq('id', clientId);
+            } catch (err) {
+                console.warn('Supabase checkin sync warning:', err.message);
+            }
+        }
     }
+
+    async saveClientTargets(clientId, targets) {
+        const parsedTargets = {
+            target_calories: parseInt(targets.target_calories) || 2000,
+            target_protein: parseInt(targets.target_protein) || 150,
+            target_carbs: parseInt(targets.target_carbs) || 200,
+            target_fats: parseInt(targets.target_fats) || 60,
+            target_steps: parseInt(targets.target_steps) || 10000
+        };
+
+        // 1. Local Storage cache (for instant read on same browser)
+        try {
+            localStorage.setItem('coachos_targets_' + clientId, JSON.stringify(parsedTargets));
+        } catch(e) {}
+
+        // 2. In-Memory AppState Update
+        const client = this.clients.find(c => c.id === clientId);
+        if (client) {
+            Object.assign(client, parsedTargets);
+        }
+
+        // 3. Persist to clients table directly — readable by client via RLS
+        if (this.user && this.user.id && window.supabaseClient) {
+            const { error } = await window.supabaseClient
+                .from('clients')
+                .update(parsedTargets)
+                .eq('id', clientId);
+            if (error) throw error;
+        }
+    }
+
 
     async saveMeasurements(clientId, waist, chest, arms, legs) {
         if (!this.user || !this.user.id) {
@@ -791,25 +968,46 @@ class AppState {
     }
 
     async logCompletedWorkout(workoutId, sessionLogs = {}) {
-        if (!this.user || !this.user.id) {
-            throw new Error("Authentication not initialized");
-        }
-        await window.supabaseClient
-            .from('workouts')
-            .update({
-                status: 'Completed'
-            })
-            .eq('id', workoutId);
+        const actualLogs = (sessionLogs && sessionLogs.sessionLogs) ? sessionLogs.sessionLogs : sessionLogs;
+        const nowIso = new Date().toISOString();
 
-        // Record completion log locally in state as well
+        // 1. Persist to localStorage FIRST (always works regardless of Supabase)
+        try {
+            const completedKey = 'coachos_completed_workouts';
+            const existing = JSON.parse(localStorage.getItem(completedKey) || '[]');
+            if (!existing.includes(workoutId)) {
+                existing.push(workoutId);
+                localStorage.setItem(completedKey, JSON.stringify(existing));
+            }
+            if (actualLogs && Object.keys(actualLogs).length > 0) {
+                localStorage.setItem('coachos_workout_logs_' + workoutId, JSON.stringify(actualLogs));
+            }
+        } catch(e) {}
+
+        // 2. Update local in-memory state immediately
         const targetW = this.workouts.find(w => w.id === workoutId);
         if (targetW) {
             targetW.status = 'Completed';
-            targetW.loggedAt = new Date().toISOString();
-            targetW.completedSets = sessionLogs.completedSets || [];
+            targetW.loggedAt = nowIso;
+            targetW.sessionLogs = actualLogs;
         }
 
-        await this.refresh();
+        // 3. Persist to Supabase if possible
+        if (this.user && this.user.id && window.supabaseClient) {
+            try {
+                await window.supabaseClient
+                    .from('workouts')
+                    .update({
+                        status: 'Completed',
+                        session_logs: actualLogs,
+                        completed_at: nowIso
+                    })
+                    .eq('id', workoutId);
+            } catch (err) {
+                console.warn('Supabase workout completion sync warning:', err.message);
+                // Local + localStorage fallback is already set above
+            }
+        }
     }
 
     async deleteWorkout(workoutId) {
@@ -820,6 +1018,19 @@ class AppState {
             .from('workouts')
             .delete()
             .eq('id', workoutId);
+        await this.refresh();
+    }
+
+    async deleteProgram(programId) {
+        if (!this.user || !this.user.id) {
+            throw new Error("Authentication not initialized");
+        }
+        // Deleting program cascades to program_weeks -> workouts -> exercises
+        const { error } = await window.supabaseClient
+            .from('programs')
+            .delete()
+            .eq('id', programId);
+        if (error) throw error;
         await this.refresh();
     }
 
@@ -987,45 +1198,99 @@ class AppState {
             throw new Error("Authentication not initialized");
         }
         const conversationId = clientId;
-        const senderId = sender === 'coach' ? this.user.id : (this.clients[0] ? this.clients[0].user_id : this.user.id);
+        const targetClient = (this.clients && this.clients.find(c => c.id === clientId || c.user_id === clientId)) || (this.clients && this.clients[0]);
+        const senderId = sender === 'coach' 
+            ? this.user.id 
+            : (targetClient && targetClient.user_id ? targetClient.user_id : this.user.id);
         
         if (!senderId) {
             console.error('Sender ID cannot be determined.');
             return null;
         }
 
-        const { data, error } = await window.supabaseClient
-            .from('messages')
-            .insert({
-                conversation_id: conversationId,
-                sender_id: senderId,
-                content: text
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        await window.supabaseClient
-            .from('clients')
-            .update({
-                status: 'Healthy'
-            })
-            .eq('id', clientId);
-
-        await this.refresh();
-        return {
+        const nowIso = new Date().toISOString();
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const tempMsgObj = {
+            id: 'msg-' + Date.now(),
             sender,
             text,
-            time: new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            time: timeStr,
+            conversation_id: conversationId,
+            created_at: nowIso
         };
+
+        // Optimistically append message to in-memory state
+        if (!this.inbox[clientId]) {
+            this.inbox[clientId] = [];
+        }
+        this.inbox[clientId].push(tempMsgObj);
+
+        // Update local client status
+        const client = this.clients.find(c => c.id === clientId);
+        if (client) client.status = 'Healthy';
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('messages')
+                .insert({
+                    conversation_id: conversationId,
+                    sender_id: senderId,
+                    content: text
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                tempMsgObj.id = data.id;
+                tempMsgObj.created_at = data.created_at;
+            }
+
+            await window.supabaseClient
+                .from('clients')
+                .update({ status: 'Healthy' })
+                .eq('id', clientId);
+
+        } catch(err) {
+            console.warn('Supabase message sync warning:', err.message);
+        }
+
+        return tempMsgObj;
     }
 
     async uploadProgressPhoto(clientId, file, poseType) {
-        if (!this.user || !this.user.id) {
-            throw new Error("Authentication not initialized");
+        // Create DataURL fallback for local instant rendering
+        const readFileAsDataUrl = (f) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(f);
+        });
+        const dataUrl = await readFileAsDataUrl(file);
+
+        // Store in localStorage cache
+        const dateStr = new Date().toISOString().split('T')[0];
+        try {
+            const localPhotosKey = `coachos_photos_${clientId}`;
+            const existing = JSON.parse(localStorage.getItem(localPhotosKey) || '[]');
+            existing.push({ clientId, date: dateStr, poseType, dataUrl });
+            localStorage.setItem(localPhotosKey, JSON.stringify(existing));
+        } catch(e) {}
+
+        // Update local in-memory progressPhotos state
+        let key = `${clientId}_${dateStr}`;
+        let photoRecord = this.progressPhotos.find(p => p.clientId === clientId && p.date === dateStr);
+        if (!photoRecord) {
+            photoRecord = { id: 'photo-' + Date.now(), clientId, date: dateStr, front: null, side: null, back: null, before: null };
+            this.progressPhotos.push(photoRecord);
         }
-        if (!window.supabaseClient) return null;
+        if (poseType === 'front') photoRecord.front = dataUrl;
+        else if (poseType === 'before') photoRecord.before = dataUrl;
+
+        if (!this.user || !this.user.id || !window.supabaseClient) {
+            return photoRecord;
+        }
 
         // Validate file type
         const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
@@ -1034,54 +1299,67 @@ class AppState {
             throw new Error('Only JPG, JPEG, PNG, and WEBP files are allowed.');
         }
 
-        // Validate workspace
-        let workspaceId = this.workspace ? this.workspace.id : null;
-        if (!workspaceId) {
-            // Fetch client to get workspace_id
-            const { data: cl } = await window.supabaseClient.from('clients').select('workspace_id').eq('id', clientId).single();
-            if (cl) workspaceId = cl.workspace_id;
+        try {
+            // Validate workspace
+            let workspaceId = this.workspace ? this.workspace.id : null;
+            if (!workspaceId) {
+                const { data: cl } = await window.supabaseClient.from('clients').select('workspace_id').eq('id', clientId).single();
+                if (cl) workspaceId = cl.workspace_id;
+            }
+
+            if (workspaceId) {
+                const fileName = `${poseType}_${Date.now()}.${fileExt}`;
+                const filePath = `${workspaceId}/${clientId}/${fileName}`;
+
+                const { error: uploadErr } = await window.supabaseClient.storage
+                    .from('progress-photos')
+                    .upload(filePath, file, { upsert: true });
+
+                if (!uploadErr) {
+                    await window.supabaseClient
+                        .from('progress_photos')
+                        .insert({
+                            client_id: clientId,
+                            storage_path: filePath,
+                            pose_type: poseType
+                        });
+                }
+            }
+        } catch(err) {
+            console.warn('Supabase photo upload sync notice (using local image):', err.message);
         }
 
-        if (!workspaceId) throw new Error('Workspace not found for client.');
-
-        // Build storage path: workspace_id/client_id/poseType_timestamp.ext
-        const fileName = `${poseType}_${Date.now()}.${fileExt}`;
-        const filePath = `${workspaceId}/${clientId}/${fileName}`;
-
-        // Upload to supabase storage
-        const { error: uploadErr } = await window.supabaseClient.storage
-            .from('progress-photos')
-            .upload(filePath, file, { upsert: true });
-
-        if (uploadErr) throw uploadErr;
-
-        // Insert row in progress_photos table
-        const { data, error: dbErr } = await window.supabaseClient
-            .from('progress_photos')
-            .insert({
-                client_id: clientId,
-                storage_path: filePath,
-                pose_type: poseType
-            })
-            .select()
-            .single();
-
-        if (dbErr) throw dbErr;
-
-        await this.refresh();
-        return data;
+        return photoRecord;
     }
 
     async savePrivateNotes(clientId, notes) {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
+
+        // Fetch existing note to preserve __TARGETS__ line if present
+        const { data: existingNote } = await window.supabaseClient
+            .from('coach_notes')
+            .select('content')
+            .eq('coach_id', this.user.id)
+            .eq('client_id', clientId)
+            .maybeSingle();
+
+        let targetsLine = '';
+        if (existingNote && existingNote.content) {
+            const match = existingNote.content.match(/^__TARGETS__:.*$/m);
+            if (match) targetsLine = match[0];
+        }
+
+        // Re-attach targets line at the top, followed by the coach's free-text notes
+        const mergedContent = targetsLine ? `${targetsLine}\n${notes}` : notes;
+
         const { error } = await window.supabaseClient
             .from('coach_notes')
             .upsert({
                 coach_id: this.user.id,
                 client_id: clientId,
-                content: notes
+                content: mergedContent
             }, {
                 onConflict: 'coach_id,client_id'
             });
@@ -1098,7 +1376,7 @@ class AppState {
                 .insert({
                     coach_id: this.user.id,
                     client_id: clientId,
-                    content: notes
+                    content: mergedContent
                 });
         }
         await this.refresh();
@@ -1137,6 +1415,33 @@ class AppState {
         }
 
         await this.refresh();
+    }
+
+    async updateClientTargets(clientId, targets) {
+        if (!this.user || !this.user.id) throw new Error("Authentication not initialized");
+        
+        const client = this.clients.find(c => c.id === clientId);
+        if (client) {
+            if (targets.target_steps !== undefined) client.target_steps = targets.target_steps;
+            if (targets.target_calories !== undefined) client.target_calories = targets.target_calories;
+            if (targets.target_protein !== undefined) client.target_protein = targets.target_protein;
+            if (targets.target_carbs !== undefined) client.target_carbs = targets.target_carbs;
+            if (targets.target_fats !== undefined) client.target_fats = targets.target_fats;
+        }
+
+        const updateData = {};
+        if (targets.target_steps !== undefined) updateData.target_steps = targets.target_steps;
+        if (targets.target_calories !== undefined) updateData.target_calories = targets.target_calories;
+        if (targets.target_protein !== undefined) updateData.target_protein = targets.target_protein;
+        if (targets.target_carbs !== undefined) updateData.target_carbs = targets.target_carbs;
+        if (targets.target_fats !== undefined) updateData.target_fats = targets.target_fats;
+
+        if (window.supabaseClient) {
+            await window.supabaseClient
+                .from('clients')
+                .update(updateData)
+                .eq('id', clientId);
+        }
     }
 
     async resolveClientAlert(clientId, status = 'Healthy') {
@@ -1184,14 +1489,51 @@ class AppState {
 
         console.log('Setting up global realtime subscription...');
         this.realtimeChannel = window.supabaseClient.channel('global-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
-                console.log('Realtime change detected:', payload.table, payload.eventType);
-                // Refresh local state cache
-                await this.refresh();
-                // Refresh the active UI screen
-                if (window.router && typeof window.router.refreshActiveScreen === 'function') {
-                    window.router.refreshActiveScreen();
+            .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+                // Direct high-performance handling for incoming chat messages
+                if (payload.table === 'messages' && payload.eventType === 'INSERT') {
+                    const m = payload.new;
+                    const convId = m.conversation_id;
+                    const targetClient = (this.clients && this.clients.find(c => c.id === convId || c.user_id === m.sender_id)) || (this.clients && this.clients[0]);
+                    const isClient = targetClient && m.sender_id === targetClient.user_id;
+                    const sender = isClient ? 'client' : 'coach';
+                    const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    if (!this.inbox[convId]) this.inbox[convId] = [];
+                    
+                    const existingMsg = this.inbox[convId].find(existing => existing.id === m.id || (existing.text === m.content && existing.sender === sender && Math.abs(new Date(existing.created_at || 0) - new Date(m.created_at)) < 5000));
+                    
+                    const newMsg = {
+                        id: m.id,
+                        sender: sender,
+                        text: m.content,
+                        time: timeStr,
+                        conversation_id: convId,
+                        created_at: m.created_at
+                    };
+
+                    if (!existingMsg) {
+                        this.inbox[convId].push(newMsg);
+                    } else {
+                        existingMsg.id = m.id;
+                    }
+
+                    // Dispatch to active screen handler
+                    if (typeof window.onRealtimeMessageReceived === 'function') {
+                        window.onRealtimeMessageReceived(newMsg);
+                    }
+                    return;
                 }
+
+                // Background sync for non-message table changes without blocking UI
+                this.refresh().then(() => {
+                    if (window.router && typeof window.router.refreshActiveScreen === 'function') {
+                        const hash = window.location.hash.slice(1);
+                        if (!hash.startsWith('inbox') && !hash.startsWith('client-mobile')) {
+                            window.router.refreshActiveScreen();
+                        }
+                    }
+                });
             })
             .subscribe();
     }

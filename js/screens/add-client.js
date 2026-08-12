@@ -46,7 +46,7 @@ window.init_add_client = function(params) {
             successContainer.classList.add('fade-in');
         } catch (err) {
             console.error('Failed to create invitation:', err);
-            alert(`Failed to create invitation: ${err.message}`);
+            showToast(`Failed to create invitation: ${err.message}`, 'error', 'Invite Error');
         } finally {
             // Reset button for next time
             submitBtn.innerHTML = originalBtnContent;
@@ -62,6 +62,7 @@ window.init_add_client = function(params) {
         const originalText = copyBtn.innerHTML;
         copyBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span><span>Copied</span>`;
         copyBtn.classList.add('text-[#22c55e]', 'border-[rgba(34,197,94,0.5)]');
+        showToast('Invite link copied to clipboard!', 'success', 'Copied');
         
         setTimeout(() => {
             copyBtn.innerHTML = originalText;
@@ -72,6 +73,7 @@ window.init_add_client = function(params) {
     sendEmailBtn.addEventListener('click', () => {
          const originalText = sendEmailBtn.innerHTML;
          sendEmailBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]" data-icon="check">check</span><span>Sent!</span>`;
+         showToast(`Invitation email dispatched to ${document.getElementById('clientEmail').value || 'client'}!`, 'success', 'Email Sent');
          setTimeout(() => {
             sendEmailBtn.innerHTML = originalText;
          }, 2000);

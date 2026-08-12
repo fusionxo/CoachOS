@@ -158,8 +158,9 @@ window.init_clients = function(params) {
                     try {
                         await window.appState.save();
                         renderClients();
+                        showToast(`Client ${client.name} status updated to ${client.status}`, 'success', 'Status Updated');
                     } catch (err) {
-                        alert(`Failed to update client archive status: ${err.message}`);
+                        showToast(`Failed to update client archive status: ${err.message}`, 'error', 'Status Error');
                     }
                 };
 
@@ -203,8 +204,9 @@ window.init_clients = function(params) {
                     await window.appState.save();
                     closeEditModal();
                     renderClients();
+                    showToast(`Client details saved successfully!`, 'success', 'Client Updated');
                 } catch (err) {
-                    alert(`Failed to save client details: ${err.message}`);
+                    showToast(`Failed to save client details: ${err.message}`, 'error', 'Save Error');
                 }
             }
         };

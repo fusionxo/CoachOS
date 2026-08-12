@@ -5,7 +5,7 @@ window.init_more = function(params) {
     const notifBtn = document.getElementById('btn-more-notifications');
     if (notifBtn) {
         notifBtn.onclick = () => {
-            alert('Push notification preferences will be configurable once APNS/FCM keys are uploaded in settings.');
+            showToast('Push notification preferences will be configurable once APNS/FCM keys are uploaded in settings.', 'info', 'Push Notifications');
         };
     }
 };

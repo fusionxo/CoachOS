@@ -177,7 +177,7 @@ window.init_dashboard = function(params) {
                     <button class="px-3 py-1 bg-[#d9f99d] text-[#09090b] font-semibold rounded text-[10px] btn-nudge" data-id="${client.id}">Nudge</button>
                 `;
                 item.querySelector('.btn-nudge').onclick = () => {
-                    alert(`Nudge notification sent to ${client.name}!`);
+                    showToast(`Nudge notification sent to ${client.name}!`, 'success', 'Nudge Sent');
                 };
                 pendingList.appendChild(item);
             }

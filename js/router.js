@@ -29,6 +29,7 @@ const routes = {
 class Router {
     constructor() {
         this.appContainer = document.getElementById('app-mount');
+        this.viewCache = new Map();
         window.addEventListener('hashchange', () => this.handleRoute());
         // Initialize
         setTimeout(() => this.handleRoute(), 100);
@@ -53,9 +54,9 @@ class Router {
             return;
         }
 
-        // Authenticated Session Checking
-        let user = null;
-        if (window.supabaseClient) {
+        // Authenticated Session Checking (Use cached appState user if present to avoid 2-3s navigation lag)
+        let user = (window.appState && window.appState.user) ? window.appState.user : null;
+        if (!user && window.supabaseClient) {
             try {
                 const { data } = await window.supabaseClient.auth.getUser();
                 user = data.user;
@@ -106,33 +107,25 @@ class Router {
             }
         }
 
-        console.log(`Routing to: #${hash} | Layout: ${route.layout} | View: ${route.view}`);
-
         // Update layouts
         this.renderLayout(route.layout, routeKey);
 
         // Fetch and inject HTML
         const container = document.getElementById('view-content-mount');
         if (container) {
-            // Render Loading state
-            container.innerHTML = `
-                <div class="flex items-center justify-center min-h-[400px]">
-                    <div class="flex flex-col items-center gap-4">
-                        <span class="material-symbols-outlined text-[48px] text-primary-container animate-spin">progress_activity</span>
-                        <p class="text-sm font-mono text-on-surface-variant">Loading view...</p>
-                    </div>
-                </div>
-            `;
-
             try {
-                const res = await fetch(`views/${route.view}.html`);
-                if (!res.ok) throw new Error(`Fetch view failed: ${res.statusText}`);
-                const html = await res.text();
-                
-                // Mount html
+                let html = this.viewCache.get(route.view);
+                if (!html) {
+                    const res = await fetch(`views/${route.view}.html`);
+                    if (!res.ok) throw new Error(`Fetch view failed: ${res.statusText}`);
+                    html = await res.text();
+                    this.viewCache.set(route.view, html);
+                }
+
+                // Mount HTML instantly
                 container.innerHTML = html;
 
-                // Load screen controller script
+                // Load and run screen controller script
                 this.loadScreenScript(route.view, params);
             } catch (err) {
                 console.error(err);
@@ -253,15 +246,18 @@ class Router {
                 activeMobileLink.classList.add('bg-primary-container', 'text-on-primary-container', 'rounded-xl', 'px-3', 'py-1');
             }
 
-            // Update main element scrollbars (prevent page scroll in inbox view)
+            // Update main element scrollbars & container flex bounds (prevent page scroll in inbox view)
             const mainEl = document.querySelector('#coach-layout-shell main');
-            if (mainEl) {
+            const mountEl = document.getElementById('view-content-mount');
+            if (mainEl && mountEl) {
                 if (activeRoute === 'inbox') {
                     mainEl.classList.remove('overflow-y-auto');
-                    mainEl.classList.add('overflow-hidden');
+                    mainEl.classList.add('overflow-hidden', 'h-screen');
+                    mountEl.classList.add('h-full', 'min-h-0', 'overflow-hidden');
                 } else {
                     mainEl.classList.remove('overflow-hidden');
                     mainEl.classList.add('overflow-y-auto');
+                    mountEl.classList.remove('h-full', 'min-h-0', 'overflow-hidden');
                 }
             }
         } else if (layoutType === 'mobile') {
@@ -301,19 +297,19 @@ class Router {
     }
 
     loadScreenScript(viewName, params) {
-        // Remove old scripts
-        const oldScript = document.getElementById('screen-controller-script');
-        if (oldScript) oldScript.remove();
+        const initFuncName = `init_${viewName.replace(/-/g, '_')}`;
+        
+        // If controller function is already loaded in memory, call immediately for instant screen swap!
+        if (typeof window[initFuncName] === 'function') {
+            window[initFuncName](params);
+            return;
+        }
 
         const scriptUrl = `js/screens/${viewName}.js`;
-        
-        // Load dynamically via script tag insertion
         const script = document.createElement('script');
-        script.id = 'screen-controller-script';
         script.src = scriptUrl;
         script.onerror = () => console.log(`No screen logic script module loaded for ${viewName}`);
         script.onload = () => {
-            const initFuncName = `init_${viewName.replace(/-/g, '_')}`;
             if (typeof window[initFuncName] === 'function') {
                 window[initFuncName](params);
             }

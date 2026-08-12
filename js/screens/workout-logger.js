@@ -323,11 +323,11 @@ window.init_workout_logger = function(params) {
             clearInterval(restInterval);
 
             try {
-                await appState.logCompletedWorkout(workout.id, { sessionLogs });
-                alert(`🎉 Congratulations! Workout "${workout.name}" logged successfully!`);
+                await appState.logCompletedWorkout(workout.id, sessionLogs);
+                showToast(`🎉 Congratulations! Workout "${workout.name}" logged successfully!`, 'success', 'Workout Completed');
             } catch (err) {
                 console.error('Error logging workout:', err);
-                alert(`Workout logged locally!`);
+                showToast(`Workout logged locally!`, 'info', 'Saved Locally');
             }
 
             const user = appState.user;

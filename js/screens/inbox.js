@@ -1,9 +1,9 @@
 // Controller for Inbox / Chat screen
-window.init_inbox = function(params) {
+window.init_inbox = function (params) {
     const clients = window.appState.clients;
     const defaultClientId = clients[0] ? clients[0].id : '';
     let activeClientId = (params && params.id) || defaultClientId;
-    
+
     const emptyState = document.getElementById('inbox-empty-state');
     const listPane = document.querySelector('.inbox-list-pane');
     const chatPane = document.querySelector('.inbox-chat-pane');
@@ -31,7 +31,7 @@ window.init_inbox = function(params) {
             desktopProfile.classList.remove('hidden');
         }
     }
-    
+
     // Select containers
     const inboxContainer = document.querySelector('.inbox-container');
     const contactListContainer = document.querySelector('.inbox-list-pane .flex-grow');
@@ -40,7 +40,7 @@ window.init_inbox = function(params) {
     const messageHistoryContainer = document.querySelector('.messages-flow');
     const textarea = document.querySelector('section textarea');
     const sendBtn = document.querySelector('.btn-send-message');
-    
+
     // AI Suggestion Box elements
     const aiSuggestionBox = document.getElementById('ai-suggestion-box');
     const aiSuggestionReason = document.getElementById('ai-suggestion-reason');
@@ -53,6 +53,118 @@ window.init_inbox = function(params) {
     const backBtn = document.querySelector('.btn-inbox-back');
     const infoBtn = document.querySelector('.btn-inbox-info');
     const profileDrawer = document.getElementById('inbox-profile-drawer');
+
+    // AI API Keys
+    const GEMINI_API_KEY = window.APP_CONFIG?.GEMINI_API_KEY || "";
+    const GROQ_API_KEY = window.APP_CONFIG?.GROQ_API_KEY || "";
+
+    function cleanAiResponse(text) {
+        if (!text) return '';
+        let cleaned = text;
+        // Strip raw UUIDs
+        cleaned = cleaned.replace(/\s*\(id:\s*[a-f0-9-]{36}\)/gi, '');
+        cleaned = cleaned.replace(/\s*id:\s*[a-f0-9-]{36}/gi, '');
+        // Strip markdown hashes ###, ##, #
+        cleaned = cleaned.replace(/###+\s*/g, '');
+        cleaned = cleaned.replace(/##\s*/g, '');
+        cleaned = cleaned.replace(/#\s*/g, '');
+        // Strip wrapping quotes
+        cleaned = cleaned.replace(/^["']|["']$/g, '');
+        return cleaned.trim();
+    }
+
+    // Dynamic Live LLM Smart Reply Generator for Inbox
+    async function updateAiSmartReply(client) {
+        if (!aiSuggestionBox) return;
+
+        const history = window.appState.inbox[client.id] || window.appState.inbox[client.user_id] || [];
+        const lastMsg = history[history.length - 1];
+
+        // Show smart reply whenever last message was sent by the client
+        if (!lastMsg || lastMsg.sender !== 'client') {
+            aiSuggestionBox.style.display = 'none';
+            return;
+        }
+
+        aiSuggestionBox.style.display = 'block';
+        if (aiSuggestionReason) aiSuggestionReason.textContent = `Analyzing ${client.name}'s latest message: "${lastMsg.text}"...`;
+        if (aiSuggestionText) aiSuggestionText.innerHTML = `<span class="text-on-surface-variant font-mono animate-pulse">Generating 2nd-Coach AI suggested reply...</span>`;
+
+        const systemInstruction = `You are CoachOS 2nd-Coach AI, an elite co-coach assisting fitness coaches.
+Athlete Profile: ${client.name}, Goal: ${client.goal || 'Fat Loss'}, Daily Targets: ${client.target_calories || 2000} kcal | ${client.target_steps || 10000} steps.
+The athlete sent the following message to their coach: "${lastMsg.text}".
+
+Your Job:
+Draft a warm, professional, encouraging, and actionable response that the coach can send back to the athlete.
+If the athlete reports feeling unwell or sick, recommend prioritizing hydration, light steps/recovery, and resting from intense lifting.
+STRICT RULES:
+- NEVER use markdown headers like ### or ##.
+- NEVER output database IDs or UUIDs.
+- Do not wrap the response in quotation marks.
+- Keep the reply concise (2-3 sentences), empathetic, and ready to send directly.`;
+
+        let replyText = '';
+
+        // 1. Try Groq API Primary (llama-3.3-70b-versatile)
+        try {
+            console.log("⚡ Generating Inbox Smart Reply via Groq AI Primary...");
+            const groqUrl = `https://api.groq.com/openai/v1/chat/completions`;
+            const res = await fetch(groqUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${GROQ_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [
+                        { role: 'system', content: systemInstruction },
+                        { role: 'user', content: 'Draft Coach Reply:' }
+                    ],
+                    temperature: 0.5
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                replyText = data.choices?.[0]?.message?.content?.trim() || '';
+                console.log("✅ Received Groq Primary Smart Reply");
+            } else {
+                console.warn("Groq API non-ok response, trying Gemini fallback...", res.status);
+            }
+        } catch (e) {
+            console.warn("Groq API call failed for smart reply, trying Gemini fallback...", e);
+        }
+
+        // 2. Try Gemini REST API Fallback (gemini-flash-latest)
+        if (!replyText) {
+            try {
+                console.log("⚡ Generating Inbox Smart Reply via Gemini API Fallback...");
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+                const res = await fetch(geminiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts: [{ text: `${systemInstruction}\n\nDraft Coach Reply:` }] }]
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    replyText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                    console.log("✅ Received Gemini Fallback Smart Reply");
+                }
+            } catch (e) {
+                console.error("Gemini API fallback failed for smart reply:", e);
+            }
+        }
+
+        // Fallback text if offline
+        if (!replyText) {
+            replyText = `Hey ${client.name.split(' ')[0]}! Absolutely, listen to your body today. Focus on hydration, hit light steps if you feel up to it, and prioritize recovery over heavy training. Let me know how you feel tomorrow! 💪`;
+        }
+
+        if (aiSuggestionReason) aiSuggestionReason.textContent = `2nd-Coach AI Suggested Reply for ${client.name}:`;
+        if (aiSuggestionText) aiSuggestionText.textContent = cleanAiResponse(replyText);
+    }
 
     // Setup back button
     if (backBtn && inboxContainer) {
@@ -89,16 +201,15 @@ window.init_inbox = function(params) {
         clients.forEach(client => {
             const btn = document.createElement('button');
             const isActive = client.id === activeClientId;
-            btn.className = `w-full text-left p-unit-md rounded-xl border transition-all flex gap-unit-md items-start ${
-                isActive ? 'bg-surface-container-high border-outline-variant' : 'hover:bg-surface-container-low border-transparent'
-            }`;
+            btn.className = `w-full text-left p-unit-md rounded-xl border transition-all flex gap-unit-md items-start ${isActive ? 'bg-surface-container-high border-outline-variant' : 'hover:bg-surface-container-low border-transparent'
+                }`;
 
             const history = window.appState.inbox[client.id] || [];
-            const lastMessage = history.length > 0 
-                ? history[history.length - 1].text 
+            const lastMessage = history.length > 0
+                ? history[history.length - 1].text
                 : 'No messages yet';
 
-            const badgeHtml = client.status !== 'Healthy' 
+            const badgeHtml = client.status !== 'Healthy'
                 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-error-container/30 border border-error-container text-error text-[10px] font-semibold uppercase tracking-wider mt-2">
                      <span class="material-symbols-outlined text-[12px]">warning</span> ${client.status}
                    </div>`
@@ -127,7 +238,7 @@ window.init_inbox = function(params) {
                 activeClientId = client.id;
                 renderContacts();
                 renderChat();
-                
+
                 // Show chat pane on mobile
                 if (inboxContainer) {
                     inboxContainer.classList.add('mobile-show-chat');
@@ -159,36 +270,8 @@ window.init_inbox = function(params) {
             `;
         }
 
-        // Show/hide AI suggestion box dynamically
-        if (aiSuggestionBox) {
-            if (client.status === 'Critical' || client.status === 'Health Alert' || client.status === 'Warning') {
-                aiSuggestionBox.style.display = 'block';
-                
-                // Calculate dynamic reasoning/suggestion
-                let suggestion = { reason: '', text: '' };
-                if (client.status === 'Critical') {
-                    suggestion = {
-                        reason: `${client.name} has missed check-ins (Last check-in: ${client.lastCheckIn}). Churn risk is high.`,
-                        text: `"Hey ${client.name.split(' ')[0]}, noticed you haven't checked in recently and completely understand that life gets busy! Don't sweat the missed days—let's focus on what we can control. Want to jump on a quick 5-min call to adjust this week's plan?"`
-                    };
-                } else if (client.status === 'Health Alert') {
-                    suggestion = {
-                        reason: `${client.name} reported sleep issues (Avg: ${client.sleep}) and low energy. HRV is declining.`,
-                        text: `"Hey ${client.name.split(' ')[0]}, I looked over your check-ins and noticed sleep has been tough lately. Let's pull back training volume by 20% this week to prioritize recovery. Sleep is where the gains happen!"`
-                    };
-                } else {
-                    suggestion = {
-                        reason: `${client.name} has macro compliance below target. Weight trend is flat.`,
-                        text: `"Hey ${client.name.split(' ')[0]}, let's review your macros. Are you having trouble hitting the protein target, or is meal prep getting in the way? Let's troubleshoot together!"`
-                    };
-                }
-
-                if (aiSuggestionReason) aiSuggestionReason.textContent = suggestion.reason;
-                if (aiSuggestionText) aiSuggestionText.textContent = suggestion.text;
-            } else {
-                aiSuggestionBox.style.display = 'none';
-            }
-        }
+        // Trigger Live AI Smart Reply generation
+        updateAiSmartReply(client);
 
         // Render message history
         if (messageHistoryContainer) {
@@ -248,16 +331,16 @@ window.init_inbox = function(params) {
                 const weightStr = client.starting_weight ? `${client.starting_weight}kg` : '';
                 const expStr = client.experience_level || '';
                 const bioParts = [heightStr, weightStr, expStr].filter(p => p !== '');
-                bioEl.textContent = bioParts.join(' • ') || 'Client';
+                bioEl.textContent = bioParts.join(' • ') || 'Intermediate';
             }
-            if (goalEl) goalEl.textContent = client.goal;
+            if (goalEl) goalEl.textContent = client.goal || 'Fat Loss';
             if (adherenceBar) adherenceBar.style.width = `${client.adherence}%`;
             if (adherencePercent) adherencePercent.textContent = `${client.adherence}% to milestone`;
             if (adherenceVal) {
                 adherenceVal.textContent = `${client.adherence}%`;
                 adherenceVal.className = `font-stat-mono text-headline-md profile-adherence-val ${client.adherence < 75 ? 'text-error' : 'text-[#22c55e]'}`;
             }
-            if (weightVal) weightVal.textContent = client.weight;
+            if (weightVal) weightVal.textContent = `${client.weight || client.starting_weight || 75} kg`;
 
             if (avatarImg) {
                 if (client.avatar && client.avatar.startsWith('http')) {
@@ -286,26 +369,117 @@ window.init_inbox = function(params) {
         });
     }
 
+    // Audio chime generator using Web Audio API for WhatsApp-like feel
+    function playChime(isIncoming = true) {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const now = ctx.currentTime;
+
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc1.type = 'sine';
+            osc2.type = 'sine';
+
+            if (isIncoming) {
+                osc1.frequency.setValueAtTime(659.25, now);
+                osc2.frequency.setValueAtTime(987.77, now + 0.08);
+            } else {
+                osc1.frequency.setValueAtTime(783.99, now);
+                osc2.frequency.setValueAtTime(1046.50, now + 0.05);
+            }
+
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc1.start(now);
+            osc2.start(now + 0.08);
+            osc1.stop(now + 0.25);
+            osc2.stop(now + 0.25);
+        } catch (e) { }
+    }
+
+    function appendMessageBubble(msg) {
+        if (!messageHistoryContainer) return;
+
+        // 1. Exact ID match check
+        if (msg.id && messageHistoryContainer.querySelector(`[data-msg-id="${msg.id}"]`)) {
+            return;
+        }
+
+        // 2. Optimistic temp ID match -> update ID to real DB UUID without adding second bubble
+        const existingTemp = Array.from(messageHistoryContainer.children).find(el => {
+            const textEl = el.querySelector('p');
+            return textEl && textEl.textContent.trim() === msg.text.trim() && el.getAttribute('data-msg-id')?.startsWith('temp-');
+        });
+
+        if (existingTemp && msg.id && !msg.id.startsWith('temp-')) {
+            existingTemp.setAttribute('data-msg-id', msg.id);
+            return;
+        }
+
+        // Clear empty state if present
+        const emptyMsg = messageHistoryContainer.querySelector('p.text-center');
+        if (emptyMsg) emptyMsg.remove();
+
+        const isCoach = msg.sender === 'coach';
+        const msgWrapper = document.createElement('div');
+        msgWrapper.setAttribute('data-msg-id', msg.id || ('temp-' + Date.now()));
+        msgWrapper.className = `flex flex-col gap-1 max-w-[80%] ${isCoach ? 'items-end self-end' : 'items-start'} transition-all animate-fadeIn`;
+
+        msgWrapper.innerHTML = `
+            <div class="${isCoach ? 'bg-[#27272a] border border-[#44483b] text-primary' : 'bg-[#18181b] border border-[#27272a] text-on-surface'} p-unit-md rounded-2xl ${isCoach ? 'rounded-tr-sm' : 'rounded-tl-sm'} shadow-md">
+                <p class="font-body-sm text-[15px] leading-relaxed">${msg.text}</p>
+            </div>
+            <span class="font-body-sm text-[11px] text-on-surface-variant ${isCoach ? 'mr-1' : 'ml-1'}">${msg.time}</span>
+        `;
+        messageHistoryContainer.appendChild(msgWrapper);
+
+        // Smooth scroll to bottom
+        messageHistoryContainer.scrollTo({
+            top: messageHistoryContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+
     async function sendMessage() {
         if (!textarea) return;
         const text = textarea.value.trim();
         if (!text) return;
 
-        const originalText = textarea.value;
         textarea.value = '';
-        textarea.disabled = true;
+        textarea.focus();
 
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const localMsg = {
+            id: 'temp-' + Date.now(),
+            sender: 'coach',
+            text: text,
+            time: timeStr
+        };
+
+        // Hide AI Smart Reply Box after coach sends a message
+        if (aiSuggestionBox) aiSuggestionBox.style.display = 'none';
+
+        // 1. Instant Optimistic UI append (WhatsApp style)
+        appendMessageBubble(localMsg);
+        playChime(false);
+        renderContacts();
+
+        // 2. Persist to appState & Supabase in background
         try {
             await window.appState.sendMessage(activeClientId, 'coach', text);
             renderContacts();
-            renderChat();
         } catch (err) {
             console.error('Failed to send message:', err);
-            alert(`Message failed to send: ${err.message}`);
-            textarea.value = originalText;
-        } finally {
-            textarea.disabled = false;
-            textarea.focus();
+            showToast(`Message failed to send: ${err.message}`, 'error', 'Message Error');
         }
     }
 
@@ -323,21 +497,28 @@ window.init_inbox = function(params) {
         };
     }
 
-    // Use AI suggestion Reply
+    // 1-Click "Use Reply" (Sends AI Smart Reply directly)
     if (useReplyBtn) {
         useReplyBtn.onclick = () => {
-            if (aiSuggestionText && textarea) {
-                textarea.value = aiSuggestionText.innerText.replace(/"/g, '').trim();
-                textarea.focus();
+            if (aiSuggestionText) {
+                const text = aiSuggestionText.textContent.trim();
+                if (text && !text.includes('Generating 2nd-Coach AI')) {
+                    if (textarea) textarea.value = text;
+                    sendMessage();
+                }
             }
         };
     }
 
+    // 1-Click "Edit & Send" (Copies AI Smart Reply into textarea for editing)
     if (editReplyBtn) {
         editReplyBtn.onclick = () => {
             if (aiSuggestionText && textarea) {
-                textarea.value = aiSuggestionText.innerText.replace(/"/g, '').trim();
-                textarea.focus();
+                const text = aiSuggestionText.textContent.trim();
+                if (text && !text.includes('Generating 2nd-Coach AI')) {
+                    textarea.value = text;
+                    textarea.focus();
+                }
             }
         };
     }
@@ -348,24 +529,21 @@ window.init_inbox = function(params) {
         };
     }
 
-    // Realtime message subscription
-    if (window.activeMessageChannel) {
-        if (window.supabaseClient) {
-            window.supabaseClient.removeChannel(window.activeMessageChannel);
+    // Global handler for incoming realtime messages on Inbox screen
+    window.onRealtimeMessageReceived = (msg) => {
+        console.log('⚡ Coach Inbox View Received Realtime Message:', msg);
+        if (msg.conversation_id === activeClientId || !msg.conversation_id) {
+            appendMessageBubble(msg);
+            if (msg.sender === 'client') playChime(true);
+        } else {
+            if (msg.sender === 'client') playChime(true);
         }
-        window.activeMessageChannel = null;
-    }
+        renderContacts();
 
-    if (window.supabaseClient) {
-        window.activeMessageChannel = window.supabaseClient.channel('realtime:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
-                console.log('Realtime message received:', payload);
-                await window.appState.refresh();
-                renderContacts();
-                renderChat();
-            })
-            .subscribe();
-    }
+        // Re-generate smart reply when client sends a message
+        const currentClient = clients.find(c => c.id === activeClientId);
+        if (currentClient) updateAiSmartReply(currentClient);
+    };
 
     // Initial load state setting
     if (params && params.id && inboxContainer) {

@@ -27,7 +27,7 @@ window.init_signup = function(params) {
 
                 if (error) throw error;
 
-                alert('Account registration successful! Directing you to workspace onboarding.');
+                showToast('Account registration successful! Directing you to workspace onboarding.', 'success', 'Registration Successful');
                 
                 // Clear cached user role so it loads fresh on onboarding route
                 window.userRole = 'coach';
@@ -35,7 +35,7 @@ window.init_signup = function(params) {
                 window.location.hash = 'onboarding';
             } catch (err) {
                 console.error('Registration failed:', err.message);
-                alert(`Sign Up Failed: ${err.message || 'Error occurred during registration.'}`);
+                showToast(`Sign Up Failed: ${err.message || 'Error occurred during registration.'}`, 'error', 'Registration Failed');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
             }

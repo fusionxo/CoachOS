@@ -339,3 +339,14 @@ svg.preview-chart {
     position: relative;
     visibility: visible;
 }
+
+/* ==========================================
+   App-Side Toast Notification Styles
+   ========================================== */
+#app-toast-container {
+    perspective: 1000px;
+}
+
+.toast-progress-bar {
+    will-change: width;
+}

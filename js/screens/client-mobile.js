@@ -11,10 +11,110 @@ window.init_client_mobile = function(params) {
         goal: 'Fat Loss',
         created_at: new Date().toISOString()
     };
-    const client = (appState.clients && appState.clients.find(c => c.id === clientId)) 
+    const client = (appState.clients && appState.clients.find(c => c.id === clientId || c.user_id === clientId || (appState.user && c.user_id === appState.user.id))) 
                 || (appState.clients && appState.clients[0]) 
                 || fallbackClient;
     const coachSettings = appState.settings || {};
+
+    function playClientChime(isIncoming = true) {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const now = ctx.currentTime;
+            
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc1.type = 'sine';
+            osc2.type = 'sine';
+
+            if (isIncoming) {
+                osc1.frequency.setValueAtTime(659.25, now);
+                osc2.frequency.setValueAtTime(987.77, now + 0.08);
+            } else {
+                osc1.frequency.setValueAtTime(783.99, now);
+                osc2.frequency.setValueAtTime(1046.50, now + 0.05);
+            }
+
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc1.start(now);
+            osc2.start(now + 0.08);
+            osc1.stop(now + 0.25);
+            osc2.stop(now + 0.25);
+        } catch(e) {}
+    }
+
+    function appendClientMsgBubble(msg) {
+        const chatHistoryMount = document.getElementById('mobile-chat-history');
+        if (!chatHistoryMount) return;
+
+        // 1. Exact ID match check
+        if (msg.id && chatHistoryMount.querySelector(`[data-msg-id="${msg.id}"]`)) {
+            return;
+        }
+
+        // 2. Optimistic temp ID match -> update ID to real DB UUID without adding second bubble
+        const existingTemp = Array.from(chatHistoryMount.children).find(el => {
+            const textEl = el.querySelector('p');
+            return textEl && textEl.textContent.trim() === msg.text.trim() && el.getAttribute('data-msg-id')?.startsWith('temp-');
+        });
+
+        if (existingTemp && msg.id && !msg.id.startsWith('temp-')) {
+            existingTemp.setAttribute('data-msg-id', msg.id);
+            return;
+        }
+
+        const emptyMsg = chatHistoryMount.querySelector('p.text-center');
+        if (emptyMsg) emptyMsg.remove();
+
+        const isClient = msg.sender === 'client';
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('data-msg-id', msg.id || ('temp-' + Date.now()));
+        wrapper.className = `flex flex-col gap-0.5 max-w-[85%] ${isClient ? 'self-end items-end ml-auto' : 'items-start mr-auto'} transition-all animate-fadeIn`;
+
+        wrapper.innerHTML = `
+            <div class="px-3 py-2 text-xs rounded-xl shadow-md border ${
+                isClient ? 'bg-[#27272a] border-[#44483b] text-primary rounded-tr-none' : 'bg-[#18181b] border-[#27272a] text-on-surface rounded-tl-none'
+            }">
+                <p class="leading-relaxed">${msg.text}</p>
+            </div>
+            <span class="text-[9px] text-on-surface-variant font-mono ${isClient ? 'mr-1' : 'ml-1'}">${msg.time}</span>
+        `;
+        chatHistoryMount.appendChild(wrapper);
+        chatHistoryMount.scrollTo({ top: chatHistoryMount.scrollHeight, behavior: 'smooth' });
+    }
+
+    // Single central Realtime Message Received dispatcher for Athlete Mobile Portal
+    window.onRealtimeMessageReceived = (msg) => {
+        console.log('⚡ Athlete Mobile View Received Realtime Message:', msg);
+        const validIds = [client.id, client.user_id, clientId, appState.user?.id].filter(Boolean);
+        
+        if (validIds.includes(msg.conversation_id)) {
+            const isClientSender = (client && msg.sender_id === client.user_id) || msg.sender === 'client';
+            const sender = isClientSender ? 'client' : 'coach';
+            msg.sender = sender;
+
+            if (sender === 'coach') playClientChime(true);
+
+            const chatHistoryMount = document.getElementById('mobile-chat-history');
+            const isMessagesTabVisible = chatHistoryMount && chatHistoryMount.offsetParent !== null;
+
+            if (isMessagesTabVisible) {
+                appendClientMsgBubble(msg);
+            } else {
+                const unreadBadge = document.getElementById('client-msg-unread-badge');
+                if (unreadBadge) unreadBadge.classList.remove('hidden');
+            }
+        }
+    };
 
     // 1. Navigation Tab Switching
     const tabButtons = document.querySelectorAll('.btn-client-tab');
@@ -27,12 +127,12 @@ window.init_client_mobile = function(params) {
             
             // Update button styles
             tabButtons.forEach(b => {
-                b.className = 'flex flex-col items-center justify-center text-on-surface-variant px-1 py-1 flex-1 btn-client-tab cursor-pointer';
+                b.className = 'flex flex-col items-center justify-center text-on-surface-variant px-1 py-1 flex-1 btn-client-tab cursor-pointer relative';
                 const span = b.querySelector('.material-symbols-outlined');
                 if (span) span.style.variationSettings = '';
             });
 
-            btn.className = 'flex flex-col items-center justify-center text-[#ceee93] px-1 py-1 flex-1 btn-client-tab cursor-pointer';
+            btn.className = 'flex flex-col items-center justify-center text-[#ceee93] px-1 py-1 flex-1 btn-client-tab cursor-pointer relative';
             const activeSpan = btn.querySelector('.material-symbols-outlined');
             if (activeSpan) activeSpan.style.variationSettings = "'FILL' 1";
 
@@ -44,6 +144,12 @@ window.init_client_mobile = function(params) {
                     pane.classList.add('hidden');
                 }
             });
+
+            // Clear unread badge on messages tab click
+            if (targetTab === 'messages') {
+                const unreadBadge = document.getElementById('client-msg-unread-badge');
+                if (unreadBadge) unreadBadge.classList.add('hidden');
+            }
 
             // Re-render specific tabs on click
             if (targetTab === 'home') initHomeTab();
@@ -60,35 +166,58 @@ window.init_client_mobile = function(params) {
         if (welcomeEl) welcomeEl.textContent = `Good Morning, ${(client.name || 'Athlete').split(' ')[0]}`;
 
         const clientWorkouts = (appState.workouts || []).filter(w => w.clientId === client.id);
-        const todayWorkout = clientWorkouts[0] || (appState.workouts && appState.workouts[0]);
+        const scheduledWorkouts = clientWorkouts.filter(w => w.status !== 'Completed');
+        const todayWorkout = scheduledWorkouts.length > 0 ? scheduledWorkouts[0] : clientWorkouts[0];
 
         const todayNameEl = document.getElementById('mobile-today-workout-name');
         const todayBadgeEl = document.getElementById('mobile-today-workout-badge');
         const todayExCountEl = document.getElementById('mobile-today-ex-count');
         const startWorkoutBtn = document.getElementById('btn-mobile-start-today-workout');
+        const todayMetaEl = document.getElementById('mobile-today-workout-meta');
 
-        if (todayWorkout) {
+        let localCompleted = [];
+        try {
+            localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
+        } catch(e) {}
+
+        if (todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0) {
+            const isCompleted = todayWorkout.status === 'Completed' || localCompleted.includes(todayWorkout.id) || !!localStorage.getItem('coachos_workout_logs_' + todayWorkout.id);
             if (todayNameEl) todayNameEl.textContent = todayWorkout.name;
-            if (todayExCountEl) todayExCountEl.textContent = `${todayWorkout.exercises ? todayWorkout.exercises.length : 0} Exercises`;
+            if (todayExCountEl) todayExCountEl.textContent = `${todayWorkout.exercises.length} Exercises`;
             if (todayBadgeEl) {
-                const isCompleted = todayWorkout.status === 'Completed';
-                todayBadgeEl.textContent = isCompleted ? 'Completed' : 'Scheduled';
-                todayBadgeEl.className = isCompleted ? 'bg-[#22c55e]/20 text-[#22c55e] text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider' : 'bg-[#ceee93]/20 text-[#ceee93] text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider';
+                todayBadgeEl.textContent = isCompleted ? 'Completed 🔒' : 'Scheduled';
+                todayBadgeEl.className = isCompleted ? 'bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30 text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider' : 'bg-[#ceee93]/20 text-[#ceee93] text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider';
             }
             if (startWorkoutBtn) {
-                startWorkoutBtn.onclick = (e) => {
-                    if (e) e.preventDefault();
-                    window.location.hash = `workout-logger/${todayWorkout.id}`;
-                };
+                if (isCompleted) {
+                    startWorkoutBtn.disabled = true;
+                    startWorkoutBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">lock</span><span>Workout Completed & Locked 🔒</span>`;
+                    startWorkoutBtn.className = "w-full py-3 bg-[#18181b] border border-[#22c55e]/30 text-[#22c55e] font-extrabold text-xs rounded-lg flex items-center justify-center gap-2 cursor-not-allowed opacity-85 shadow-none";
+                    startWorkoutBtn.onclick = (e) => { if (e) e.preventDefault(); };
+                } else {
+                    startWorkoutBtn.disabled = false;
+                    startWorkoutBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">play_circle</span><span>Start Today's Workout</span>`;
+                    startWorkoutBtn.className = "w-full py-3 bg-[#d9f99d] text-[#09090b] font-extrabold text-xs rounded-lg flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(217,249,157,0.2)] transition-transform active:scale-95";
+                    startWorkoutBtn.onclick = (e) => {
+                        if (e) e.preventDefault();
+                        window.location.hash = `workout-logger/${todayWorkout.id}`;
+                    };
+                }
             }
         } else {
-            if (todayNameEl) todayNameEl.textContent = 'Lower Body Power Focus';
-            if (todayExCountEl) todayExCountEl.textContent = '4 Exercises';
-            if (todayBadgeEl) todayBadgeEl.textContent = 'Scheduled';
+            if (todayNameEl) todayNameEl.textContent = 'Rest Day (No Workout Scheduled)';
+            if (todayExCountEl) todayExCountEl.textContent = 'Active Recovery';
+            if (todayBadgeEl) {
+                todayBadgeEl.textContent = 'Rest Day';
+                todayBadgeEl.className = 'bg-[#3f3f46]/30 text-on-surface-variant text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider';
+            }
             if (startWorkoutBtn) {
+                startWorkoutBtn.disabled = false;
+                startWorkoutBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">fitness_center</span><span>View Training Schedule</span>`;
                 startWorkoutBtn.onclick = (e) => {
                     if (e) e.preventDefault();
-                    window.location.hash = 'workout-logger/demo-workout';
+                    const trainingTabBtn = document.querySelector('.btn-client-tab[data-tab="training"]');
+                    if (trainingTabBtn) trainingTabBtn.click();
                 };
             }
         }
@@ -115,9 +244,9 @@ window.init_client_mobile = function(params) {
                 const wInput = document.getElementById('mobile-checkin-weight');
                 const sInput = document.getElementById('mobile-checkin-sleep');
                 const stInput = document.getElementById('mobile-checkin-steps');
-                if (wInput) wInput.value = client.weight || '75.0';
-                if (sInput) sInput.value = '7.5';
-                if (stInput) stInput.value = '10000';
+                if (wInput) wInput.value = '';
+                if (sInput) sInput.value = '';
+                if (stInput) stInput.value = '';
             }
             if (checkinCompleteMsg) checkinCompleteMsg.classList.add('hidden');
             if (checkinStatusText) {
@@ -132,17 +261,31 @@ window.init_client_mobile = function(params) {
         if (streakText && streakBar) {
             const count = Math.min(7, clientCheckins.length);
             streakText.textContent = `${count}/7 Days`;
-            streakBar.style.width = `${(count / 7) * 100}%`;
+            streakBar.style.width = `${Math.round((count / 7) * 100)}%`;
         }
 
         // Handle checkin submit
         if (checkinForm) {
             checkinForm.onsubmit = async (e) => {
                 e.preventDefault();
-                const weight = document.getElementById('mobile-checkin-weight')?.value || '75.0';
-                const sleep = document.getElementById('mobile-checkin-sleep')?.value || '7.5';
+                const weight = document.getElementById('mobile-checkin-weight')?.value || client.weight || '75.0';
+                const sleep = document.getElementById('mobile-checkin-sleep')?.value || '7.0';
                 const steps = document.getElementById('mobile-checkin-steps')?.value || '10000';
                 const mood = document.getElementById('mobile-checkin-mood')?.value || '🙂';
+
+                const energy = parseInt(document.getElementById('mobile-checkin-energy')?.value || '4');
+
+                const existingTodayCheckin = (appState.checkins || []).find(c => c.clientId === client.id && c.date === todayStr);
+
+                const targetCals = client.target_calories || 2000;
+                const targetProtein = client.target_protein || 150;
+                const targetCarbs = client.target_carbs || 200;
+                const targetFats = client.target_fats || 60;
+
+                const calsVal = existingTodayCheckin && existingTodayCheckin.calories ? existingTodayCheckin.calories : targetCals;
+                const protVal = existingTodayCheckin && existingTodayCheckin.protein ? existingTodayCheckin.protein : targetProtein;
+                const carbsVal = existingTodayCheckin && existingTodayCheckin.carbs ? existingTodayCheckin.carbs : targetCarbs;
+                const fatsVal = existingTodayCheckin && existingTodayCheckin.fats ? existingTodayCheckin.fats : targetFats;
 
                 try {
                     if (client.id !== 'sandbox-client' && window.supabaseClient && appState.user) {
@@ -152,11 +295,11 @@ window.init_client_mobile = function(params) {
                             sleep,
                             steps,
                             mood,
-                            calories: 2200,
-                            protein: 160,
-                            carbs: 220,
-                            fats: 70,
-                            energy: 4,
+                            energy,
+                            calories: calsVal,
+                            protein: protVal,
+                            carbs: carbsVal,
+                            fats: fatsVal,
                             notes: 'Logged via Athlete Mobile check-in.'
                         });
                     } else {
@@ -168,12 +311,15 @@ window.init_client_mobile = function(params) {
                             sleep,
                             steps,
                             mood,
-                            calories: 2200,
-                            protein: 160
+                            energy,
+                            calories: calsVal,
+                            protein: protVal,
+                            carbs: carbsVal,
+                            fats: fatsVal
                         });
                     }
 
-                    alert('Daily check-in logged successfully!');
+                    showToast('Daily check-in logged successfully!', 'success', 'Check-in Saved');
                     if (checkinForm) checkinForm.classList.add('hidden');
                     if (checkinCompleteMsg) checkinCompleteMsg.classList.remove('hidden');
                     if (checkinStatusText) {
@@ -182,7 +328,7 @@ window.init_client_mobile = function(params) {
                     }
                 } catch (err) {
                     console.error('Check-in log save notice:', err);
-                    alert('Daily check-in logged successfully!');
+                    showToast('Daily check-in logged successfully!', 'success', 'Check-in Saved');
                     if (checkinForm) checkinForm.classList.add('hidden');
                     if (checkinCompleteMsg) checkinCompleteMsg.classList.remove('hidden');
                 }
@@ -231,7 +377,7 @@ window.init_client_mobile = function(params) {
             `;
         } else {
             clientWorkouts.forEach((w, idx) => {
-                const isCompleted = w.status === 'Completed';
+                const isCompleted = w.status === 'Completed' || localCompleted.includes(w.id) || !!localStorage.getItem('coachos_workout_logs_' + w.id);
                 const totalSets = (w.exercises || []).reduce((acc, e) => acc + (parseInt(e.sets) || 0), 0);
 
                 const item = document.createElement('div');
@@ -243,8 +389,8 @@ window.init_client_mobile = function(params) {
                             <h4 class="font-body-base text-primary font-bold text-sm mt-0.5">${w.name}</h4>
                         </div>
                         <span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase font-mono ${
-                            isCompleted ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[#ceee93]/20 text-[#ceee93]'
-                        }">${isCompleted ? 'Completed' : 'Scheduled'}</span>
+                            isCompleted ? 'bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30' : 'bg-[#ceee93]/20 text-[#ceee93]'
+                        }">${isCompleted ? 'Completed 🔒' : 'Scheduled'}</span>
                     </div>
 
                     <div class="flex items-center gap-3 text-xs text-on-surface-variant font-mono bg-[#09090b] px-3 py-1.5 rounded-lg border border-[#27272a]">
@@ -252,15 +398,21 @@ window.init_client_mobile = function(params) {
                         <span>⚡ ${totalSets} Sets</span>
                     </div>
 
-                    <button class="w-full py-2 bg-[#d9f99d] text-[#09090b] font-bold text-xs rounded transition-transform active:scale-95 btn-log-workout flex items-center justify-center gap-1">
-                        <span class="material-symbols-outlined text-[16px]">${isCompleted ? 'replay' : 'play_circle'}</span>
-                        <span>${isCompleted ? 'Review / Re-log Workout' : 'Start Workout Session'}</span>
+                    <button ${isCompleted ? 'disabled' : ''} class="w-full py-2 ${
+                        isCompleted 
+                        ? 'bg-[#18181b] border border-[#22c55e]/30 text-[#22c55e] opacity-75 cursor-not-allowed' 
+                        : 'bg-[#d9f99d] text-[#09090b] transition-transform active:scale-95'
+                    } font-bold text-xs rounded btn-log-workout flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">${isCompleted ? 'lock' : 'play_circle'}</span>
+                        <span>${isCompleted ? 'Training Completed & Locked 🔒' : 'Start Workout Session'}</span>
                     </button>
                 `;
 
-                item.querySelector('.btn-log-workout').onclick = () => {
-                    window.location.hash = `workout-logger/${w.id}`;
-                };
+                if (!isCompleted) {
+                    item.querySelector('.btn-log-workout').onclick = () => {
+                        window.location.hash = `workout-logger/${w.id}`;
+                    };
+                }
 
                 listMount.appendChild(item);
             });
@@ -269,20 +421,21 @@ window.init_client_mobile = function(params) {
 
     // 4. Dedicated Nutrition Tab Logic
     function renderNutritionTab() {
-        const clientCheckins = appState.checkins.filter(c => c.clientId === client.id).sort((a,b) => new Date(b.date) - new Date(a.date));
-        const latestCheckin = clientCheckins[0] || {};
+        const todayStr = new Date().toISOString().split('T')[0];
+        const clientCheckins = appState.checkins.filter(c => c.clientId === client.id).sort((a,b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        const todayCheckin = clientCheckins.find(c => c.date === todayStr);
 
-        const loggedCals = latestCheckin.calories || 1850;
-        const targetCals = 2200;
+        // Fetch targets set by coach for this client
+        const targetCals = client.target_calories || 2000;
+        const targetProtein = client.target_protein || 150;
+        const targetCarbs = client.target_carbs || 200;
+        const targetFats = client.target_fats || 60;
 
-        const loggedProtein = latestCheckin.protein || 140;
-        const targetProtein = 160;
-
-        const loggedCarbs = latestCheckin.carbs || 190;
-        const targetCarbs = 220;
-
-        const loggedFats = latestCheckin.fats || 55;
-        const targetFats = 70;
+        // Actual intake logged by client today
+        const loggedCals = todayCheckin && todayCheckin.calories !== null && todayCheckin.calories !== undefined ? todayCheckin.calories : 0;
+        const loggedProtein = todayCheckin && todayCheckin.protein !== null && todayCheckin.protein !== undefined ? todayCheckin.protein : 0;
+        const loggedCarbs = todayCheckin && todayCheckin.carbs !== null && todayCheckin.carbs !== undefined ? todayCheckin.carbs : 0;
+        const loggedFats = todayCheckin && todayCheckin.fats !== null && todayCheckin.fats !== undefined ? todayCheckin.fats : 0;
 
         // UI Mounts
         const calsValEl = document.getElementById('nutrition-cals-val');
@@ -309,34 +462,46 @@ window.init_client_mobile = function(params) {
         if (fatsValEl) fatsValEl.textContent = `${loggedFats}g / ${targetFats}g`;
         if (fatsBarEl) fatsBarEl.style.width = `${Math.min(100, Math.round((loggedFats / targetFats) * 100))}%`;
 
-        // Prepopulate Logger Form
+        // Form Inputs (Clean empty start, with coach target placeholders)
         const nutrCalsInput = document.getElementById('mobile-nutr-calories');
         const nutrProteinInput = document.getElementById('mobile-nutr-protein');
         const nutrCarbsInput = document.getElementById('mobile-nutr-carbs');
         const nutrFatsInput = document.getElementById('mobile-nutr-fats');
 
-        if (nutrCalsInput) nutrCalsInput.value = loggedCals;
-        if (nutrProteinInput) nutrProteinInput.value = loggedProtein;
-        if (nutrCarbsInput) nutrCarbsInput.value = loggedCarbs;
-        if (nutrFatsInput) nutrFatsInput.value = loggedFats;
+        if (nutrCalsInput) {
+            nutrCalsInput.value = todayCheckin && todayCheckin.calories !== null && todayCheckin.calories !== undefined ? todayCheckin.calories : '';
+            nutrCalsInput.placeholder = `Goal: ${targetCals} kcal`;
+        }
+        if (nutrProteinInput) {
+            nutrProteinInput.value = todayCheckin && todayCheckin.protein !== null && todayCheckin.protein !== undefined ? todayCheckin.protein : '';
+            nutrProteinInput.placeholder = `Goal: ${targetProtein}g`;
+        }
+        if (nutrCarbsInput) {
+            nutrCarbsInput.value = todayCheckin && todayCheckin.carbs !== null && todayCheckin.carbs !== undefined ? todayCheckin.carbs : '';
+            nutrCarbsInput.placeholder = `Goal: ${targetCarbs}g`;
+        }
+        if (nutrFatsInput) {
+            nutrFatsInput.value = todayCheckin && todayCheckin.fats !== null && todayCheckin.fats !== undefined ? todayCheckin.fats : '';
+            nutrFatsInput.placeholder = `Goal: ${targetFats}g`;
+        }
 
         // Form Submit
         const nutrForm = document.getElementById('mobile-nutrition-form');
         if (nutrForm) {
             nutrForm.onsubmit = async (e) => {
                 e.preventDefault();
-                const cals = parseInt(nutrCalsInput.value) || 2000;
-                const prot = parseInt(nutrProteinInput.value) || 150;
-                const carbs = parseInt(nutrCarbsInput.value) || 200;
-                const fats = parseInt(nutrFatsInput.value) || 60;
+                const cals = parseInt(nutrCalsInput.value) || 0;
+                const prot = parseInt(nutrProteinInput.value) || 0;
+                const carbs = parseInt(nutrCarbsInput.value) || 0;
+                const fats = parseInt(nutrFatsInput.value) || 0;
 
                 try {
                     await appState.saveCheckIn(client.id, {
-                        date: new Date().toISOString().split('T')[0],
-                        weight: client.weight || 75.0,
-                        sleep: 7.5,
-                        steps: 10000,
-                        mood: '🙂',
+                        date: todayStr,
+                        weight: todayCheckin ? todayCheckin.weight : (client.weight || 75.0),
+                        sleep: todayCheckin ? todayCheckin.sleep : 7.0,
+                        steps: todayCheckin ? todayCheckin.steps : 10000,
+                        mood: todayCheckin ? todayCheckin.mood : '🙂',
                         calories: cals,
                         protein: prot,
                         carbs: carbs,
@@ -344,10 +509,10 @@ window.init_client_mobile = function(params) {
                         notes: 'Nutrition log update.'
                     });
 
-                    alert('Nutrition log saved successfully!');
+                    showToast('Nutrition log saved successfully!', 'success', 'Nutrition Logged');
                     renderNutritionTab();
                 } catch (err) {
-                    alert(`Failed to save nutrition log: ${err.message}`);
+                    showToast(`Failed to save nutrition log: ${err.message}`, 'error', 'Save Error');
                 }
             };
         }
@@ -361,7 +526,55 @@ window.init_client_mobile = function(params) {
 
         const clientCheckins = appState.checkins.filter(c => c.clientId === client.id).sort((a,b) => new Date(b.date) - new Date(a.date));
         const clientMeasures = appState.measurements.filter(m => m.clientId === client.id).sort((a,b) => new Date(b.date) - new Date(a.date));
-        const clientPhotos = appState.progressPhotos.filter(p => p.clientId === client.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+        const clientPhotos = appState.progressPhotos.filter(p => p.clientId === client.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        // Weight Log Form & Toggle UI
+        const btnLogWeight = document.getElementById('btn-mobile-log-weight');
+        const btnCloseLogWeight = document.getElementById('btn-close-log-weight');
+        const logWeightContainer = document.getElementById('mobile-log-weight-container');
+        const weightForm = document.getElementById('mobile-weight-form');
+        const weightInput = document.getElementById('mobile-input-weight');
+        const weightDateInput = document.getElementById('mobile-input-weight-date');
+
+        if (btnLogWeight && logWeightContainer) {
+            btnLogWeight.onclick = () => {
+                logWeightContainer.classList.toggle('hidden');
+                if (weightInput) weightInput.value = client.weight || '75.0';
+                if (weightDateInput) weightDateInput.value = new Date().toISOString().split('T')[0];
+            };
+        }
+
+        if (btnCloseLogWeight && logWeightContainer) {
+            btnCloseLogWeight.onclick = () => {
+                logWeightContainer.classList.add('hidden');
+            };
+        }
+
+        if (weightForm) {
+            weightForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const newWeight = weightInput ? weightInput.value : client.weight;
+                const logDate = weightDateInput ? weightDateInput.value : new Date().toISOString().split('T')[0];
+
+                try {
+                    await appState.saveCheckIn(client.id, {
+                        date: logDate,
+                        weight: newWeight,
+                        sleep: 7.0,
+                        steps: 10000,
+                        mood: '🙂',
+                        notes: 'Logged via Progress tab Log Weight button.'
+                    });
+
+                    client.weight = newWeight.toString();
+                    showToast(`Weight (${newWeight} kg) logged successfully!`, 'success', 'Weight Logged');
+                    if (logWeightContainer) logWeightContainer.classList.add('hidden');
+                    renderProgressTab();
+                } catch (err) {
+                    showToast(`Failed to log weight: ${err.message}`, 'error', 'Error');
+                }
+            };
+        }
 
         if (weightLogsMount) {
             weightLogsMount.innerHTML = '';
@@ -401,66 +614,141 @@ window.init_client_mobile = function(params) {
             }
         }
 
+        // Photos Gallery — Before is earliest 'before' tagged, Current is latest 'front' tagged
         if (photosGalleryMount) {
             photosGalleryMount.innerHTML = '';
-            if (clientPhotos.length === 0) {
-                photosGalleryMount.innerHTML = `<p class="col-span-2 text-[10px] text-on-surface-variant italic py-3 text-center">No progress photos recorded.</p>`;
+
+            // Find before photo (pose_type='before') and current photo (pose_type='front')
+            const beforePhotos = clientPhotos.filter(p => p.before);
+            const currentPhotos = clientPhotos.filter(p => p.front);
+
+            const beforePhoto = beforePhotos.length > 0 ? beforePhotos[0] : null;
+            const currentPhoto = currentPhotos.length > 0 ? currentPhotos[currentPhotos.length - 1] : null;
+
+            const beforeImg = beforePhoto ? beforePhoto.before : null;
+            const currentImg = currentPhoto ? currentPhoto.front : null;
+
+            if (!beforeImg && !currentImg) {
+                photosGalleryMount.innerHTML = `<p class="col-span-2 text-[10px] text-on-surface-variant italic py-3 text-center">Upload your Before & Current photos below.</p>`;
             } else {
-                const earliest = clientPhotos[0];
-                const latest = clientPhotos[clientPhotos.length - 1];
-
-                const beforeImg = earliest.front || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBcNme_YnSQkYty_V5lL6HrAtsgHdpKdKQ-tuwD-dRPRxEdM6EK98Wklg_C2-TjavYfK-ANi8leJ5CRtTex0ka2YIRLgEqT1hRhcrXB7yy1_atVlJqvlsuWL1_1uO7QZ6WSWWbezaPLePg3aQktN-y5G3He4lI9Tx43WT8QtgHzwx4E2rAyuXQWpkVUJY3W71R57pT2LeW96wYD9CDxcR0J_xEwKS2hCynh_7x3k_pwkZ7X5cfAWq8oyOpqa_UUUsuPuG0tWv1tVIg';
-                const afterImg = latest.front || 'https://lh3.googleusercontent.com/aida-public/AB6AXuC3rJlWEZT_wH8Bvk3fZG4EeMVDY7o7bmFYzbsN1yRtEOMs5NsPDp_E-8ut46VjcyUV-rjkpbH8W3aVbPs3WvFnCLm6brnjNV8ciVfdUNKdW3Gk7bgf0QlcFCYAqltMimkx-JjUW1_sYwUyYJoKG5WrEma9tebvNk8nZFYrpvpTzbxZU_WBPrB1ykTGlCiMb21S4eKC7JjxvW9jL5BZqa-5VjCpzcHTKgq7mNuyCIloRQ-UUDOlBcjqt65AdSqlhy_Z6Vdnu1Tui8U';
-
                 photosGalleryMount.innerHTML = `
-                    <div class="relative rounded overflow-hidden h-32 border border-[#27272a]">
-                        <img alt="Before" class="w-full h-full object-cover grayscale opacity-70" src="${beforeImg}">
+                    <div class="relative rounded overflow-hidden h-32 border border-[#27272a] bg-[#09090b] flex items-center justify-center">
+                        ${beforeImg ? `<img alt="Before" class="w-full h-full object-cover grayscale opacity-70" src="${beforeImg}">` : `<div class="flex flex-col items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[24px] opacity-40">image_not_supported</span><span class="text-[9px] italic opacity-60">No before photo</span></div>`}
                         <span class="absolute bottom-1 left-1 bg-black/60 px-1 rounded text-[8px] text-white">Before</span>
                     </div>
-                    <div class="relative rounded overflow-hidden h-32 border border-[#27272a]">
-                        <img alt="Current" class="w-full h-full object-cover" src="${afterImg}">
-                        <span class="absolute bottom-1 right-1 bg-[#d9f99d] px-1 rounded text-[8px] text-[#09090b] font-bold">Latest</span>
+                    <div class="relative rounded overflow-hidden h-32 border border-[#27272a] bg-[#09090b] flex items-center justify-center">
+                        ${currentImg ? `<img alt="Current" class="w-full h-full object-cover" src="${currentImg}">` : `<div class="flex flex-col items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[24px] opacity-40">add_a_photo</span><span class="text-[9px] italic opacity-60">No current photo</span></div>`}
+                        <span class="absolute bottom-1 right-1 bg-[#d9f99d] px-1 rounded text-[8px] text-[#09090b] font-bold">Current</span>
                     </div>
                 `;
             }
 
-            const photosCard = photosGalleryMount.parentNode;
-            let uploadBtn = photosCard.querySelector('.btn-mobile-upload-photo');
-            if (!uploadBtn) {
-                uploadBtn = document.createElement('button');
-                uploadBtn.className = 'w-full py-2 bg-[#d9f99d] text-[#09090b] font-bold text-xs rounded transition-transform active:scale-95 btn-mobile-upload-photo flex items-center justify-center gap-1.5 mt-3';
-                uploadBtn.innerHTML = `<span class="material-symbols-outlined text-[14px]">add_a_photo</span> Upload Progress Photo`;
-                photosCard.appendChild(uploadBtn);
+            // Wire upload buttons
+            function wireUploadBtn(btnId, poseType) {
+                const uploadBtn = document.getElementById(btnId);
+                if (!uploadBtn) return;
+
+                uploadBtn.onclick = () => {
+                    const fileEl = document.createElement('input');
+                    fileEl.type = 'file';
+                    fileEl.accept = 'image/png, image/jpeg, image/jpg, image/webp';
+                    fileEl.style.display = 'none';
+                    document.body.appendChild(fileEl);
+
+                    fileEl.click();
+
+                    fileEl.onchange = async () => {
+                        if (fileEl.files.length === 0) return;
+                        const file = fileEl.files[0];
+                        const originalText = uploadBtn.innerHTML;
+                        uploadBtn.disabled = true;
+                        uploadBtn.innerHTML = `<span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span> Uploading...`;
+                        try {
+                            await appState.uploadProgressPhoto(client.id, file, poseType);
+                            showToast(`${poseType === 'before' ? 'Before' : 'Current'} photo uploaded!`, 'success', 'Photo Uploaded');
+                            renderProgressTab();
+                        } catch (err) {
+                            console.error(err);
+                            showToast(`Upload failed: ${err.message}`, 'error', 'Upload Error');
+                        } finally {
+                            uploadBtn.disabled = false;
+                            uploadBtn.innerHTML = originalText;
+                            fileEl.remove();
+                        }
+                    };
+                };
             }
 
-            uploadBtn.onclick = () => {
-                const fileEl = document.createElement('input');
-                fileEl.type = 'file';
-                fileEl.accept = 'image/png, image/jpeg, image/jpg, image/webp';
-                fileEl.style.display = 'none';
-                document.body.appendChild(fileEl);
+            wireUploadBtn('btn-upload-before-photo', 'before');
+            wireUploadBtn('btn-upload-current-photo', 'front');
+        }
 
-                fileEl.click();
+        // Measurements form
+        const measureForm = document.getElementById('mobile-measurements-form');
+        if (measureForm) {
+            measureForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const waist = document.getElementById('mobile-measure-waist')?.value;
+                const chest = document.getElementById('mobile-measure-chest')?.value;
+                const arms = document.getElementById('mobile-measure-arms')?.value;
+                const legs = document.getElementById('mobile-measure-legs')?.value;
 
-                fileEl.onchange = async () => {
-                    if (fileEl.files.length === 0) return;
-                    const file = fileEl.files[0];
-                    const originalText = uploadBtn.innerHTML;
-                    uploadBtn.disabled = true;
-                    uploadBtn.innerHTML = `<span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> Uploading...`;
-                    try {
-                        await appState.uploadProgressPhoto(client.id, file, 'front');
-                        alert('Progress photo uploaded successfully!');
-                        renderProgressTab();
-                    } catch (err) {
-                        console.error(err);
-                        alert(`Upload failed: ${err.message}`);
-                    } finally {
-                        uploadBtn.disabled = false;
-                        uploadBtn.innerHTML = originalText;
-                        fileEl.remove();
+                try {
+                    await appState.saveMeasurements(client.id, waist, chest, arms, legs);
+                    showToast('Measurements saved successfully!', 'success', 'Measurements Logged');
+                    measureForm.reset();
+                    renderProgressTab();
+                } catch (err) {
+                    showToast(`Failed to save measurements: ${err.message}`, 'error', 'Save Error');
+                }
+            };
+        }
+
+        // Wellness form (Sleep / Steps / Mood / Energy)
+        const wellnessForm = document.getElementById('mobile-wellness-form');
+        const wellnessSavedMsg = document.getElementById('wellness-saved-msg');
+        if (wellnessForm) {
+            // Pre-fill with today's existing data if any
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayCheckin = clientCheckins.find(c => c.date === todayStr);
+            const sleepInput = document.getElementById('mobile-wellness-sleep');
+            const stepsInput = document.getElementById('mobile-wellness-steps');
+            const moodSelect = document.getElementById('mobile-wellness-mood');
+            const energySelect = document.getElementById('mobile-wellness-energy');
+            if (sleepInput && todayCheckin && todayCheckin.sleep) sleepInput.value = todayCheckin.sleep;
+            if (stepsInput && todayCheckin && todayCheckin.steps) stepsInput.value = todayCheckin.steps;
+            if (moodSelect && todayCheckin && todayCheckin.mood) moodSelect.value = todayCheckin.mood;
+            if (energySelect && todayCheckin && todayCheckin.energy) energySelect.value = todayCheckin.energy;
+
+            wellnessForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const sleepVal = parseFloat(sleepInput?.value) || 7.0;
+                const stepsVal = parseInt(stepsInput?.value) || 10000;
+                const moodVal = moodSelect?.value || '🙂';
+                const energyVal = parseInt(energySelect?.value || '4');
+
+                try {
+                    await appState.saveCheckIn(client.id, {
+                        date: todayStr,
+                        weight: todayCheckin ? todayCheckin.weight : (client.weight || 75.0),
+                        sleep: sleepVal,
+                        steps: stepsVal,
+                        mood: moodVal,
+                        energy: energyVal,
+                        calories: todayCheckin ? todayCheckin.calories : null,
+                        protein: todayCheckin ? todayCheckin.protein : null,
+                        carbs: todayCheckin ? todayCheckin.carbs : null,
+                        fats: todayCheckin ? todayCheckin.fats : null,
+                        notes: 'Wellness log update via Progress tab.'
+                    });
+                    showToast('Wellness data saved successfully!', 'success', 'Wellness Logged');
+                    if (wellnessSavedMsg) {
+                        wellnessSavedMsg.classList.remove('hidden');
+                        setTimeout(() => wellnessSavedMsg.classList.add('hidden'), 3000);
                     }
-                };
+                } catch (err) {
+                    showToast(`Failed to save wellness log: ${err.message}`, 'error', 'Save Error');
+                }
             };
         }
     }
@@ -505,25 +793,51 @@ window.init_client_mobile = function(params) {
             }, 50);
         }
 
+        function appendClientMsgBubble(msg) {
+            if (!chatHistoryMount) return;
+            const emptyMsg = chatHistoryMount.querySelector('p.text-center');
+            if (emptyMsg) emptyMsg.remove();
+
+            const isClient = msg.sender === 'client';
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex flex-col gap-0.5 max-w-[85%] ${isClient ? 'self-end items-end ml-auto' : 'items-start mr-auto'}`;
+
+            wrapper.innerHTML = `
+                <div class="px-3 py-2 text-xs rounded-xl shadow-md border ${
+                    isClient ? 'bg-[#27272a] border-[#44483b] text-primary rounded-tr-none' : 'bg-[#18181b] border-[#27272a] text-on-surface rounded-tl-none'
+                }">
+                    <p class="leading-relaxed">${msg.text}</p>
+                </div>
+                <span class="text-[9px] text-on-surface-variant font-mono ${isClient ? 'mr-1' : 'ml-1'}">${msg.time}</span>
+            `;
+            chatHistoryMount.appendChild(wrapper);
+            chatHistoryMount.scrollTo({ top: chatHistoryMount.scrollHeight, behavior: 'smooth' });
+        }
+
         async function sendMsg() {
             if (!chatInput) return;
             const text = chatInput.value.trim();
             if (!text) return;
 
-            const originalText = chatInput.value;
             chatInput.value = '';
-            chatInput.disabled = true;
+            chatInput.focus();
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const localMsg = {
+                id: 'temp-' + Date.now(),
+                sender: 'client',
+                text: text,
+                time: timeStr
+            };
+
+            // Instant optimistic append
+            appendClientMsgBubble(localMsg);
 
             try {
                 await appState.sendMessage(client.id, 'client', text);
-                populateHistory();
             } catch (err) {
                 console.error(err);
-                alert(`Failed to send message: ${err.message}`);
-                chatInput.value = originalText;
-            } finally {
-                chatInput.disabled = false;
-                chatInput.focus();
+                showToast(`Failed to send message: ${err.message}`, 'error', 'Message Error');
             }
         }
 

@@ -118,16 +118,16 @@ window.init_invitation = function(params) {
     if (acceptBtn) {
         acceptBtn.onclick = async () => {
             if (!nameInput.value.trim()) {
-                alert('Please enter your Name.');
+                showToast('Please enter your Name.', 'error', 'Validation Error');
                 return;
             }
             if (!passwordInput || !passwordInput.value.trim()) {
-                alert('Please choose a password.');
+                showToast('Please choose a password.', 'error', 'Validation Error');
                 return;
             }
 
             if (!client || !inviteDetails) {
-                alert('Onboarding data not loaded.');
+                showToast('Onboarding data not loaded.', 'error', 'Invitation Error');
                 return;
             }
 
@@ -163,12 +163,12 @@ window.init_invitation = function(params) {
                 if (rpcError) throw rpcError;
 
                 // Success
-                alert('Invitation accepted successfully! Redirecting you to the athlete portal.');
+                showToast('Invitation accepted successfully! Redirecting you to the athlete portal.', 'success', 'Invitation Accepted');
                 window.userRole = 'client';
                 window.location.hash = `client-mobile/${client.id}`;
             } catch (err) {
                 console.error('Failed to complete onboarding:', err);
-                alert(`Onboarding Failed: ${err.message}`);
+                showToast(`Onboarding Failed: ${err.message}`, 'error', 'Onboarding Error');
                 acceptBtn.disabled = false;
                 acceptBtn.innerHTML = originalBtnText;
             }

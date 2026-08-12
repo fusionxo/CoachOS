@@ -195,7 +195,7 @@ window.init_templates = function(params) {
                         <button class="py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary text-[11px] font-medium transition-colors btn-edit">Edit</button>
                         <button class="py-1.5 rounded bg-[#d9f99d] text-[#09090b] font-bold text-[11px] transition-transform active:scale-95 btn-assign flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">person_add</span> Assign</button>
                     </div>
-                `;     `;
+                `;
 
                 // Wire Card Action Buttons
                 card.querySelector('.btn-preview').onclick = () => openPreviewTemplate(t);
@@ -205,17 +205,19 @@ window.init_templates = function(params) {
                     try {
                         await appState.duplicateTemplate(t.id);
                         renderTemplates();
+                        showToast(`Template "${t.name}" duplicated successfully!`, 'success', 'Template Duplicated');
                     } catch (err) {
-                        alert(`Failed to duplicate: ${err.message}`);
+                        showToast(`Failed to duplicate: ${err.message}`, 'error', 'Duplicate Error');
                     }
                 };
                 card.querySelector('.btn-delete').onclick = async () => {
-                    if (confirm(`Delete template "${t.name}"?`)) {
+                    if (await showConfirm(`Delete template "${t.name}"?`, 'Delete Template', 'Delete', 'Cancel')) {
                         try {
                             await appState.deleteTemplate(t.id);
                             renderTemplates();
+                            showToast(`Template "${t.name}" deleted successfully!`, 'success', 'Template Deleted');
                         } catch (err) {
-                            alert(`Failed to delete: ${err.message}`);
+                            showToast(`Failed to delete: ${err.message}`, 'error', 'Delete Error');
                         }
                     }
                 };
@@ -339,8 +341,9 @@ window.init_templates = function(params) {
                 });
                 closeModals();
                 renderTemplates();
+                showToast(`Template "${name}" saved successfully!`, 'success', 'Template Saved');
             } catch (err) {
-                alert(`Failed to save template: ${err.message}`);
+                showToast(`Failed to save template: ${err.message}`, 'error', 'Save Error');
             }
         };
     }
@@ -372,14 +375,14 @@ window.init_templates = function(params) {
                 try {
                     const newWorkout = await appState.assignTemplateToClient(templateId, clientId);
                     closeModals();
-                    alert(`Workout template successfully assigned to client!`);
+                    showToast(`Workout template successfully assigned to client!`, 'success', 'Template Assigned');
                     if (newWorkout) {
                         window.location.hash = `builder/${newWorkout.id}`;
                     } else {
                         window.location.hash = 'builder';
                     }
                 } catch (err) {
-                    alert(`Failed to assign template: ${err.message}`);
+                    showToast(`Failed to assign template: ${err.message}`, 'error', 'Assign Error');
                 }
             }
         };

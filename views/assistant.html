@@ -47,9 +47,15 @@
 <div class="flex-1 p-unit-md overflow-y-auto custom-scroll flex flex-col gap-4 bg-[#09090b]/50">
 <!-- Dynamically loaded messages -->
 </div>
-<div class="p-unit-md border-t border-outline-variant bg-surface">
+<div class="p-unit-md border-t border-outline-variant bg-surface space-y-2">
+<div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pb-1 text-[10px]">
+    <button type="button" class="btn-ai-chip px-2.5 py-1 rounded-full bg-[#27272a] text-[#d9f99d] border border-[#ceee93]/30 hover:bg-[#3f3f46] transition-all whitespace-nowrap">📊 360° Roster Audit</button>
+    <button type="button" class="btn-ai-chip px-2.5 py-1 rounded-full bg-[#27272a] text-on-surface hover:bg-[#3f3f46] transition-all whitespace-nowrap">🔍 Analyze Plateaus</button>
+    <button type="button" class="btn-ai-chip px-2.5 py-1 rounded-full bg-[#27272a] text-on-surface hover:bg-[#3f3f46] transition-all whitespace-nowrap">💬 Check Inbox Messages</button>
+    <button type="button" class="btn-ai-chip px-2.5 py-1 rounded-full bg-[#27272a] text-on-surface hover:bg-[#3f3f46] transition-all whitespace-nowrap">📉 Calorie & Step Adjustments</button>
+</div>
 <div class="relative">
-<input class="w-full input-inset rounded-lg py-3 pl-4 pr-12 font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant transition-all" placeholder="Ask AI about your clients..." type="text">
+<input class="w-full input-inset rounded-lg py-3 pl-4 pr-12 font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant transition-all" placeholder="Ask your 2nd Coach AI about any client..." type="text">
 <button class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary rounded-md text-on-primary hover:opacity-90 transition-opacity">
 <span class="material-symbols-outlined text-[18px]">send</span>
 </button>

@@ -92,6 +92,7 @@ window.init_settings = function(params) {
                 }
 
                 // Show success alert
+                showToast('Settings saved successfully!', 'success', 'Settings Saved');
                 if (successMsg) {
                     successMsg.classList.remove('hidden');
                     successMsg.classList.add('inline-flex');
@@ -101,7 +102,7 @@ window.init_settings = function(params) {
                     }, 3000);
                 }
             } catch (err) {
-                alert(`Failed to save settings: ${err.message}`);
+                showToast(`Failed to save settings: ${err.message}`, 'error', 'Save Error');
             } finally {
                 if (saveBtn) {
                     saveBtn.disabled = false;
@@ -113,16 +114,16 @@ window.init_settings = function(params) {
 
     if (clearDbBtn) {
         clearDbBtn.onclick = async function() {
-            if (confirm('Are you sure you want to completely wipe all coach workspace data? This cannot be undone.')) {
+            if (await showConfirm('Are you sure you want to completely wipe all coach workspace data? This cannot be undone.', 'Wipe Workspace Data', 'Wipe Data', 'Cancel')) {
                 try {
                     await window.appState.toggleDemoMode(false);
                     if (window.router && typeof window.router.updateCoachHeaderDetails === 'function') {
                         window.router.updateCoachHeaderDetails();
                     }
-                    alert('Database successfully reset to clean production mode!');
-                    location.reload();
+                    showToast('Database successfully reset to clean production mode!', 'success', 'Database Reset');
+                    setTimeout(() => location.reload(), 1000);
                 } catch (err) {
-                    alert(`Failed to reset: ${err.message}`);
+                    showToast(`Failed to reset: ${err.message}`, 'error', 'Reset Error');
                 }
             }
         };

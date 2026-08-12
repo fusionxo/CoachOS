@@ -71,7 +71,7 @@ window.init_onboarding = function(params) {
             const nameInput = document.getElementById('onboarding-coach-name');
             const bizInput = document.getElementById('onboarding-business-name');
             if (!nameInput.value.trim() || !bizInput.value.trim()) {
-                alert('Please enter both Coach Name and Business Name to continue.');
+                showToast('Please enter both Coach Name and Business Name to continue.', 'error', 'Validation Error');
                 return;
             }
         }
@@ -106,11 +106,12 @@ window.init_onboarding = function(params) {
                     if (window.router && typeof window.router.updateCoachHeaderDetails === 'function') {
                         window.router.updateCoachHeaderDetails();
                     }
+                    showToast('Workspace created successfully!', 'success', 'Workspace Ready');
                     // Redirect to Dashboard
                     window.location.hash = 'dashboard';
                 } catch (err) {
                     console.error('Failed to create workspace:', err);
-                    alert(`Onboarding Error: ${err.message}`);
+                    showToast(`Onboarding Error: ${err.message}`, 'error', 'Workspace Error');
                     btnNext.disabled = false;
                     btnNext.innerHTML = `
                         Create Workspace

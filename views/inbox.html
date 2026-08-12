@@ -36,9 +36,9 @@
     </aside>
 
     <!-- Middle Column: Chat Interface -->
-    <section class="inbox-chat-pane flex-1 flex flex-col h-full bg-[#09090b] relative z-10 overflow-hidden">
+    <section class="inbox-chat-pane flex-1 flex flex-col h-full min-h-0 bg-[#09090b] relative z-10 overflow-hidden">
         <!-- Chat Header -->
-        <header class="h-[80px] border-b border-[#27272a] bg-[#18181b]/80 backdrop-blur-md flex items-center justify-between px-unit-lg shrink-0">
+        <header class="h-[70px] border-b border-[#27272a] bg-[#18181b]/80 backdrop-blur-md flex items-center justify-between px-unit-lg shrink-0">
             <div class="flex items-center gap-unit-md">
                 <button class="text-on-surface-variant p-2 -ml-2 rounded-lg hover:bg-surface-container btn-inbox-back flex items-center justify-center">
                     <span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
@@ -64,8 +64,8 @@
             </div>
         </header>
 
-        <!-- Message History -->
-        <div class="flex-grow overflow-y-auto p-unit-lg space-y-unit-lg flex flex-col">
+        <!-- Message History (Middle Scrolling Zone) -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-unit-lg space-y-unit-lg flex flex-col">
             <!-- Date Divider -->
             <div class="flex items-center justify-center relative my-unit-sm shrink-0">
                 <hr class="w-full border-[#27272a] absolute">
@@ -109,8 +109,8 @@
             </div>
         </div>
 
-        <!-- Input Area -->
-        <div class="p-unit-lg bg-[#18181b]/80 backdrop-blur-md border-t border-[#27272a] shrink-0">
+        <!-- Input Area (Pinned Bottom Bar) -->
+        <div class="p-unit-lg bg-[#18181b] border-t border-[#27272a] shrink-0 sticky bottom-0 z-20">
             <div class="flex items-end gap-unit-sm bg-[#09090b] border border-[#27272a] rounded-xl p-2 focus-within:border-[#6366f1] focus-within:ring-2 focus-within:ring-[#6366f1]/20 transition-all">
                 <button class="p-2 text-on-surface-variant hover:text-primary transition-colors shrink-0">
                     <span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>

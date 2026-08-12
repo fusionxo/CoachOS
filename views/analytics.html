@@ -178,57 +178,34 @@
     <!-- Check-ins Tab -->
     <div id="tab-pane-checkins" class="tab-pane hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Log Check-in Form -->
+            <!-- Set Client Targets Form -->
             <div class="lg:col-span-1 card-base border border-base rounded-xl p-unit-md h-fit">
-                <h3 class="font-headline-md text-primary font-bold mb-4">Log Daily Check-in</h3>
-                <form id="checkin-log-form" class="space-y-3">
+                <h3 class="font-headline-md text-primary font-bold mb-1">Coach Daily Goals & Targets</h3>
+                <p class="text-xs text-on-surface-variant mb-4">Set daily nutrition & step goals. Your client will see and target these on their app.</p>
+                <form id="coach-targets-form" class="space-y-3">
                     <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Date</label>
-                        <input type="date" id="checkin-date" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Daily Calorie Target (kcal)</label>
+                        <input type="number" id="target-calories" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="2000" required>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Weight (kg)</label>
-                            <input type="number" step="0.1" id="checkin-weight" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Sleep (hrs)</label>
-                            <input type="number" step="0.5" id="checkin-sleep" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Steps</label>
-                            <input type="number" id="checkin-steps" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Mood</label>
-                            <select id="checkin-mood" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface">
-                                <option value="🙂">🙂 Happy / Good</option>
-                                <option value="😐">😐 Neutral / Okay</option>
-                                <option value="😞">😞 Tired / Stressed</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Calories (kcal)</label>
-                            <input type="number" id="checkin-calories" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
-                        </div>
+                    <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Protein (g)</label>
-                            <input type="number" id="checkin-protein" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" required>
+                            <input type="number" id="target-protein" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="150" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Carbs (g)</label>
+                            <input type="number" id="target-carbs" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="200" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Fats (g)</label>
+                            <input type="number" id="target-fats" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="60" required>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Energy (1-5)</label>
-                        <input type="range" id="checkin-energy" min="1" max="5" value="3" class="w-full accent-primary-container">
+                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Daily Step Goal (steps)</label>
+                        <input type="number" id="target-steps" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="10000" required>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Daily Notes</label>
-                        <textarea id="checkin-notes" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface h-16 resize-none" placeholder="How did training/meals feel?"></textarea>
-                    </div>
-                    <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] text-xs font-semibold rounded hover:opacity-95 transition-opacity">Save Check-in</button>
+                    <button type="submit" class="w-full py-2.5 bg-[#d9f99d] text-[#09090b] text-xs font-bold rounded hover:opacity-95 transition-opacity">Save Client Targets</button>
                 </form>
             </div>
             <!-- Check-ins History Table -->
@@ -265,39 +242,38 @@
         <div id="analytics-workouts-list" class="space-y-4">
             <!-- Populated dynamically -->
         </div>
+
+        <!-- Completed Session Logs Section for Coach -->
+        <div class="card-base border border-[#ceee93]/30 rounded-xl p-unit-md space-y-4 mt-6">
+            <div class="flex items-center justify-between border-b border-[#27272a] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#ceee93] text-lg">fact_check</span>
+                    <div>
+                        <h4 class="font-headline-md text-primary font-bold text-base">Completed Training Session Logs</h4>
+                        <p class="text-xs text-on-surface-variant">Review exact set-by-set load, reps, and exercise performance logged by the client.</p>
+                    </div>
+                </div>
+                <span id="completed-session-count-badge" class="bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30 px-2.5 py-1 rounded text-xs font-bold font-mono">0 Logged Sessions</span>
+            </div>
+            <div id="analytics-session-logs-mount" class="space-y-3">
+                <!-- Populated dynamically with completed workout cards -->
+            </div>
+        </div>
     </div>
 
     <!-- Progress Photos Tab -->
     <div id="tab-pane-photos" class="tab-pane hidden space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Photo Upload Box -->
-            <div class="lg:col-span-1 card-base border border-base rounded-xl p-unit-md space-y-4">
-                <h3 class="font-headline-md text-primary font-bold">Upload Progress Photos</h3>
-                <form id="photos-upload-form" class="space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Front Photo URL</label>
-                        <input type="text" id="photo-front-url" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="https://example.com/front.jpg">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Side Photo URL</label>
-                        <input type="text" id="photo-side-url" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="https://example.com/side.jpg">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Back Photo URL</label>
-                        <input type="text" id="photo-back-url" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="https://example.com/back.jpg">
-                    </div>
-                    <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] text-xs font-semibold rounded hover:opacity-95 transition-opacity">Upload Photos</button>
-                </form>
+        <!-- Photo Comparison Slider Grid -->
+        <div class="card-base border border-base rounded-xl p-unit-md max-w-4xl mx-auto w-full">
+            <div class="flex justify-between items-center mb-4 border-b border-[#27272a] pb-3">
+                <div>
+                    <h3 class="font-headline-md text-primary font-bold">Client Visual Progress Comparison</h3>
+                    <p class="text-xs text-on-surface-variant mt-0.5">Submitted progress photos by client.</p>
+                </div>
+                <div class="text-xs text-on-surface-variant font-mono" id="photos-compare-stats">Weight change: -4.2 kg</div>
             </div>
-            <!-- Photo Comparison Slider Grid -->
-            <div class="lg:col-span-2 card-base border border-base rounded-xl p-unit-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-headline-md text-primary font-bold">Before vs Current Comparison</h3>
-                    <div class="text-xs text-on-surface-variant" id="photos-compare-stats">Weight change: -4.2 kg</div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="photos-gallery-mount">
-                    <!-- Before/Current images loaded here -->
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="photos-gallery-mount">
+                <!-- Before/Current images loaded here -->
             </div>
         </div>
     </div>
@@ -305,28 +281,21 @@
     <!-- Measurements Tab -->
     <div id="tab-pane-measurements" class="tab-pane hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Log Measurements Form -->
+            <!-- Info Panel -->
             <div class="lg:col-span-1 card-base border border-base rounded-xl p-unit-md h-fit">
-                <h3 class="font-headline-md text-primary font-bold mb-4">Log Key Measurements</h3>
-                <form id="measurements-log-form" class="space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Waist (cm)</label>
-                        <input type="number" step="0.1" id="measure-waist" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 85.0" required>
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-[#ceee93]">straighten</span>
+                    <h3 class="font-headline-md text-primary font-bold">Body Measurements</h3>
+                </div>
+                <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">Measurements are logged by the <span class="text-primary font-semibold">client</span> through their mobile app. This panel shows all measurements your client has submitted.</p>
+                <div class="p-3 bg-[#1f201a] border border-[#ceee93]/20 rounded-lg text-xs text-on-surface-variant leading-relaxed">
+                    <div class="flex items-start gap-2">
+                        <span class="material-symbols-outlined text-[#ceee93] text-[16px] mt-0.5">info</span>
+                        <span>Ask your client to log measurements in the <strong class="text-primary">Progress</strong> tab of their mobile app.</span>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Chest (cm)</label>
-                        <input type="number" step="0.1" id="measure-chest" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 100.0" required>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Arms (cm)</label>
-                        <input type="number" step="0.1" id="measure-arms" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 38.0" required>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-label-caps text-on-surface-variant mb-1">Legs (cm)</label>
-                        <input type="number" step="0.1" id="measure-legs" class="w-full px-3 py-2 bg-[#0d0e12] border border-[#27272a] rounded text-xs text-on-surface" placeholder="e.g. 58.0" required>
-                    </div>
-                    <button type="submit" class="w-full py-2 bg-[#d9f99d] text-[#09090b] text-xs font-semibold rounded hover:opacity-95 transition-opacity">Save Measurements</button>
-                </form>
+                </div>
+                <!-- Latest Summary -->
+                <div id="measurements-latest-summary" class="mt-4 space-y-2"></div>
             </div>
             <!-- Measurements History -->
             <div class="lg:col-span-2 card-base border border-base rounded-xl p-unit-md overflow-x-auto">
@@ -369,6 +338,28 @@
                 <span id="notes-save-status" class="text-[10px] text-on-surface-variant font-mono">Autosaved</span>
                 <button id="btn-save-notes" class="px-5 py-2.5 rounded bg-[#d9f99d] text-[#09090b] text-xs font-semibold hover:opacity-95 transition-opacity">Force Save</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workout Session Detail Modal -->
+<div id="workout-session-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="card-base border border-[#ceee93]/40 rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto bg-[#12140e] shadow-2xl">
+        <div class="flex justify-between items-start border-b border-[#27272a] pb-3">
+            <div>
+                <span class="text-[10px] uppercase font-mono text-[#ceee93] font-bold tracking-widest">COMPLETED WORKOUT SESSION RECORD</span>
+                <h3 class="font-headline-md text-xl font-bold text-primary mt-0.5" id="modal-session-title">Lower Body Power Focus</h3>
+                <p class="text-xs text-on-surface-variant font-mono mt-0.5" id="modal-session-subtitle">Logged Session</p>
+            </div>
+            <button id="btn-close-session-modal" class="text-on-surface-variant hover:text-primary p-1.5 rounded-lg bg-[#1f201a] border border-[#27272a]">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <div id="modal-session-body" class="space-y-4">
+            <!-- Exercise set logs populated dynamically -->
+        </div>
+        <div class="border-t border-[#27272a] pt-3 flex justify-end">
+            <button id="btn-dismiss-session-modal" class="px-5 py-2.5 bg-[#d9f99d] text-[#09090b] text-xs font-bold rounded-lg hover:opacity-90 transition-opacity">Close Inspector</button>
         </div>
     </div>
 </div>

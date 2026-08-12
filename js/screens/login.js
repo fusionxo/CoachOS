@@ -43,7 +43,7 @@ window.init_login = function(params) {
                 }
             } catch (err) {
                 console.error('Authentication failed:', err.message);
-                alert(`Login Failed: ${err.message || 'Invalid email or password.'}`);
+                showToast(`Login Failed: ${err.message || 'Invalid email or password.'}`, 'error', 'Authentication Error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
             }
