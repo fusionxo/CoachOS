@@ -132,15 +132,6 @@ STRICT RULES:
         if (aiSuggestionText) aiSuggestionText.textContent = cleanAiResponse(replyText);
     }
 
-        // Fallback text if offline
-        if (!replyText) {
-            replyText = `Hey ${client.name.split(' ')[0]}! Absolutely, listen to your body today. Focus on hydration, hit light steps if you feel up to it, and prioritize recovery over heavy training. Let me know how you feel tomorrow! 💪`;
-        }
-
-        if (aiSuggestionReason) aiSuggestionReason.textContent = `2nd-Coach AI Suggested Reply for ${client.name}:`;
-        if (aiSuggestionText) aiSuggestionText.textContent = cleanAiResponse(replyText);
-    }
-
     // Setup back button
     if (backBtn && inboxContainer) {
         backBtn.addEventListener('click', () => {

@@ -308,7 +308,7 @@ class Router {
             return;
         }
 
-        const scriptUrl = `js/screens/${viewName}.js?v=20260812sec`;
+        const scriptUrl = `js/screens/${viewName}.js?v=20260812fix3`;
         const script = document.createElement('script');
         script.src = scriptUrl;
         script.onerror = () => console.log(`No screen logic script module loaded for ${viewName}`);
