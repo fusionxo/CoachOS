@@ -125,10 +125,7 @@ window.init_assistant = function(params) {
         }
     }
 
-    // Actual AI API Integration (Gemini REST API + Groq API Fallback)
-    const GEMINI_API_KEY = window.APP_CONFIG?.GEMINI_API_KEY || "";
-    const GROQ_API_KEY = window.APP_CONFIG?.GROQ_API_KEY || "";
-
+    // Actual AI API Integration (Secure Vercel Serverless Proxy /api/ai)
     function cleanAiResponse(text) {
         if (!text) return '';
 
@@ -194,66 +191,28 @@ Your Job:
    - Format response in clean HTML tags like <strong>, <ul>, <li>, <code>, <blockquote class="bg-[#09090b] p-3 rounded-lg border-l-2 border-[#ceee93] text-xs italic text-on-surface">.
 4. Keep responses concise, direct, visually clean, and authoritative.`;
 
-        // 1. Try Gemini REST API (gemini-flash-latest endpoint)
         try {
-            console.log("⚡ Calling Gemini AI API...");
-            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-            const res = await fetch(geminiUrl, {
+            console.log("⚡ Calling Vercel Secure AI Proxy (/api/ai)...");
+            const res = await fetch('/api/ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [
-                        { role: 'user', parts: [{ text: `${systemInstruction}\n\nUser/Coach Query: ${userPrompt}` }] }
-                    ]
+                    prompt: userPrompt,
+                    systemInstruction: systemInstruction
                 })
             });
 
             if (res.ok) {
                 const data = await res.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                    console.log("✅ Received Gemini AI Response");
-                    return cleanAiResponse(text);
+                if (data.text) {
+                    console.log("✅ Received AI Response from Vercel Serverless Function");
+                    return cleanAiResponse(data.text);
                 }
             } else {
-                console.warn("Gemini API non-ok response status:", res.status);
+                console.warn("Vercel AI API non-ok response status:", res.status);
             }
         } catch (e) {
-            console.warn("Gemini API Call failed, trying Groq fallback...", e);
-        }
-
-        // 2. Fallback to Groq API (llama-3.3-70b-versatile or llama3-8b-8192)
-        try {
-            console.log("⚡ Calling Groq AI API Fallback...");
-            const groqUrl = `https://api.groq.com/openai/v1/chat/completions`;
-            const res = await fetch(groqUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${GROQ_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [
-                        { role: 'system', content: systemInstruction },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    temperature: 0.5
-                })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                const text = data.choices?.[0]?.message?.content;
-                if (text) {
-                    console.log("✅ Received Groq AI Fallback Response");
-                    return cleanAiResponse(text);
-                }
-            } else {
-                console.warn("Groq API non-ok response status:", res.status);
-            }
-        } catch (e) {
-            console.error("Groq API Fallback failed:", e);
+            console.warn("Call to /api/ai failed, using local offline insight fallback...", e);
         }
 
         // Final fallback if both external APIs hit rate limits/network errors

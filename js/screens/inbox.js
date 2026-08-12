@@ -54,10 +54,6 @@ window.init_inbox = function (params) {
     const infoBtn = document.querySelector('.btn-inbox-info');
     const profileDrawer = document.getElementById('inbox-profile-drawer');
 
-    // AI API Keys
-    const GEMINI_API_KEY = window.APP_CONFIG?.GEMINI_API_KEY || "";
-    const GROQ_API_KEY = window.APP_CONFIG?.GROQ_API_KEY || "";
-
     function cleanAiResponse(text) {
         if (!text) return '';
         let cleaned = text;
@@ -73,7 +69,7 @@ window.init_inbox = function (params) {
         return cleaned.trim();
     }
 
-    // Dynamic Live LLM Smart Reply Generator for Inbox
+    // Dynamic Live LLM Smart Reply Generator for Inbox (via /api/ai Vercel Proxy)
     async function updateAiSmartReply(client) {
         if (!aiSuggestionBox) return;
 
@@ -105,57 +101,36 @@ STRICT RULES:
 
         let replyText = '';
 
-        // 1. Try Groq API Primary (llama-3.3-70b-versatile)
         try {
-            console.log("⚡ Generating Inbox Smart Reply via Groq AI Primary...");
-            const groqUrl = `https://api.groq.com/openai/v1/chat/completions`;
-            const res = await fetch(groqUrl, {
+            console.log("⚡ Generating Inbox Smart Reply via Vercel Secure AI Proxy (/api/ai)...");
+            const res = await fetch('/api/ai', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${GROQ_API_KEY}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [
-                        { role: 'system', content: systemInstruction },
-                        { role: 'user', content: 'Draft Coach Reply:' }
-                    ],
-                    temperature: 0.5
+                    prompt: 'Draft Coach Reply:',
+                    systemInstruction: systemInstruction
                 })
             });
+
             if (res.ok) {
                 const data = await res.json();
-                replyText = data.choices?.[0]?.message?.content?.trim() || '';
-                console.log("✅ Received Groq Primary Smart Reply");
+                replyText = data.text || '';
+                console.log("✅ Received Smart Reply from Vercel AI Proxy");
             } else {
-                console.warn("Groq API non-ok response, trying Gemini fallback...", res.status);
+                console.warn("Vercel AI Proxy returned non-ok status for smart reply:", res.status);
             }
         } catch (e) {
-            console.warn("Groq API call failed for smart reply, trying Gemini fallback...", e);
+            console.warn("Vercel AI Proxy call failed for smart reply:", e);
         }
 
-        // 2. Try Gemini REST API Fallback (gemini-flash-latest)
+        // Fallback text if offline
         if (!replyText) {
-            try {
-                console.log("⚡ Generating Inbox Smart Reply via Gemini API Fallback...");
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-                const res = await fetch(geminiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: 'user', parts: [{ text: `${systemInstruction}\n\nDraft Coach Reply:` }] }]
-                    })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    replyText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-                    console.log("✅ Received Gemini Fallback Smart Reply");
-                }
-            } catch (e) {
-                console.error("Gemini API fallback failed for smart reply:", e);
-            }
+            replyText = `Hey ${client.name.split(' ')[0]}! Absolutely, listen to your body today. Focus on hydration, hit light steps if you feel up to it, and prioritize recovery over heavy training. Let me know how you feel tomorrow! 💪`;
         }
+
+        if (aiSuggestionReason) aiSuggestionReason.textContent = `2nd-Coach AI Suggested Reply for ${client.name}:`;
+        if (aiSuggestionText) aiSuggestionText.textContent = cleanAiResponse(replyText);
+    }
 
         // Fallback text if offline
         if (!replyText) {
