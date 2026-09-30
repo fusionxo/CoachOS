@@ -1,70 +1,137 @@
 // Controller for Coach Workout Builder screen
-window.init_builder = function(params) {
+window.init_builder = async function(params) {
     const appState = window.appState;
     let workouts = appState.workouts || [];
     let clients = appState.clients || [];
     let templates = appState.templates || [];
 
+    // Ensure clients and templates are loaded
+    if (clients.length === 0 && window.supabaseClient) {
+        const { data: cls } = await window.supabaseClient.from('clients').select('*').order('name');
+        if (cls) {
+            clients = cls;
+            appState.clients = cls;
+        }
+    }
+    if (templates.length === 0 && window.supabaseClient) {
+        const { data: tmpls } = await window.supabaseClient.from('workout_templates').select('*, template_exercises(*)').order('name');
+        if (tmpls) {
+            templates = tmpls;
+            appState.templates = tmpls;
+        }
+    }
+
     let currentWorkoutId = params ? params.id : null;
     let currentWorkout = workouts.find(w => w.id === currentWorkoutId);
+
+    // If ID provided but not found in memory, fetch directly from Supabase
+    if (currentWorkoutId && !currentWorkout && window.supabaseClient) {
+        const { data: wk } = await window.supabaseClient
+            .from('workouts')
+            .select('*, exercises(*), program_weeks(*, programs(*))')
+            .eq('id', currentWorkoutId)
+            .maybeSingle();
+        if (wk) {
+            currentWorkout = {
+                id: wk.id,
+                clientId: wk.program_weeks?.programs?.client_id || null,
+                name: wk.name,
+                programName: wk.program_weeks?.programs?.name || 'Training Program',
+                weekName: `Week ${wk.program_weeks?.week_number || 1}`,
+                dayNumber: wk.day_number || 1,
+                notes: wk.instructions || '',
+                exercises: (wk.exercises || []).map(e => ({
+                    id: e.id,
+                    name: e.name,
+                    sets: e.sets || 3,
+                    reps: e.reps || '10',
+                    weight: e.weight || 'RPE 8',
+                    rest: e.rest || '90s',
+                    tempo: e.tempo || '2-0-1',
+                    notes: e.notes || '',
+                    order: e.order_in_workout || 1
+                }))
+            };
+        }
+    }
 
     const mainContent = document.getElementById('builder-main-content');
     const emptyState = document.getElementById('builder-empty-state');
     const createFirstBtn = document.getElementById('btn-builder-create-first');
 
-    // Handle Empty State when no workouts exist at all
-    if (!currentWorkout && workouts.length === 0) {
-        if (mainContent) mainContent.classList.add('hidden');
-        if (emptyState) {
-            emptyState.classList.remove('hidden');
-            emptyState.classList.add('flex');
-        }
-        if (createFirstBtn) {
-            createFirstBtn.onclick = async () => {
-                const defaultClient = clients[0];
-                const clientId = defaultClient ? defaultClient.id : 'sandbox-client';
-                try {
-                    const newW = await appState.addWorkout(clientId, {
-                        name: 'Lower Body Power Focus',
-                        notes: 'Focus on explosive concentric drive and full depth on squats.',
-                        programName: '12-Week Hypertrophy',
-                        weekName: 'Week 1',
-                        exercises: [
-                            { id: 'e-' + Math.random().toString(36).substr(2, 9), name: 'Barbell Back Squat', sets: 4, reps: '5-8', weight: 'RPE 8', rest: '180s', tempo: '3-0-1', notes: 'Deep depth, brace core hard.', order: 1 },
-                            { id: 'e-' + Math.random().toString(36).substr(2, 9), name: 'Romanian Deadlift', sets: 3, reps: '8-10', weight: '70% 1RM', rest: '120s', tempo: '2-1-1', notes: 'Maintain neutral spine throughout.', order: 2 }
-                        ]
-                    });
-                    
-                    if (emptyState) {
-                        emptyState.classList.add('hidden');
-                        emptyState.classList.remove('flex');
-                    }
-                    if (mainContent) mainContent.classList.remove('hidden');
-                    
-                    if (newW && newW.id) {
-                        window.location.hash = `builder/${newW.id}`;
-                    } else {
-                        window.location.hash = 'builder';
-                    }
-                } catch (err) {
-                    showToast(`Failed to create workout: ${err.message}`, 'error', 'Create Error');
-                }
-            };
-        }
-        return;
-    } else {
-        if (emptyState) {
-            emptyState.classList.add('hidden');
-            emptyState.classList.remove('flex');
-        }
-        if (mainContent) mainContent.classList.remove('hidden');
+    const isNew = params && (params.new === 'true' || params.isNew === 'true');
 
-        if (!currentWorkout) {
+    if (isNew) {
+        // Start a fresh custom workout without preloading any template or existing workout
+        const targetClientId = params.clientId || (clients[0] ? clients[0].id : null);
+        const targetWeek = parseInt(params.week) || 1;
+        const targetDay = parseInt(params.day) || 1;
+        const targetName = params.name ? decodeURIComponent(params.name) : `Week ${targetWeek} Day ${targetDay} - Workout`;
+        const targetInstructions = params.instructions ? decodeURIComponent(params.instructions) : '';
+
+        currentWorkout = {
+            id: null,
+            clientId: targetClientId,
+            name: targetName,
+            programName: 'Training Program',
+            weekName: `Week ${targetWeek}`,
+            dayNumber: targetDay,
+            targetWeekNum: targetWeek,
+            notes: targetInstructions,
+            exercises: [
+                {
+                    id: 'e-' + Math.random().toString(36).substr(2, 9),
+                    name: 'Barbell Bench Press',
+                    sets: 3,
+                    reps: '8-10',
+                    weight: 'RPE 8',
+                    rest: '90s',
+                    tempo: '2-0-1',
+                    notes: 'Controlled eccentric, full pause on chest.',
+                    order: 1
+                }
+            ]
+        };
+        currentWorkoutId = null;
+    } else if (!currentWorkout) {
+        if (workouts.length > 0) {
             currentWorkout = workouts[0];
             currentWorkoutId = currentWorkout.id;
             window.history.replaceState(null, null, `#builder/${currentWorkoutId}`);
+        } else {
+            const defaultClient = clients[0];
+            currentWorkout = {
+                id: null,
+                clientId: defaultClient ? defaultClient.id : null,
+                name: 'Week 1 Day 1 - Workout',
+                programName: 'Training Program',
+                weekName: 'Week 1',
+                dayNumber: 1,
+                targetWeekNum: 1,
+                notes: '',
+                exercises: [
+                    {
+                        id: 'e-' + Math.random().toString(36).substr(2, 9),
+                        name: 'Barbell Back Squat',
+                        sets: 3,
+                        reps: '8-10',
+                        weight: 'RPE 8',
+                        rest: '120s',
+                        tempo: '3-0-1',
+                        notes: 'Deep depth, brace core hard.',
+                        order: 1
+                    }
+                ]
+            };
+            currentWorkoutId = null;
         }
     }
+
+    if (emptyState) {
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+    }
+    if (mainContent) mainContent.classList.remove('hidden');
 
     // UI Mount Points
     const clientSelect = document.getElementById('builder-client-select');
@@ -412,12 +479,59 @@ window.init_builder = function(params) {
     }
 
     // Action bar triggers
+    const btnNewWorkout = document.getElementById('btn-builder-new-workout');
+    if (btnNewWorkout) {
+        btnNewWorkout.onclick = () => {
+            const currentClient = currentWorkout.clientId || (clients[0] ? clients[0].id : '');
+            window.location.hash = `builder?new=true&clientId=${currentClient}&week=1&day=1&name=New%20Workout%20Session`;
+        };
+    }
+
     if (btnSaveWorkout) {
-        btnSaveWorkout.onclick = () => {
+        btnSaveWorkout.onclick = async () => {
             syncExercisesFromDOM();
-            showToast(`Workout "${currentWorkout.name}" saved successfully!`, 'success', 'Workout Saved');
-            const defaultId = clients[0] ? clients[0].id : '';
-            window.location.hash = `analytics/${currentWorkout.clientId || defaultId}`;
+            try {
+                btnSaveWorkout.disabled = true;
+                btnSaveWorkout.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Saving...`;
+
+                const clientId = currentWorkout.clientId || (clients[0] ? clients[0].id : null);
+                if (!clientId) {
+                    showToast('Please select a client for this workout', 'error', 'Client Required');
+                    return;
+                }
+
+                const targetWeekNum = currentWorkout.targetWeekNum || (currentWorkout.weekName?.includes('2') ? 2 : 1);
+                const dayNum = currentWorkout.dayNumber || 1;
+
+                if (!currentWorkout.id) {
+                    const newWk = await appState.addWorkout(clientId, {
+                        name: currentWorkout.name || `Week ${targetWeekNum} Day ${dayNum} - Workout`,
+                        notes: currentWorkout.notes,
+                        programName: currentWorkout.programName || 'Training Program',
+                        weekName: `Week ${targetWeekNum}`,
+                        targetWeekNum: targetWeekNum,
+                        dayNumber: dayNum,
+                        exercises: currentWorkout.exercises
+                    });
+                    currentWorkout.id = newWk.id;
+                    currentWorkoutId = newWk.id;
+                    showToast(`Workout "${currentWorkout.name}" saved to client schedule!`, 'success', 'Workout Saved');
+                } else {
+                    await appState.updateWorkout(currentWorkout.id, {
+                        name: currentWorkout.name,
+                        notes: currentWorkout.notes,
+                        exercises: currentWorkout.exercises
+                    });
+                    showToast(`Workout "${currentWorkout.name}" updated successfully!`, 'success', 'Workout Saved');
+                }
+
+                window.location.hash = `analytics/${clientId}`;
+            } catch (err) {
+                showToast(`Failed to save workout: ${err.message}`, 'error', 'Save Error');
+            } finally {
+                btnSaveWorkout.disabled = false;
+                btnSaveWorkout.innerHTML = `Save Workout`;
+            }
         };
     }
 
@@ -586,11 +700,18 @@ window.init_builder = function(params) {
     if (btnOptDelete) {
         btnOptDelete.onclick = async () => {
             if (dropdownOptions) dropdownOptions.classList.add('hidden');
-            if (await showConfirm(`Are you sure you want to delete "${currentWorkout.name}"?`, 'Delete Workout', 'Delete', 'Cancel')) {
+            if (!currentWorkout.id) {
+                showToast('Discarded unsaved workout session.', 'info', 'Discarded');
+                const targetClient = currentWorkout.clientId || (clients[0] ? clients[0].id : '');
+                window.location.hash = targetClient ? `analytics/${targetClient}` : 'builder';
+                return;
+            }
+            if (await showConfirm(`Are you sure you want to delete "${currentWorkout.name}"? Note: Templates in your library remain safe and untouched.`, 'Delete Workout', 'Delete', 'Cancel')) {
                 try {
                     await appState.deleteWorkout(currentWorkout.id);
-                    showToast(`Workout deleted successfully!`, 'success', 'Workout Deleted');
-                    window.location.hash = 'builder';
+                    showToast(`Workout deleted successfully! Templates in library remain intact.`, 'success', 'Workout Deleted');
+                    const targetClient = currentWorkout.clientId || (clients[0] ? clients[0].id : '');
+                    window.location.hash = targetClient ? `analytics/${targetClient}` : 'builder';
                 } catch (err) {
                     showToast(`Failed to delete workout: ${err.message}`, 'error', 'Delete Error');
                 }

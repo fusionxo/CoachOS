@@ -40,11 +40,23 @@ class Router {
         let routeKey = hash;
         let params = {};
 
+        // Parse query string if present (e.g. #templates?create=true, #builder?new=true)
+        if (hash.includes('?')) {
+            const qParts = hash.split('?');
+            hash = qParts[0];
+            const urlParams = new URLSearchParams(qParts[1]);
+            for (const [k, v] of urlParams.entries()) {
+                params[k] = v;
+            }
+        }
+
         // Parse path parameters (e.g. #analytics/rahul-sharma, #builder/w1)
         if (hash.includes('/')) {
             const parts = hash.split('/');
             routeKey = parts[0];
             params.id = parts[1];
+        } else {
+            routeKey = hash;
         }
 
         const route = routes[routeKey];
@@ -287,10 +299,21 @@ class Router {
         let routeKey = hash;
         let params = {};
 
+        if (hash.includes('?')) {
+            const qParts = hash.split('?');
+            hash = qParts[0];
+            const urlParams = new URLSearchParams(qParts[1]);
+            for (const [k, v] of urlParams.entries()) {
+                params[k] = v;
+            }
+        }
+
         if (hash.includes('/')) {
             const parts = hash.split('/');
             routeKey = parts[0];
             params.id = parts[1];
+        } else {
+            routeKey = hash;
         }
 
         const initFuncName = `init_${routeKey.replace(/-/g, '_')}`;

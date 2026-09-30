@@ -1,12 +1,13 @@
 // Controller for Client Workout Logger mobile simulation
-window.init_workout_logger = function(params) {
+window.init_workout_logger = async function(params) {
     const appState = window.appState;
     const workoutId = params && params.id;
     let workouts = appState.workouts || [];
+
     const defaultWorkout = {
         id: workoutId || 'demo-workout',
         name: 'Lower Body Power Focus',
-        programName: '12-Week Hypertrophy',
+        programName: 'Training Program',
         weekName: 'Week 1',
         exercises: [
             { id: 'ex-1', name: 'Barbell Back Squat', sets: 4, reps: '5-8', weight: '75', rest: '180s', notes: 'Maintain neutral spine, drive hard off hips.' },
@@ -14,37 +15,126 @@ window.init_workout_logger = function(params) {
             { id: 'ex-3', name: 'Bulgarian Split Squat', sets: 3, reps: '10-12', weight: '20', rest: '90s', notes: 'Keep torso upright, drive through front heel.' }
         ]
     };
-    let workout = (workoutId && workouts.find(w => w.id === workoutId)) || workouts[0] || defaultWorkout;
+
+    let workout = (workoutId && workouts.find(w => w.id === workoutId)) || null;
+
+    // Direct DB fallback if refreshing directly on #workout-logger/:id
+    if (!workout && workoutId && window.supabaseClient) {
+        try {
+            const { data: dbWk } = await window.supabaseClient
+                .from('workouts')
+                .select('*, exercises(*), program_weeks(*, programs(*))')
+                .eq('id', workoutId)
+                .maybeSingle();
+
+            if (dbWk) {
+                const program = dbWk.program_weeks?.programs;
+                const week = dbWk.program_weeks;
+                workout = {
+                    id: dbWk.id,
+                    clientId: program?.client_id,
+                    programId: program?.id,
+                    weekId: week?.id,
+                    weekNumber: week?.week_number || 1,
+                    dayNumber: dbWk.day_number || 1,
+                    name: dbWk.name,
+                    status: dbWk.status || 'Scheduled',
+                    notes: dbWk.instructions,
+                    programName: program?.name || 'Training Program',
+                    weekName: `Week ${week?.week_number || 1}`,
+                    exercises: dbWk.exercises ? dbWk.exercises.map(e => ({
+                        id: e.id,
+                        name: e.name,
+                        sets: e.sets,
+                        reps: e.reps,
+                        weight: e.load_target,
+                        rest: e.rest_time,
+                        notes: e.notes,
+                        order: e.order_index
+                    })).sort((a,b) => (a.order || 0) - (b.order || 0)) : []
+                };
+            }
+        } catch(e) {
+            console.warn('Could not fetch workout directly:', e);
+        }
+    }
+
+    if (!workout) {
+        workout = workouts[0] || defaultWorkout;
+    }
 
     // Dynamic State per session
     let activeExerciseIndex = 0;
     let exercises = workout.exercises || [];
     if (exercises.length === 0) {
         exercises = [
-            { id: 'ex-1', name: 'Barbell Back Squat', sets: 4, reps: '5-8', weight: 'RPE 8', rest: '180s', notes: 'Deep depth, brace core hard.' }
+            { id: 'ex-1', name: 'Barbell Back Squat', sets: 4, reps: '5-8', weight: '75', rest: '180s', notes: 'Deep depth, brace core hard.' }
         ];
     }
 
-    // Set tracking memory: { [exerciseId]: [ { setNum, weight, reps, completed } ] }
-    let sessionLogs = {};
-    exercises.forEach(ex => {
-        const numSets = parseInt(ex.sets) || 3;
-        sessionLogs[ex.id] = [];
-        for (let i = 1; i <= numSets; i++) {
-            sessionLogs[ex.id].push({
-                setNum: i,
-                weight: parseFloat(ex.weight) || 75.0,
-                reps: parseInt(ex.reps) || 10,
-                completed: false
-            });
+    // Default Set tracking memory
+    function createDefaultSessionLogs() {
+        const logs = {};
+        exercises.forEach(ex => {
+            const numSets = parseInt(ex.sets) || 3;
+            logs[ex.id] = [];
+            for (let i = 1; i <= numSets; i++) {
+                logs[ex.id].push({
+                    setNum: i,
+                    weight: parseFloat(ex.weight) || 75.0,
+                    reps: parseInt(ex.reps) || 10,
+                    completed: false
+                });
+            }
+        });
+        return logs;
+    }
+
+    let sessionLogs = createDefaultSessionLogs();
+    let elapsedSeconds = 0;
+    let draftRestored = false;
+
+    // Check for saved in-progress draft in localStorage
+    const draftKey = `coachos_workout_draft_${workout.id}`;
+    try {
+        const savedDraftRaw = localStorage.getItem(draftKey);
+        if (savedDraftRaw) {
+            const draft = JSON.parse(savedDraftRaw);
+            if (draft && draft.sessionLogs && Object.keys(draft.sessionLogs).length > 0) {
+                sessionLogs = draft.sessionLogs;
+                if (typeof draft.activeExerciseIndex === 'number' && draft.activeExerciseIndex < exercises.length) {
+                    activeExerciseIndex = draft.activeExerciseIndex;
+                }
+                if (typeof draft.elapsedSeconds === 'number') {
+                    elapsedSeconds = draft.elapsedSeconds;
+                }
+                draftRestored = true;
+            }
         }
-    });
+    } catch(e) {
+        console.warn('Error reading saved workout draft:', e);
+    }
+
+    // Helper: Persist draft immediately to localStorage
+    function persistDraft() {
+        try {
+            localStorage.setItem(draftKey, JSON.stringify({
+                activeExerciseIndex,
+                sessionLogs,
+                elapsedSeconds,
+                updatedAt: Date.now()
+            }));
+        } catch(e) {}
+    }
 
     // UI Mount Points
     const workoutTitleEl = document.getElementById('logger-workout-title');
     const programTitleEl = document.getElementById('logger-program-title');
     const elapsedTimerEl = document.getElementById('logger-elapsed-timer');
     const exerciseTabsMount = document.getElementById('logger-exercise-tabs');
+
+    const draftAlertEl = document.getElementById('logger-draft-alert');
+    const btnDiscardDraft = document.getElementById('btn-discard-draft');
 
     const exCounterEl = document.getElementById('logger-ex-counter');
     const exNameEl = document.getElementById('logger-ex-name');
@@ -73,21 +163,63 @@ window.init_workout_logger = function(params) {
     let restSecondsLeft = 0;
 
     // Elapsed Timer
-    let elapsedSeconds = 0;
+    function formatTime(totalSecs) {
+        const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+        const secs = String(totalSecs % 60).padStart(2, '0');
+        return `${mins}:${secs}`;
+    }
+
+    if (elapsedTimerEl) elapsedTimerEl.textContent = formatTime(elapsedSeconds);
+
     const elapsedInterval = setInterval(() => {
         elapsedSeconds++;
-        const mins = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
-        const secs = String(elapsedSeconds % 60).padStart(2, '0');
-        if (elapsedTimerEl) elapsedTimerEl.textContent = `${mins}:${secs}`;
+        if (elapsedTimerEl) elapsedTimerEl.textContent = formatTime(elapsedSeconds);
+        // Throttle draft save to every 10 seconds for timer
+        if (elapsedSeconds % 10 === 0) {
+            persistDraft();
+        }
     }, 1000);
+
+    // Save on browser close / navigation
+    const handleBeforeUnload = () => persistDraft();
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+
+    function cleanup() {
+        clearInterval(elapsedInterval);
+        clearInterval(restInterval);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('pagehide', handleBeforeUnload);
+    }
 
     // Header Setup
     if (workoutTitleEl) workoutTitleEl.textContent = workout.name;
     if (programTitleEl) programTitleEl.textContent = `${workout.programName || 'Training Program'} • ${workout.weekName || 'Week 1'}`;
+    
+    // Show draft restored banner if applicable
+    if (draftRestored && draftAlertEl) {
+        draftAlertEl.classList.remove('hidden');
+    }
+
+    if (btnDiscardDraft) {
+        btnDiscardDraft.onclick = () => {
+            try {
+                localStorage.removeItem(draftKey);
+            } catch(e) {}
+            sessionLogs = createDefaultSessionLogs();
+            activeExerciseIndex = 0;
+            elapsedSeconds = 0;
+            if (elapsedTimerEl) elapsedTimerEl.textContent = '00:00';
+            if (draftAlertEl) draftAlertEl.classList.add('hidden');
+            renderActiveExercise();
+            showToast('Workout progress reset to start', 'info', 'Session Reset');
+        };
+    }
+
     if (btnBack) {
         btnBack.onclick = () => {
-            clearInterval(elapsedInterval);
-            clearInterval(restInterval);
+            persistDraft();
+            cleanup();
             const user = appState.user;
             window.location.hash = user ? `client-mobile/${user.id}` : 'client-mobile';
         };
@@ -101,14 +233,23 @@ window.init_workout_logger = function(params) {
         exercises.forEach((ex, idx) => {
             const btn = document.createElement('button');
             const isActive = idx === activeExerciseIndex;
-            btn.className = `px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors flex items-center gap-1 ${
-                isActive ? 'bg-[#d9f99d] text-[#09090b]' : 'bg-[#18181b] border border-[#27272a] text-on-surface-variant hover:text-primary'
+            const setRecords = sessionLogs[ex.id] || [];
+            const isAllCompleted = setRecords.length > 0 && setRecords.every(s => s.completed);
+
+            btn.className = `px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors flex items-center gap-1.5 ${
+                isActive 
+                    ? 'bg-[#d9f99d] text-[#09090b]' 
+                    : isAllCompleted 
+                        ? 'bg-[#22c55e]/20 border border-[#22c55e]/40 text-[#22c55e]' 
+                        : 'bg-[#18181b] border border-[#27272a] text-on-surface-variant hover:text-primary'
             }`;
             btn.innerHTML = `
+                ${isAllCompleted ? '<span class="material-symbols-outlined text-[13px]">check_circle</span>' : ''}
                 <span>${idx + 1}. ${ex.name}</span>
             `;
             btn.onclick = () => {
                 activeExerciseIndex = idx;
+                persistDraft();
                 renderActiveExercise();
             };
             exerciseTabsMount.appendChild(btn);
@@ -155,7 +296,7 @@ window.init_workout_logger = function(params) {
             const isCompleted = setRec.completed;
 
             setRow.className = `p-2.5 sm:p-3 rounded-xl border transition-all ${
-                isCompleted ? 'bg-[#18181b]/60 border-[#22c55e]/40 opacity-85' : 'bg-[#18181b] border-[#27272a]'
+                isCompleted ? 'bg-[#18181b]/60 border-[#22c55e]/40 opacity-90' : 'bg-[#18181b] border-[#27272a]'
             }`;
 
             setRow.innerHTML = `
@@ -167,7 +308,7 @@ window.init_workout_logger = function(params) {
                         }">${setRec.setNum}</span>
                         <div class="min-w-0">
                             <p class="text-xs font-semibold text-primary truncate">Set ${setRec.setNum}</p>
-                            <p class="text-[10px] text-on-surface-variant font-mono truncate">${currentEx.reps || '10'} reps</p>
+                            <p class="text-[10px] text-on-surface-variant font-mono truncate">${currentEx.reps || '10'} reps target</p>
                         </div>
                     </div>
 
@@ -201,36 +342,42 @@ window.init_workout_logger = function(params) {
             // Weight Adjusters
             const weightInput = setRow.querySelector('.input-weight');
             setRow.querySelector('.btn-weight-minus').onclick = () => {
-                setRec.weight = Math.max(0, parseFloat((parseFloat(weightInput.value) - 2.5).toFixed(1)));
+                setRec.weight = Math.max(0, parseFloat((parseFloat(weightInput.value || 0) - 2.5).toFixed(1)));
                 weightInput.value = setRec.weight;
+                persistDraft();
             };
             setRow.querySelector('.btn-weight-plus').onclick = () => {
-                setRec.weight = parseFloat((parseFloat(weightInput.value) + 2.5).toFixed(1));
+                setRec.weight = parseFloat((parseFloat(weightInput.value || 0) + 2.5).toFixed(1));
                 weightInput.value = setRec.weight;
+                persistDraft();
             };
             weightInput.oninput = (e) => {
                 setRec.weight = parseFloat(e.target.value) || 0;
+                persistDraft();
             };
 
             // Reps Adjusters
             const repsInput = setRow.querySelector('.input-reps');
             setRow.querySelector('.btn-reps-minus').onclick = () => {
-                setRec.reps = Math.max(0, parseInt(repsInput.value) - 1);
+                setRec.reps = Math.max(0, parseInt(repsInput.value || 0) - 1);
                 repsInput.value = setRec.reps;
+                persistDraft();
             };
             setRow.querySelector('.btn-reps-plus').onclick = () => {
-                setRec.reps = parseInt(repsInput.value) + 1;
+                setRec.reps = parseInt(repsInput.value || 0) + 1;
                 repsInput.value = setRec.reps;
+                persistDraft();
             };
             repsInput.oninput = (e) => {
                 setRec.reps = parseInt(e.target.value) || 0;
+                persistDraft();
             };
 
             // Toggle Complete Action
             setRow.querySelector('.btn-toggle-complete').onclick = () => {
                 setRec.completed = !setRec.completed;
+                persistDraft();
                 if (setRec.completed) {
-                    // Trigger Rest Timer
                     const parsedRest = parseInt(currentEx.rest) || 90;
                     startRestTimer(parsedRest);
                 }
@@ -250,10 +397,11 @@ window.init_workout_logger = function(params) {
             const lastSet = setRecords[setRecords.length - 1];
             setRecords.push({
                 setNum: setRecords.length + 1,
-                weight: lastSet ? lastSet.weight : 75.0,
-                reps: lastSet ? lastSet.reps : 10,
+                weight: lastSet ? lastSet.weight : (parseFloat(currentEx.weight) || 75.0),
+                reps: lastSet ? lastSet.reps : (parseInt(currentEx.reps) || 10),
                 completed: false
             });
+            persistDraft();
             renderActiveExercise();
         };
     }
@@ -302,6 +450,7 @@ window.init_workout_logger = function(params) {
         btnPrevEx.onclick = () => {
             if (activeExerciseIndex > 0) {
                 activeExerciseIndex--;
+                persistDraft();
                 renderActiveExercise();
             }
         };
@@ -311,24 +460,91 @@ window.init_workout_logger = function(params) {
         btnNextEx.onclick = () => {
             if (activeExerciseIndex < exercises.length - 1) {
                 activeExerciseIndex++;
+                persistDraft();
                 renderActiveExercise();
             }
         };
     }
 
-    // Finish Workout Button Action
+    // Complete Workout Modal Logic
+    const finishModal = document.getElementById('logger-finish-modal');
+    const finishSetsCountEl = document.getElementById('finish-modal-sets-count');
+    const finishDurationEl = document.getElementById('finish-modal-duration');
+    const finishWarningEl = document.getElementById('finish-modal-uncompleted-warning');
+    const finishNotesInput = document.getElementById('finish-modal-notes');
+    const btnFinishCancel = document.getElementById('btn-finish-modal-cancel');
+    const btnFinishClose = document.getElementById('btn-finish-modal-close');
+    const btnFinishConfirm = document.getElementById('btn-finish-modal-confirm');
+
+    function closeFinishModal() {
+        if (finishModal) finishModal.classList.add('hidden');
+    }
+
+    if (btnFinishCancel) btnFinishCancel.onclick = closeFinishModal;
+    if (btnFinishClose) btnFinishClose.onclick = closeFinishModal;
+
+    // Trigger Finish Review Modal
     if (btnFinish) {
-        btnFinish.onclick = async () => {
-            clearInterval(elapsedInterval);
-            clearInterval(restInterval);
+        btnFinish.onclick = () => {
+            // Count total and completed sets
+            let totalSets = 0;
+            let completedSets = 0;
+
+            Object.values(sessionLogs).forEach(sets => {
+                if (Array.isArray(sets)) {
+                    totalSets += sets.length;
+                    completedSets += sets.filter(s => s.completed).length;
+                }
+            });
+
+            if (finishSetsCountEl) {
+                finishSetsCountEl.textContent = `${completedSets} / ${totalSets} Sets Completed`;
+            }
+            if (finishDurationEl) {
+                finishDurationEl.textContent = formatTime(elapsedSeconds);
+            }
+            if (finishWarningEl) {
+                if (completedSets < totalSets) {
+                    finishWarningEl.classList.remove('hidden');
+                } else {
+                    finishWarningEl.classList.add('hidden');
+                }
+            }
+
+            if (finishModal) finishModal.classList.remove('hidden');
+        };
+    }
+
+    // Confirm & Save Workout
+    if (btnFinishConfirm) {
+        btnFinishConfirm.onclick = async () => {
+            btnFinishConfirm.disabled = true;
+            btnFinishConfirm.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Saving...`;
+
+            cleanup();
+
+            const feedbackNote = finishNotesInput ? finishNotesInput.value.trim() : '';
+            const finalPayload = {
+                sessionLogs: sessionLogs,
+                clientNotes: feedbackNote,
+                durationSeconds: elapsedSeconds,
+                completedAt: new Date().toISOString()
+            };
 
             try {
-                await appState.logCompletedWorkout(workout.id, sessionLogs);
-                showToast(`🎉 Congratulations! Workout "${workout.name}" logged successfully!`, 'success', 'Workout Completed');
+                await appState.logCompletedWorkout(workout.id, finalPayload);
+                // Clear the saved draft
+                try {
+                    localStorage.removeItem(draftKey);
+                } catch(e) {}
+
+                showToast(`🎉 Outstanding job! Workout "${workout.name}" logged successfully!`, 'success', 'Workout Completed');
             } catch (err) {
                 console.error('Error logging workout:', err);
-                showToast(`Workout logged locally!`, 'info', 'Saved Locally');
+                showToast(`Workout logged and saved locally!`, 'info', 'Saved Locally');
             }
+
+            closeFinishModal();
 
             const user = appState.user;
             window.location.hash = user ? `client-mobile/${user.id}` : 'client-mobile';

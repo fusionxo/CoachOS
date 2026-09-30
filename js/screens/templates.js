@@ -1,8 +1,38 @@
 // Controller for Training Templates screen
-window.init_templates = function(params) {
+window.init_templates = async function(params) {
     const appState = window.appState;
-    let templates = appState.templates || [];
     let clients = appState.clients || [];
+
+    // Ensure templates are loaded even if refresh was pending
+    if ((!appState.templates || appState.templates.length === 0) && window.supabaseClient && appState.user) {
+        try {
+            const { data: dbTemplates } = await window.supabaseClient
+                .from('workout_templates')
+                .select('*')
+                .eq('coach_id', appState.user.id);
+            if (dbTemplates && dbTemplates.length > 0) {
+                appState.templates = dbTemplates.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    category: t.category || 'hypertrophy',
+                    notes: t.notes || '',
+                    exercises: Array.isArray(t.exercises) ? t.exercises.map((e, idx) => ({
+                        id: e.id || `te-${idx + 1}`,
+                        name: e.name,
+                        sets: e.sets,
+                        reps: e.reps,
+                        weight: e.weight || e.load_target || '70%',
+                        rest: e.rest || e.rest_time || '90s',
+                        tempo: e.tempo || '2-0-2',
+                        notes: e.notes || '',
+                        order: e.order || e.order_index || (idx + 1)
+                    })).sort((a,b) => (a.order || 0) - (b.order || 0)) : []
+                }));
+            }
+        } catch(e) {
+            console.warn('Error fetching templates directly:', e);
+        }
+    }
 
     // Mount points
     const gridMount = document.getElementById('templates-grid-mount');
@@ -30,6 +60,7 @@ window.init_templates = function(params) {
     const assignModal = document.getElementById('assign-client-modal');
     const assignForm = document.getElementById('assign-client-form');
     const assignSelect = document.getElementById('assign-client-select');
+    const assignWeekSelect = document.getElementById('assign-week-select');
 
     let activeFilterCategory = 'all';
     let activeSearchQuery = '';
@@ -109,7 +140,14 @@ window.init_templates = function(params) {
                 <input type="text" placeholder="Add cues (e.g. pause at chest, drive legs)..." class="w-full min-w-0 bg-[#0d0e12] border border-[#27272a] rounded-lg px-2.5 py-1 text-xs text-on-surface ex-notes" value="${exData.notes || ''}">
             </div>
         `;
-        row.querySelector('.btn-remove-ex').onclick = () => row.remove();
+        row.querySelector('.btn-remove-ex').onclick = () => {
+            const allRows = exercisesMount.querySelectorAll('.group-ex-row');
+            if (allRows.length > 1) {
+                row.remove();
+            } else {
+                showToast('A template requires at least 1 exercise.', 'info', 'Notice');
+            }
+        };
         exercisesMount.appendChild(row);
     }
 
@@ -118,19 +156,21 @@ window.init_templates = function(params) {
         if (!gridMount) return;
         gridMount.innerHTML = '';
 
-        let filtered = templates;
+        // Always read current appState.templates to avoid stale closures
+        let currentTemplates = appState.templates || [];
+        let filtered = currentTemplates;
 
         // Apply Category Filter
         if (activeFilterCategory !== 'all') {
-            filtered = filtered.filter(t => (t.category || 'hypertrophy').toLowerCase() === activeFilterCategory);
+            filtered = filtered.filter(t => (t.category || 'hypertrophy').toLowerCase() === activeFilterCategory.toLowerCase());
         }
 
         // Apply Search Filter
         if (activeSearchQuery) {
             filtered = filtered.filter(t => {
-                const matchName = t.name.toLowerCase().includes(activeSearchQuery);
+                const matchName = (t.name || '').toLowerCase().includes(activeSearchQuery);
                 const matchNotes = (t.notes || '').toLowerCase().includes(activeSearchQuery);
-                const matchEx = (t.exercises || []).some(e => e.name.toLowerCase().includes(activeSearchQuery));
+                const matchEx = (t.exercises || []).some(e => (e.name || '').toLowerCase().includes(activeSearchQuery));
                 return matchName || matchNotes || matchEx;
             });
         }
@@ -164,7 +204,7 @@ window.init_templates = function(params) {
                             </div>
                             <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
                                 <button class="p-1 text-on-surface-variant hover:text-primary transition-colors btn-duplicate" title="Duplicate"><span class="material-symbols-outlined text-[16px]">content_copy</span></button>
-                                <button class="p-1 text-error/80 hover:text-error transition-colors btn-delete" title="Delete"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+                                <button class="p-1 text-error/80 hover:text-error transition-colors btn-delete" title="Delete Template"><span class="material-symbols-outlined text-[16px]">delete</span></button>
                             </div>
                         </div>
 
@@ -172,7 +212,7 @@ window.init_templates = function(params) {
 
                         <!-- Stats Row -->
                         <div class="flex items-center gap-3 text-[10px] text-on-surface-variant font-mono mb-3 bg-[#09090b] px-3 py-1.5 rounded-lg border border-[#27272a]">
-                            <span>💪 ${t.exercises.length} Exercises</span>
+                            <span>💪 ${(t.exercises || []).length} Exercises</span>
                             <span>⚡ ${totalSets} Total Sets</span>
                         </div>
 
@@ -211,7 +251,7 @@ window.init_templates = function(params) {
                     }
                 };
                 card.querySelector('.btn-delete').onclick = async () => {
-                    if (await showConfirm(`Delete template "${t.name}"?`, 'Delete Template', 'Delete', 'Cancel')) {
+                    if (await showConfirm(`Delete template "${t.name}"? This only removes the template from your library; assigned client workouts are not deleted.`, 'Delete Template', 'Delete', 'Cancel')) {
                         try {
                             await appState.deleteTemplate(t.id);
                             renderTemplates();
@@ -236,9 +276,9 @@ window.init_templates = function(params) {
         exercisesMount.innerHTML = '';
         if (modalTitle) modalTitle.textContent = 'Create Workout Template';
         
-        // Add 2 default exercise rows
-        addExerciseRow();
-        addExerciseRow();
+        // Add 2 clean default exercise rows
+        addExerciseRow({ name: 'Barbell Bench Press', sets: 4, reps: '8-10', weight: '70% 1RM', rest: '90s', tempo: '2-0-2', notes: 'Touch chest lightly, drive feet.' });
+        addExerciseRow({ name: 'Incline Dumbbell Press', sets: 3, reps: '10-12', weight: 'RPE 8', rest: '90s', tempo: '2-0-2', notes: 'Control the stretch.' });
         if (templateModal) templateModal.classList.remove('hidden');
     };
 
@@ -270,7 +310,7 @@ window.init_templates = function(params) {
         previewingTemplate = template;
         if (previewTitle) previewTitle.textContent = template.name;
         if (previewCategory) previewCategory.textContent = (template.category || 'HYPERTROPHY').toUpperCase();
-        if (previewNotes) previewNotes.textContent = template.notes || 'No global notes specified.';
+        if (previewNotes) previewNotes.textContent = template.notes || 'No general notes specified.';
 
         if (previewExercisesList) {
             previewExercisesList.innerHTML = '';
@@ -308,28 +348,33 @@ window.init_templates = function(params) {
         templateForm.onsubmit = async function(e) {
             e.preventDefault();
             const id = document.getElementById('template-id').value || null;
-            const name = document.getElementById('template-name').value;
+            const name = document.getElementById('template-name').value.trim();
             const category = document.getElementById('template-category').value;
-            const notes = document.getElementById('template-notes').value;
+            const notes = document.getElementById('template-notes').value.trim();
 
             const exercises = [];
             let count = 1;
             document.querySelectorAll('.group-ex-row').forEach(row => {
-                const exName = row.querySelector('.ex-name').value;
-                if (exName.trim()) {
+                const exName = row.querySelector('.ex-name').value.trim();
+                if (exName) {
                     exercises.push({
                         id: 'te-' + Math.random().toString(36).substr(2, 9),
                         name: exName,
                         sets: parseInt(row.querySelector('.ex-sets').value) || 4,
-                        reps: row.querySelector('.ex-reps').value || '8-10',
-                        weight: row.querySelector('.ex-weight').value || 'RPE 8',
-                        rest: row.querySelector('.ex-rest').value || '90s',
-                        tempo: row.querySelector('.ex-tempo').value || '2-0-2',
-                        notes: row.querySelector('.ex-notes').value || '',
+                        reps: row.querySelector('.ex-reps').value.trim() || '8-10',
+                        weight: row.querySelector('.ex-weight').value.trim() || 'RPE 8',
+                        rest: row.querySelector('.ex-rest').value.trim() || '90s',
+                        tempo: row.querySelector('.ex-tempo').value.trim() || '2-0-2',
+                        notes: row.querySelector('.ex-notes').value.trim() || '',
                         order: count++
                     });
                 }
             });
+
+            if (exercises.length === 0) {
+                showToast('Please add at least one exercise to the template.', 'error', 'Missing Exercises');
+                return;
+            }
 
             try {
                 await appState.saveTemplate({
@@ -348,7 +393,7 @@ window.init_templates = function(params) {
         };
     }
 
-    // Assign Template
+    // Assign Template to Client
     function openAssignTemplate(templateId) {
         document.getElementById('assign-template-id').value = templateId;
         
@@ -370,17 +415,15 @@ window.init_templates = function(params) {
             e.preventDefault();
             const templateId = document.getElementById('assign-template-id').value;
             const clientId = assignSelect.value;
+            const targetWeek = assignWeekSelect ? parseInt(assignWeekSelect.value) || 1 : 1;
 
             if (templateId && clientId) {
                 try {
-                    const newWorkout = await appState.assignTemplateToClient(templateId, clientId);
+                    const newWorkout = await appState.assignTemplateToClient(templateId, clientId, targetWeek);
                     closeModals();
-                    showToast(`Workout template successfully assigned to client!`, 'success', 'Template Assigned');
-                    if (newWorkout) {
-                        window.location.hash = `builder/${newWorkout.id}`;
-                    } else {
-                        window.location.hash = 'builder';
-                    }
+                    showToast(`Workout template assigned to Week ${targetWeek}!`, 'success', 'Template Assigned');
+                    // Direct to client training view so coach sees the newly added workout
+                    window.location.hash = `analytics/${clientId}`;
                 } catch (err) {
                     showToast(`Failed to assign template: ${err.message}`, 'error', 'Assign Error');
                 }
@@ -390,4 +433,9 @@ window.init_templates = function(params) {
 
     // Initial render
     renderTemplates();
+
+    // Auto open create modal if requested in URL
+    if (window.location.hash.includes('create=true')) {
+        triggerCreate();
+    }
 };

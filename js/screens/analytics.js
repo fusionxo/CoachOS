@@ -459,31 +459,43 @@ window.init_analytics = function(params) {
         if (!programs || programs.length === 0) {
             workoutsListMount.innerHTML = `
                 <div class="card-bg border border-dashed border-outline-variant rounded-xl p-8 text-center text-on-surface-variant text-sm">
-                    <p class="mb-3">No active workout programs assigned.</p>
+                    <span class="material-symbols-outlined text-[36px] text-primary-container mb-2">fitness_center</span>
+                    <p class="font-bold text-primary mb-1">No active training program assigned yet</p>
+                    <p class="text-xs text-on-surface-variant mb-4">Assign a program template or create custom workouts for Week 1 and Week 2.</p>
+                    <button id="btn-analytics-create-first-workout" class="px-4 py-2 bg-[#d9f99d] text-[#09090b] text-xs font-bold rounded-lg inline-flex items-center gap-1.5 shadow-[0_0_15px_rgba(217,249,157,0.2)]">
+                        <span class="material-symbols-outlined text-[16px]">add_circle</span> Add First Workout
+                    </button>
                 </div>
             `;
+            const btnCreateFirst = document.getElementById('btn-analytics-create-first-workout');
+            if (btnCreateFirst) btnCreateFirst.onclick = () => openAddWorkoutModal(1);
             return;
         }
 
         programs.forEach(p => {
             const progSection = document.createElement('div');
-            progSection.className = 'space-y-4 mb-6 card-bg border border-base rounded-xl p-4';
+            progSection.className = 'space-y-5 mb-8 card-bg border border-base rounded-2xl p-5';
             progSection.innerHTML = `
-                <div class="flex items-center justify-between border-b border-[#27272a] pb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[#ceee93] text-sm">folder</span>
-                        <h4 class="text-sm font-bold text-primary uppercase font-label-caps tracking-wider">${p.name}</h4>
+                <div class="flex items-center justify-between border-b border-[#27272a] pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-[#ceee93]/10 border border-[#ceee93]/20 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[#ceee93] text-[18px]">folder</span>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-primary uppercase font-label-caps tracking-wider">${p.name}</h4>
+                            <p class="text-[10px] text-on-surface-variant font-mono">Assigned Program</p>
+                        </div>
                     </div>
-                    <button class="px-3 py-1.5 rounded border border-error/30 text-error hover:bg-error/10 text-[10px] font-semibold transition-colors btn-delete-program flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[13px]">delete</span>
+                    <button class="px-3 py-1.5 rounded-lg border border-error/30 text-error hover:bg-error/10 text-[11px] font-semibold transition-colors btn-delete-program flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">delete</span>
                         Delete Program
                     </button>
                 </div>
-                <div class="program-weeks-container space-y-4"></div>
+                <div class="program-weeks-container space-y-6"></div>
             `;
 
             progSection.querySelector('.btn-delete-program').onclick = async () => {
-                if (await showConfirm(`Delete entire program "${p.name}" and all its workouts?`, 'Delete Program', 'Delete', 'Cancel')) {
+                if (await showConfirm(`Delete entire program "${p.name}" and all its workouts? Note: Templates in your library remain safe and untouched.`, 'Delete Program', 'Delete', 'Cancel')) {
                     try {
                         await window.appState.deleteProgram(p.id);
                         showToast(`Program "${p.name}" deleted successfully!`, 'success', 'Program Deleted');
@@ -496,54 +508,142 @@ window.init_analytics = function(params) {
 
             const weeksContainer = progSection.querySelector('.program-weeks-container');
 
-            if (p.program_weeks && p.program_weeks.length > 0) {
-                const sortedWeeks = [...p.program_weeks].sort((a, b) => a.week_number - b.week_number);
-                sortedWeeks.forEach(pw => {
-                    if (!pw.workouts || pw.workouts.length === 0) return;
-                    const wkSection = document.createElement('div');
-                    wkSection.className = 'pl-4 space-y-3';
-                    wkSection.innerHTML = `
-                        <div class="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
-                            <span class="material-symbols-outlined text-xs text-[#ceee93]">calendar_view_week</span>
-                            <span>Week ${pw.week_number}</span>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                    `;
-                    const gridMount = wkSection.querySelector('div.grid');
+            // Build map of weeks, ensuring Week 1 and Week 2 exist in view
+            const weekMap = new Map();
+            if (p.program_weeks) {
+                p.program_weeks.forEach(pw => weekMap.set(pw.week_number, pw));
+            }
 
-                    pw.workouts.forEach(wk => {
+            // Always display Week 1 and Week 2
+            const weekNumbers = Array.from(new Set([1, 2, ...Array.from(weekMap.keys())])).sort((a, b) => a - b);
+
+            weekNumbers.forEach(wNum => {
+                const pw = weekMap.get(wNum) || { week_number: wNum, workouts: [] };
+                const wkWs = (pw.workouts || []).sort((a, b) => (a.day_number || 1) - (b.day_number || 1));
+                const wkSection = document.createElement('div');
+                wkSection.className = 'bg-[#0d0f09] border border-[#27272a] rounded-xl p-4 space-y-3';
+                
+                const hasWorkouts = wkWs.length > 0;
+                const canCopyWeek1 = wNum === 2 && !hasWorkouts && (weekMap.get(1)?.workouts?.length > 0);
+
+                wkSection.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-[#27272a]/60 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded bg-[#ceee93]/15 text-[#ceee93] border border-[#ceee93]/30 font-mono text-xs font-bold">Week ${wNum}</span>
+                            <span class="text-xs text-on-surface-variant font-mono">(${wkWs.length} Workout${wkWs.length === 1 ? '' : 's'})</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${canCopyWeek1 ? `
+                                <button class="px-2.5 py-1 rounded bg-[#27272a] hover:bg-[#34352f] text-[11px] font-semibold text-primary transition-colors btn-copy-week1 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[13px]">content_copy</span> Copy Week 1
+                                </button>
+                            ` : ''}
+                            <button class="px-3 py-1 rounded bg-[#d9f99d] text-[#09090b] text-[11px] font-bold hover:opacity-90 transition-opacity btn-add-workout-to-week flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[13px]">add</span> Add Workout
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 workouts-grid"></div>
+                `;
+
+                // Copy Week 1 button
+                const btnCopyW1 = wkSection.querySelector('.btn-copy-week1');
+                if (btnCopyW1) {
+                    btnCopyW1.onclick = async () => {
+                        try {
+                            btnCopyW1.disabled = true;
+                            btnCopyW1.innerHTML = `<span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span> Copying...`;
+                            await window.appState.duplicateWeek(client.id, p.id, 1, 2);
+                            showToast('Copied Week 1 workouts into Week 2!', 'success', 'Week Duplicated');
+                            renderTraining();
+                        } catch (err) {
+                            showToast(`Failed to copy week: ${err.message}`, 'error', 'Copy Error');
+                            btnCopyW1.disabled = false;
+                            btnCopyW1.innerHTML = `<span class="material-symbols-outlined text-[13px]">content_copy</span> Copy Week 1`;
+                        }
+                    };
+                }
+
+                // Add workout to this week
+                wkSection.querySelector('.btn-add-workout-to-week').onclick = () => {
+                    openAddWorkoutModal(wNum);
+                };
+
+                const gridMount = wkSection.querySelector('.workouts-grid');
+
+                if (!hasWorkouts) {
+                    gridMount.innerHTML = `
+                        <div class="col-span-full py-4 text-center text-xs text-on-surface-variant italic">
+                            No workouts in Week ${wNum} yet. Click "+ Add Workout" to schedule Day 1, Day 2, etc.
+                        </div>
+                    `;
+                } else {
+                    wkWs.forEach((wk, idx) => {
                         const exs = wk.exercises || [];
                         const card = document.createElement('div');
-                        card.className = 'card-bg border border-base rounded-xl p-unit-md flex flex-col justify-between';
+                        card.className = 'card-bg border border-base hover:border-outline rounded-xl p-3.5 flex flex-col justify-between transition-all group min-w-0';
+                        const dayLabel = wk.day_number ? `Day ${wk.day_number}` : `Day ${idx + 1}`;
+
                         card.innerHTML = `
-                            <div class="mb-3">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h5 class="font-body-base text-body-base font-semibold text-primary">${wk.name}</h5>
-                                    <button class="px-2.5 py-1 rounded border border-base hover:bg-surface-container-high text-[10px] text-on-surface font-semibold transition-colors btn-edit-workout">Edit</button>
+                            <div class="mb-3 min-w-0">
+                                <div class="flex justify-between items-start mb-1.5 gap-2">
+                                    <div class="min-w-0 flex-1">
+                                        <span class="bg-[#27272a] text-[#ceee93] text-[9px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider">${dayLabel}</span>
+                                        <h5 class="font-body-base text-xs sm:text-sm font-bold text-primary truncate mt-1">${wk.name}</h5>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <button class="p-1 text-on-surface-variant hover:text-primary transition-colors btn-edit-workout" title="Edit in Builder">
+                                            <span class="material-symbols-outlined text-[16px]">edit</span>
+                                        </button>
+                                        <button class="p-1 text-error/70 hover:text-error transition-colors btn-delete-workout" title="Delete Workout from Client Schedule">
+                                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-on-surface-variant mb-3">${wk.instructions || 'No general notes.'}</p>
-                                <div class="space-y-1.5 text-xs">
-                                    ${exs.length === 0 ? '<p class="text-on-surface-variant italic">No exercises added yet.</p>' : ''}
-                                    ${exs.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map(ex => `
-                                        <div class="flex justify-between text-on-surface-variant border-b border-[#27272a]/20 py-1 text-[11px]">
-                                            <span>• ${ex.name}</span>
-                                            <span class="font-stat-mono text-[10px] text-primary">${ex.sets}x${ex.reps} @ ${ex.load_target || '--'}</span>
+                                <p class="text-[11px] text-on-surface-variant mb-2.5 line-clamp-1">${wk.instructions || 'No instructions specified.'}</p>
+                                <div class="space-y-1 text-xs">
+                                    ${exs.length === 0 ? '<p class="text-on-surface-variant text-[11px] italic">No exercises added.</p>' : ''}
+                                    ${exs.slice(0, 3).map(ex => `
+                                        <div class="flex justify-between items-center text-on-surface-variant py-0.5 text-[11px] border-b border-[#27272a]/20">
+                                            <span class="truncate flex-1">• ${ex.name}</span>
+                                            <span class="font-mono text-[10px] text-primary shrink-0 pl-2">${ex.sets}x${ex.reps}</span>
                                         </div>
                                     `).join('')}
+                                    ${exs.length > 3 ? `<p class="text-[10px] text-primary-container font-semibold pt-0.5">+ ${exs.length - 3} more exercises</p>` : ''}
                                 </div>
                             </div>
+                            <div class="pt-2 border-t border-[#27272a]/40 flex justify-between items-center text-[10px] font-mono text-on-surface-variant">
+                                <span>💪 ${exs.length} Exercises</span>
+                                <button class="text-primary hover:underline font-semibold btn-edit-workout">Edit Routine →</button>
+                            </div>
                         `;
-                        card.querySelector('.btn-edit-workout').onclick = () => {
-                            window.location.hash = `builder/${wk.id}`;
+
+                        // Edit button
+                        card.querySelectorAll('.btn-edit-workout').forEach(b => {
+                            b.onclick = () => {
+                                window.location.hash = `builder/${wk.id}`;
+                            };
+                        });
+
+                        // Delete button: ONLY deletes this workout from workouts table
+                        card.querySelector('.btn-delete-workout').onclick = async () => {
+                            if (await showConfirm(`Remove "${wk.name}" (${dayLabel} • Week ${wNum}) from ${client.name}'s schedule? Note: Templates in your library remain safe and untouched.`, 'Delete Workout', 'Delete', 'Cancel')) {
+                                try {
+                                    await window.appState.deleteWorkout(wk.id);
+                                    showToast(`Workout "${wk.name}" removed from client training.`, 'success', 'Workout Deleted');
+                                    renderTraining();
+                                } catch (err) {
+                                    showToast(`Failed to delete workout: ${err.message}`, 'error', 'Delete Error');
+                                }
+                            }
                         };
+
                         gridMount.appendChild(card);
                     });
+                }
 
-                    weeksContainer.appendChild(wkSection);
-                });
-            } else {
-                weeksContainer.innerHTML = `<p class="text-xs text-on-surface-variant italic pl-4">No workouts added to this program yet.</p>`;
-            }
+                weeksContainer.appendChild(wkSection);
+            });
 
             workoutsListMount.appendChild(progSection);
         });
@@ -793,9 +893,146 @@ window.init_analytics = function(params) {
         if (btnDismiss) btnDismiss.onclick = () => modal.classList.add('hidden');
     }
 
+    // --- ADD WORKOUT MODAL (Custom Builder or Template Picker) ---
+    async function openAddWorkoutModal(preselectedWeek = 1) {
+        const modal = document.getElementById('modal-add-client-workout');
+        if (!modal) return;
+
+        const weekSelect = document.getElementById('custom-workout-week');
+        const templateWeekSelect = document.getElementById('select-template-target-week');
+        const daySelect = document.getElementById('custom-workout-day');
+        const nameInput = document.getElementById('custom-workout-name');
+        const notesInput = document.getElementById('custom-workout-notes');
+        const templateSelect = document.getElementById('select-existing-template');
+
+        if (weekSelect) weekSelect.value = String(preselectedWeek || 1);
+        if (templateWeekSelect) templateWeekSelect.value = String(preselectedWeek || 1);
+        if (daySelect) daySelect.value = "1";
+        if (nameInput) nameInput.value = `Week ${preselectedWeek || 1} Day 1 - Workout`;
+        if (notesInput) notesInput.value = "";
+
+        // Populate templates select
+        if (templateSelect) {
+            templateSelect.innerHTML = '<option value="">Loading templates...</option>';
+            let tmpls = window.appState.templates || [];
+            if (tmpls.length === 0 && window.supabaseClient) {
+                const { data } = await window.supabaseClient
+                    .from('workout_templates')
+                    .select('*, template_exercises(*)')
+                    .order('name');
+                if (data) tmpls = data;
+            }
+            if (tmpls.length === 0) {
+                templateSelect.innerHTML = '<option value="">No templates available in library</option>';
+            } else {
+                templateSelect.innerHTML = tmpls.map(t => 
+                    `<option value="${t.id}">${t.name} (${t.category || 'Hypertrophy'} • ${t.template_exercises?.length || t.exercises?.length || 0} exercises)</option>`
+                ).join('');
+            }
+        }
+
+        // Reset to first tab
+        switchAddWorkoutTab('blank');
+        modal.classList.remove('hidden');
+    }
+
+    function switchAddWorkoutTab(tab) {
+        const tabBlank = document.getElementById('tab-btn-add-blank');
+        const tabTmpl = document.getElementById('tab-btn-add-template');
+        const formBlank = document.getElementById('form-create-custom-workout');
+        const formTmpl = document.getElementById('form-assign-existing-template');
+
+        if (tab === 'blank') {
+            if (tabBlank) {
+                tabBlank.className = 'py-2 text-xs font-bold rounded-lg bg-[#d9f99d] text-[#09090b] transition-all';
+            }
+            if (tabTmpl) {
+                tabTmpl.className = 'py-2 text-xs font-semibold text-on-surface-variant hover:text-primary rounded-lg transition-all';
+            }
+            if (formBlank) formBlank.classList.remove('hidden');
+            if (formTmpl) formTmpl.classList.add('hidden');
+        } else {
+            if (tabBlank) {
+                tabBlank.className = 'py-2 text-xs font-semibold text-on-surface-variant hover:text-primary rounded-lg transition-all';
+            }
+            if (tabTmpl) {
+                tabTmpl.className = 'py-2 text-xs font-bold rounded-lg bg-[#d9f99d] text-[#09090b] transition-all';
+            }
+            if (formBlank) formBlank.classList.add('hidden');
+            if (formTmpl) formTmpl.classList.remove('hidden');
+        }
+    }
+
+    // Modal tabs & close wiring
+    const modalAddWorkout = document.getElementById('modal-add-client-workout');
+    const tabBtnBlank = document.getElementById('tab-btn-add-blank');
+    const tabBtnTmpl = document.getElementById('tab-btn-add-template');
+    const btnCloseAddModal = document.getElementById('btn-close-add-workout-modal');
+    const btnCancelAddBtns = document.querySelectorAll('.btn-cancel-add-workout');
+    const btnGotoTemplates = document.getElementById('btn-goto-templates');
+    const formCreateCustom = document.getElementById('form-create-custom-workout');
+    const formAssignTmpl = document.getElementById('form-assign-existing-template');
+
+    if (tabBtnBlank) tabBtnBlank.onclick = () => switchAddWorkoutTab('blank');
+    if (tabBtnTmpl) tabBtnTmpl.onclick = () => switchAddWorkoutTab('template');
+    if (btnCloseAddModal) btnCloseAddModal.onclick = () => modalAddWorkout?.classList.add('hidden');
+    btnCancelAddBtns.forEach(b => b.onclick = () => modalAddWorkout?.classList.add('hidden'));
+
+    if (btnGotoTemplates) {
+        btnGotoTemplates.onclick = () => {
+            modalAddWorkout?.classList.add('hidden');
+            window.location.hash = 'templates';
+        };
+    }
+
+    if (formCreateCustom) {
+        formCreateCustom.onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('custom-workout-name')?.value.trim() || 'Custom Workout';
+            const week = document.getElementById('custom-workout-week')?.value || '1';
+            const day = document.getElementById('custom-workout-day')?.value || '1';
+            const notes = document.getElementById('custom-workout-notes')?.value.trim() || '';
+
+            modalAddWorkout?.classList.add('hidden');
+            window.location.hash = `builder?new=true&clientId=${client.id}&week=${week}&day=${day}&name=${encodeURIComponent(name)}&instructions=${encodeURIComponent(notes)}`;
+        };
+    }
+
+    if (formAssignTmpl) {
+        formAssignTmpl.onsubmit = async (e) => {
+            e.preventDefault();
+            const templateId = document.getElementById('select-existing-template')?.value;
+            const targetWeek = parseInt(document.getElementById('select-template-target-week')?.value) || 1;
+            const btnSubmit = document.getElementById('btn-submit-assign-template');
+
+            if (!templateId) {
+                showToast('Please select a template to assign', 'error', 'No Template Selected');
+                return;
+            }
+
+            try {
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Assigning...`;
+                }
+                await window.appState.assignTemplateToClient(templateId, client.id, targetWeek);
+                showToast(`Assigned template to Week ${targetWeek}!`, 'success', 'Template Assigned');
+                modalAddWorkout?.classList.add('hidden');
+                renderTraining();
+            } catch (err) {
+                showToast(`Failed to assign template: ${err.message}`, 'error', 'Assignment Error');
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = `<span class="material-symbols-outlined text-[16px]">person_add</span> Assign Template`;
+                }
+            }
+        };
+    }
+
     if (btnAddWorkout) {
         btnAddWorkout.onclick = () => {
-            window.location.hash = 'builder';
+            openAddWorkoutModal(1);
         };
     }
 

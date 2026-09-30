@@ -278,6 +278,7 @@ class AppState {
                                             programId: p.id,
                                             weekId: w.id,
                                             weekNumber: w.week_number,
+                                            dayNumber: wk.day_number || 1,
                                             name: wk.name,
                                             status: (isCompletedLocally || wk.status === 'Completed' || (sessionLogs && Object.keys(sessionLogs).length > 0)) ? 'Completed' : (wk.status || 'Scheduled'),
                                             notes: wk.instructions,
@@ -350,6 +351,7 @@ class AppState {
                         this.templates.push({
                             id: t.id,
                             name: t.name,
+                            category: t.category || 'hypertrophy',
                             notes: t.notes || '',
                             exercises: Array.isArray(t.exercises) ? t.exercises.map((e, idx) => ({
                                 id: e.id || `e-${idx}`,
@@ -555,6 +557,7 @@ class AppState {
                                             programId: p.id,
                                             weekId: w.id,
                                             weekNumber: w.week_number,
+                                            dayNumber: wk.day_number || 1,
                                             name: wk.name,
                                             status: (isCompletedLocally || wk.status === 'Completed') ? 'Completed' : (wk.status || 'Scheduled'),
                                             notes: wk.instructions,
@@ -866,37 +869,81 @@ class AppState {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
-        // Find or create default Program
-        const { data: program, error: progErr } = await window.supabaseClient
-            .from('programs')
-            .insert({
-                coach_id: this.user.id,
-                client_id: clientId,
-                name: workout.programName || 'Training Program',
-                description: 'Custom training routine.'
-            })
-            .select()
-            .single();
+        const targetWeekNum = parseInt(workout.weekNumber) || 1;
+        let program = null;
 
-        if (progErr || !program) throw progErr || new Error('Failed to create program.');
+        if (workout.programId) {
+            const { data: p } = await window.supabaseClient
+                .from('programs')
+                .select('id, name')
+                .eq('id', workout.programId)
+                .maybeSingle();
+            program = p;
+        }
 
-        const { data: week, error: weekErr } = await window.supabaseClient
+        if (!program) {
+            // Check if client already has a program
+            const { data: existingProgs } = await window.supabaseClient
+                .from('programs')
+                .select('id, name')
+                .eq('client_id', clientId)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (existingProgs && existingProgs.length > 0) {
+                program = existingProgs[0];
+            } else {
+                const { data: newProg, error: progErr } = await window.supabaseClient
+                    .from('programs')
+                    .insert({
+                        coach_id: this.user.id,
+                        client_id: clientId,
+                        name: workout.programName || 'Training Program',
+                        description: 'Custom training routine.'
+                    })
+                    .select()
+                    .single();
+                if (progErr || !newProg) throw progErr || new Error('Failed to create program.');
+                program = newProg;
+            }
+        }
+
+        // Find or create the target week
+        let { data: week } = await window.supabaseClient
             .from('program_weeks')
-            .insert({
-                program_id: program.id,
-                week_number: 1
-            })
-            .select()
-            .single();
+            .select('id, week_number')
+            .eq('program_id', program.id)
+            .eq('week_number', targetWeekNum)
+            .maybeSingle();
 
-        if (weekErr || !week) throw weekErr || new Error('Failed to create program week.');
+        if (!week) {
+            const { data: newWeek, error: weekErr } = await window.supabaseClient
+                .from('program_weeks')
+                .insert({
+                    program_id: program.id,
+                    week_number: targetWeekNum
+                })
+                .select()
+                .single();
+            if (weekErr || !newWeek) throw weekErr || new Error('Failed to create program week.');
+            week = newWeek;
+        }
+
+        // Determine day number in this week
+        const { count } = await window.supabaseClient
+            .from('workouts')
+            .select('id', { count: 'exact', head: true })
+            .eq('week_id', week.id);
+
+        const dayNum = workout.dayNumber || (count ? count + 1 : 1);
 
         const { data: wk, error: wkErr } = await window.supabaseClient
             .from('workouts')
             .insert({
                 week_id: week.id,
-                name: workout.name || 'Untitled Session',
-                instructions: workout.notes || ''
+                name: workout.name || `Day ${dayNum} Workout`,
+                instructions: workout.notes || '',
+                day_number: dayNum
             })
             .select()
             .single();
@@ -944,6 +991,9 @@ class AppState {
             if (updatedData.status !== undefined) {
                 updatePayload.status = updatedData.status;
             }
+            if (updatedData.dayNumber !== undefined) {
+                updatePayload.day_number = parseInt(updatedData.dayNumber) || 1;
+            }
             await window.supabaseClient
                 .from('workouts')
                 .update(updatePayload)
@@ -981,7 +1031,12 @@ class AppState {
         const actualLogs = (sessionLogs && sessionLogs.sessionLogs) ? sessionLogs.sessionLogs : sessionLogs;
         const nowIso = new Date().toISOString();
 
-        // 1. Persist to localStorage FIRST (always works regardless of Supabase)
+        // 1. Clear in-progress draft from localStorage
+        try {
+            localStorage.removeItem('coachos_workout_draft_' + workoutId);
+        } catch(e) {}
+
+        // 2. Persist to localStorage completed workouts
         try {
             const completedKey = 'coachos_completed_workouts';
             const existing = JSON.parse(localStorage.getItem(completedKey) || '[]');
@@ -994,7 +1049,7 @@ class AppState {
             }
         } catch(e) {}
 
-        // 2. Update local in-memory state immediately
+        // 3. Update local in-memory state immediately
         const targetW = this.workouts.find(w => w.id === workoutId);
         if (targetW) {
             targetW.status = 'Completed';
@@ -1002,7 +1057,7 @@ class AppState {
             targetW.sessionLogs = actualLogs;
         }
 
-        // 3. Persist to Supabase if possible
+        // 4. Persist to Supabase if available
         if (this.user && this.user.id && window.supabaseClient) {
             try {
                 await window.supabaseClient
@@ -1015,15 +1070,17 @@ class AppState {
                     .eq('id', workoutId);
             } catch (err) {
                 console.warn('Supabase workout completion sync warning:', err.message);
-                // Local + localStorage fallback is already set above
             }
         }
+
+        await this.refresh();
     }
 
     async deleteWorkout(workoutId) {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
+        // ONLY deletes the workout from workouts table. Never touches templates!
         await window.supabaseClient
             .from('workouts')
             .delete()
@@ -1035,12 +1092,81 @@ class AppState {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
-        // Deleting program cascades to program_weeks -> workouts -> exercises
+        // Deleting program cascades ONLY to program_weeks -> workouts -> exercises. Never touches templates!
         const { error } = await window.supabaseClient
             .from('programs')
             .delete()
             .eq('id', programId);
         if (error) throw error;
+        await this.refresh();
+    }
+
+    async duplicateWeek(clientId, programId, sourceWeekNum, targetWeekNum) {
+        if (!this.user || !this.user.id) {
+            throw new Error("Authentication not initialized");
+        }
+        // Fetch source week workouts
+        const { data: sourceWeek } = await window.supabaseClient
+            .from('program_weeks')
+            .select('id, workouts(*, exercises(*))')
+            .eq('program_id', programId)
+            .eq('week_number', sourceWeekNum)
+            .single();
+
+        if (!sourceWeek || !sourceWeek.workouts || sourceWeek.workouts.length === 0) {
+            throw new Error(`Week ${sourceWeekNum} has no workouts to copy.`);
+        }
+
+        // Find or create target week
+        let { data: targetWeek } = await window.supabaseClient
+            .from('program_weeks')
+            .select('id')
+            .eq('program_id', programId)
+            .eq('week_number', targetWeekNum)
+            .maybeSingle();
+
+        if (!targetWeek) {
+            const { data: newWk, error: wErr } = await window.supabaseClient
+                .from('program_weeks')
+                .insert({
+                    program_id: programId,
+                    week_number: targetWeekNum
+                })
+                .select()
+                .single();
+            if (wErr) throw wErr;
+            targetWeek = newWk;
+        }
+
+        // Clone workouts and exercises
+        for (const wk of sourceWeek.workouts) {
+            const { data: newWk, error: insErr } = await window.supabaseClient
+                .from('workouts')
+                .insert({
+                    week_id: targetWeek.id,
+                    name: wk.name,
+                    instructions: wk.instructions,
+                    day_number: wk.day_number || 1
+                })
+                .select()
+                .single();
+            if (insErr) throw insErr;
+
+            if (wk.exercises && wk.exercises.length > 0) {
+                const exToInsert = wk.exercises.map(e => ({
+                    workout_id: newWk.id,
+                    name: e.name,
+                    sets: e.sets,
+                    reps: e.reps,
+                    load_target: e.load_target,
+                    rest_time: e.rest_time,
+                    notes: e.notes,
+                    order_index: e.order_index
+                }));
+                await window.supabaseClient.from('exercises').insert(exToInsert);
+            }
+        }
+
         await this.refresh();
     }
 
@@ -1052,11 +1178,13 @@ class AppState {
         
         // Format the exercises array as expected by database JSONB and by frontend
         const formattedExercises = (template.exercises || []).map((e, idx) => ({
+            id: e.id || `te-${idx + 1}`,
             name: e.name,
             sets: parseInt(e.sets) || 3,
             reps: e.reps || '10',
             weight: e.weight || '70%',
             rest: e.rest || '90s',
+            tempo: e.tempo || '2-0-2',
             notes: e.notes || '',
             order: idx + 1
         }));
@@ -1067,6 +1195,7 @@ class AppState {
                 .from('workout_templates')
                 .update({
                     name: template.name,
+                    category: template.category || 'hypertrophy',
                     notes: template.notes || '',
                     exercises: formattedExercises
                 })
@@ -1079,6 +1208,7 @@ class AppState {
                 .insert({
                     coach_id: this.user.id,
                     name: template.name || 'Workout Template',
+                    category: template.category || 'hypertrophy',
                     notes: template.notes || '',
                     exercises: formattedExercises
                 })
@@ -1092,6 +1222,7 @@ class AppState {
         return {
             id: templateId,
             name: template.name,
+            category: template.category || 'hypertrophy',
             notes: template.notes,
             exercises: formattedExercises
         };
@@ -1101,6 +1232,7 @@ class AppState {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
+        // ONLY deletes from workout_templates table. Never touches client workouts!
         const { error } = await window.supabaseClient
             .from('workout_templates')
             .delete()
@@ -1126,6 +1258,7 @@ class AppState {
             .insert({
                 coach_id: this.user.id,
                 name: `${template.name} (Copy)`,
+                category: template.category || 'hypertrophy',
                 notes: template.notes,
                 exercises: template.exercises
             })
@@ -1134,9 +1267,10 @@ class AppState {
         if (insertErr || !dupTemplate) throw insertErr || new Error('Failed to create duplicate template.');
 
         await this.refresh();
+        return dupTemplate;
     }
 
-    async assignTemplateToClient(templateId, clientId) {
+    async assignTemplateToClient(templateId, clientId, targetWeekNumber = 1) {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
@@ -1148,35 +1282,69 @@ class AppState {
 
         if (fetchErr || !template) throw fetchErr || new Error('Template not found.');
 
-        // Programs should only exist after assigning a template to a client
-        const { data: prog, error: progErr } = await window.supabaseClient
+        // Find existing program or create one
+        let program = null;
+        const { data: existingProgs } = await window.supabaseClient
             .from('programs')
-            .insert({
-                coach_id: this.user.id,
-                client_id: clientId,
-                name: template.name,
-                description: template.notes
-            })
-            .select()
-            .single();
-        if (progErr || !prog) throw progErr || new Error('Failed to assign program template.');
+            .select('id, name')
+            .eq('client_id', clientId)
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        const { data: week, error: weekErr } = await window.supabaseClient
+        if (existingProgs && existingProgs.length > 0) {
+            program = existingProgs[0];
+        } else {
+            const { data: prog, error: progErr } = await window.supabaseClient
+                .from('programs')
+                .insert({
+                    coach_id: this.user.id,
+                    client_id: clientId,
+                    name: template.name,
+                    description: template.notes
+                })
+                .select()
+                .single();
+            if (progErr || !prog) throw progErr || new Error('Failed to assign program template.');
+            program = prog;
+        }
+
+        // Find or create target week (Week 1 or Week 2)
+        const weekNum = parseInt(targetWeekNumber) || 1;
+        let { data: week } = await window.supabaseClient
             .from('program_weeks')
-            .insert({
-                program_id: prog.id,
-                week_number: 1
-            })
-            .select()
-            .single();
-        if (weekErr || !week) throw weekErr || new Error('Failed to create assigned week.');
+            .select('id')
+            .eq('program_id', program.id)
+            .eq('week_number', weekNum)
+            .maybeSingle();
+
+        if (!week) {
+            const { data: newWk, error: weekErr } = await window.supabaseClient
+                .from('program_weeks')
+                .insert({
+                    program_id: program.id,
+                    week_number: weekNum
+                })
+                .select()
+                .single();
+            if (weekErr || !newWk) throw weekErr || new Error('Failed to create assigned week.');
+            week = newWk;
+        }
+
+        // Determine day number in this week
+        const { count } = await window.supabaseClient
+            .from('workouts')
+            .select('id', { count: 'exact', head: true })
+            .eq('week_id', week.id);
+
+        const dayNum = (count ? count + 1 : 1);
 
         const { data: createdWk, error: wkErr } = await window.supabaseClient
             .from('workouts')
             .insert({
                 week_id: week.id,
                 name: template.name,
-                instructions: template.notes
+                instructions: template.notes,
+                day_number: dayNum
             })
             .select()
             .single();

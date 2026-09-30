@@ -16,6 +16,11 @@ window.init_client_mobile = function(params) {
                 || fallbackClient;
     const coachSettings = appState.settings || {};
 
+    let localCompleted = [];
+    try {
+        localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
+    } catch(e) {}
+
     function playClientChime(isIncoming = true) {
         try {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -175,7 +180,6 @@ window.init_client_mobile = function(params) {
         const startWorkoutBtn = document.getElementById('btn-mobile-start-today-workout');
         const todayMetaEl = document.getElementById('mobile-today-workout-meta');
 
-        let localCompleted = [];
         try {
             localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
         } catch(e) {}
@@ -344,11 +348,11 @@ window.init_client_mobile = function(params) {
         const listMount = document.getElementById('mobile-training-list');
 
         const clientWorkouts = appState.workouts.filter(w => w.clientId === client.id);
-        const programName = clientWorkouts[0] ? clientWorkouts[0].programName : 'Custom Program';
+        const programName = clientWorkouts[0] ? clientWorkouts[0].programName : 'Training Program';
 
-        if (subtitleEl) subtitleEl.textContent = `${programName} • Phase 1`;
+        if (subtitleEl) subtitleEl.textContent = `${programName} • Week ${selectedWeekNumber}`;
 
-        // Render Week Tabs
+        // Render Week Tabs (Week 1 and Week 2)
         if (weekTabsMount) {
             const weekBtns = weekTabsMount.querySelectorAll('.btn-week-tab');
             weekBtns.forEach(btn => {
@@ -369,23 +373,30 @@ window.init_client_mobile = function(params) {
         if (!listMount) return;
         listMount.innerHTML = '';
 
-        if (clientWorkouts.length === 0) {
+        // Filter workouts specifically for the active week tab
+        const weekWorkouts = clientWorkouts.filter(w => {
+            const wNum = w.weekNumber || (w.weekName ? (parseInt(w.weekName.replace(/\D/g, '')) || 1) : 1);
+            return wNum === selectedWeekNumber;
+        }).sort((a, b) => (a.dayNumber || 1) - (b.dayNumber || 1));
+
+        if (weekWorkouts.length === 0) {
             listMount.innerHTML = `
                 <div class="card-bg border border-dashed border-[#27272a] rounded-xl p-6 text-center text-on-surface-variant text-xs">
-                    No workout programs assigned by your coach yet.
+                    No workouts scheduled for Week ${selectedWeekNumber}.
                 </div>
             `;
         } else {
-            clientWorkouts.forEach((w, idx) => {
+            weekWorkouts.forEach((w, idx) => {
                 const isCompleted = w.status === 'Completed' || localCompleted.includes(w.id) || !!localStorage.getItem('coachos_workout_logs_' + w.id);
                 const totalSets = (w.exercises || []).reduce((acc, e) => acc + (parseInt(e.sets) || 0), 0);
+                const dayNum = w.dayNumber || (idx + 1);
 
                 const item = document.createElement('div');
                 item.className = 'card-bg border border-base hover:border-outline-variant/60 rounded-xl p-4 space-y-3 transition-all';
                 item.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="text-[9px] uppercase font-label-caps tracking-wider text-on-surface-variant font-mono">Day ${idx + 1} • Week ${selectedWeekNumber}</span>
+                            <span class="text-[9px] uppercase font-label-caps tracking-wider text-on-surface-variant font-mono">Day ${dayNum} • Week ${selectedWeekNumber}</span>
                             <h4 class="font-body-base text-primary font-bold text-sm mt-0.5">${w.name}</h4>
                         </div>
                         <span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase font-mono ${
