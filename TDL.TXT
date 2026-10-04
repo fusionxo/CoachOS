@@ -23,3 +23,24 @@
   - Added "Remove Movement" button with confirmation to drop an unfinished exercise from today's session.
   - Added "Add Exercise" button with a modal to add exercises dynamically to today's workout.
   - Ensured dynamic exercise list persists in session draft and properly saves upon completion.
+
+- [x] **RESOLVED** - Incremental daily check-ins (log weight in morning, steps/sleep at night):
+  - Removed strict HTML5 `required` constraints from individual daily check-in fields in `views/client-mobile.html`.
+  - Added individual visual status badges (`Logged` with green pill indicator) next to each metric once recorded.
+  - Added an overarching progress pill (`X/3 Logged`) in the check-in header.
+  - Check-in form remains accessible throughout the day instead of locking out or disappearing after the first entry.
+  - Implemented smart merge logic in `saveCheckIn` (`js/app.js` and `js/screens/client-mobile.js`) so updating evening steps preserves previously entered morning bodyweight without overwriting it with null/defaults.
+
+- [x] **RESOLVED** - Client push notifications & automated daily reminder engine:
+  - Built `js/utils/notifications.js` with full Web Notification & Service Worker Push API support.
+  - Added automated contextual checks for:
+    - Morning weigh-in reminder (active 06:00 - 11:59 if weight is not yet logged).
+    - Workout of the day reminder (if client has a scheduled session today).
+    - Evening reflection reminder (active 19:00 - 23:59 if steps/sleep are not yet logged).
+  - Added client mobile notification bell with real-time unread badge and dropdown panel to enable alerts and trigger test notifications.
+
+- [x] **RESOLVED** - Client Progressive Web App (PWA) transformation:
+  - Created `manifest.json` configured for standalone mobile mode, CoachOS dark branding (`#09090b`), portrait lock, and high-DPI icons.
+  - Created high-res SVG app icons (`icons/icon-192.svg`, `icons/icon-512.svg`, `icons/icon.svg`).
+  - Implemented `sw.js` (Service Worker) with offline shell asset caching, offline workout logging capability, push event listener, and window focus management.
+  - Added dynamic PWA install banner in the client mobile view with 1-click install support for Chromium/Android and step-by-step guidance for iOS Safari ("Add to Home Screen").

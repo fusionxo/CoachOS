@@ -11,6 +11,15 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Progressive Web App (PWA) Manifest & Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CoachOS">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <!-- Consolidated Global Stylesheet -->
     <link href="css/app.css?v=20260811f" rel="stylesheet">
     <!-- Design System Configuration -->
@@ -116,10 +125,26 @@
     <script>window.APP_CONFIG = { GEMINI_API_KEY: '', GROQ_API_KEY: '' };</script>
     <script src="js/config.js?v=20260811f" onerror="console.warn('js/config.js not found. Using empty keys.')"></script>
     <script src="js/utils/imageCompressor.js?v=20260812sec"></script>
+    <script src="js/utils/notifications.js?v=20260813pwa"></script>
     <script src="js/logger.js?v=20260812sec"></script>
     <script src="js/toast.js?v=20260811f"></script>
     <script src="js/supabase.js?v=20260811f"></script>
     <script src="js/app.js?v=20260811f"></script>
     <script src="js/router.js?v=20260811f"></script>
+
+    <!-- Service Worker Registration for PWA & Offline Support -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log('CoachOS PWA Service Worker Registered. Scope:', reg.scope);
+                    })
+                    .catch(err => {
+                        console.warn('Service Worker registration skipped or failed:', err);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

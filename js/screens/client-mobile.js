@@ -226,38 +226,224 @@ window.init_client_mobile = function(params) {
             }
         }
 
-        // Daily Check-in state
+        // PWA Install Banner Setup
+        const pwaBanner = document.getElementById('pwa-install-banner');
+        const btnPwaInstall = document.getElementById('btn-pwa-install');
+        const btnPwaDismiss = document.getElementById('btn-pwa-dismiss');
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+        if (pwaBanner) {
+            const isDismissed = localStorage.getItem('coachos_pwa_dismissed') === 'true';
+            if (!isStandalone && !isDismissed) {
+                pwaBanner.classList.remove('hidden');
+            }
+            if (btnPwaDismiss) {
+                btnPwaDismiss.onclick = () => {
+                    pwaBanner.classList.add('hidden');
+                    localStorage.setItem('coachos_pwa_dismissed', 'true');
+                };
+            }
+            if (btnPwaInstall) {
+                btnPwaInstall.onclick = async () => {
+                    if (window.coachosDeferredPrompt) {
+                        window.coachosDeferredPrompt.prompt();
+                        const { outcome } = await window.coachosDeferredPrompt.userChoice;
+                        if (outcome === 'accepted') {
+                            pwaBanner.classList.add('hidden');
+                        }
+                        window.coachosDeferredPrompt = null;
+                    } else {
+                        // iOS Safari or standard browser instruction
+                        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                        if (isIos) {
+                            showToast("To install on iOS: Tap Share ⎋ at bottom of Safari, then tap 'Add to Home Screen' ⊞.", 'info', 'Install App');
+                        } else {
+                            showToast("To install CoachOS: Click the Install icon in your browser address bar or menu.", 'info', 'Install App');
+                        }
+                    }
+                };
+            }
+        }
+
+        // Notification Reminders Setup
+        const btnNotifications = document.getElementById('btn-mobile-notifications');
+        const notificationsPanel = document.getElementById('mobile-notifications-panel');
+        const notifStatusEl = document.getElementById('notif-permission-status');
+        const notifBadge = document.getElementById('mobile-notif-badge');
+        const btnEnableNotif = document.getElementById('btn-enable-notifications');
+        const btnTestNotif = document.getElementById('btn-test-notification');
+
+        function updateNotificationUI() {
+            if (!window.CoachOSNotifications) return;
+            const isEnabled = window.CoachOSNotifications.isEnabled();
+            if (notifStatusEl) {
+                notifStatusEl.textContent = isEnabled ? 'Active' : 'Disabled';
+                notifStatusEl.className = isEnabled 
+                    ? 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] font-bold' 
+                    : 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#27272a] text-on-surface-variant';
+            }
+            if (notifBadge) {
+                if (!isEnabled) notifBadge.classList.remove('hidden');
+                else notifBadge.classList.add('hidden');
+            }
+            if (btnEnableNotif) {
+                btnEnableNotif.innerHTML = isEnabled 
+                    ? `<span class="material-symbols-outlined text-[14px]">check_circle</span> Notifications Enabled` 
+                    : `<span class="material-symbols-outlined text-[14px]">notifications_active</span> Enable Device Push Alerts`;
+                btnEnableNotif.className = isEnabled
+                    ? 'w-full py-1.5 bg-[#18181b] border border-[#22c55e]/30 text-[#22c55e] text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 shadow-sm'
+                    : 'w-full py-1.5 bg-[#d9f99d] text-[#09090b] text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 shadow-sm';
+            }
+        }
+
+        updateNotificationUI();
+
+        if (btnNotifications && notificationsPanel) {
+            btnNotifications.onclick = (e) => {
+                e.stopPropagation();
+                notificationsPanel.classList.toggle('hidden');
+            };
+            document.addEventListener('click', (e) => {
+                if (!notificationsPanel.contains(e.target) && e.target !== btnNotifications) {
+                    notificationsPanel.classList.add('hidden');
+                }
+            });
+        }
+
+        if (btnEnableNotif) {
+            btnEnableNotif.onclick = async () => {
+                if (window.CoachOSNotifications) {
+                    const granted = await window.CoachOSNotifications.requestPermission();
+                    updateNotificationUI();
+                    if (granted) {
+                        showToast('Device notifications enabled! You will receive daily coaching alerts.', 'success', 'Alerts Active');
+                        await window.CoachOSNotifications.sendTestNotification();
+                    } else {
+                        showToast('Notification permission was blocked or closed.', 'info', 'Notifications');
+                    }
+                }
+            };
+        }
+
+        if (btnTestNotif) {
+            btnTestNotif.onclick = async () => {
+                if (window.CoachOSNotifications) {
+                    await window.CoachOSNotifications.sendTestNotification();
+                    showToast('Test notification sent to device!', 'success');
+                }
+            };
+        }
+
+        // Daily Check-in state (Supports incremental morning weigh-in & evening steps/sleep)
         const todayStr = new Date().toISOString().split('T')[0];
         const clientCheckins = (appState.checkins || []).filter(c => c.clientId === client.id);
-        const checkedInToday = clientCheckins.some(c => c.date === todayStr);
+        const todayCheckin = clientCheckins.find(c => c.date === todayStr);
 
         const checkinForm = document.getElementById('client-checkin-form');
         const checkinCompleteMsg = document.getElementById('client-checkin-complete-msg');
         const checkinStatusText = document.getElementById('client-checkin-status');
+        const checkinProgressPill = document.getElementById('checkin-progress-pill');
+        const btnSaveCheckinLabel = document.getElementById('btn-save-checkin-label');
 
-        if (checkedInToday) {
-            if (checkinForm) checkinForm.classList.add('hidden');
-            if (checkinCompleteMsg) checkinCompleteMsg.classList.remove('hidden');
-            if (checkinStatusText) {
-                checkinStatusText.textContent = 'Completed • Well Done!';
-                checkinStatusText.className = 'font-body-sm text-[10px] text-[#22c55e] font-semibold';
+        const weightStatus = document.getElementById('checkin-weight-status');
+        const sleepStatus = document.getElementById('checkin-sleep-status');
+        const stepsStatus = document.getElementById('checkin-steps-status');
+
+        const wInput = document.getElementById('mobile-checkin-weight');
+        const sInput = document.getElementById('mobile-checkin-sleep');
+        const stInput = document.getElementById('mobile-checkin-steps');
+        const mInput = document.getElementById('mobile-checkin-mood');
+        const enInput = document.getElementById('mobile-checkin-energy');
+
+        function renderCheckinStatus() {
+            const hasWeight = todayCheckin && todayCheckin.weight !== null && todayCheckin.weight !== undefined && todayCheckin.weight !== '' && !isNaN(parseFloat(todayCheckin.weight));
+            const hasSleep = todayCheckin && todayCheckin.sleep !== null && todayCheckin.sleep !== undefined && todayCheckin.sleep !== '' && !isNaN(parseFloat(todayCheckin.sleep));
+            const hasSteps = todayCheckin && todayCheckin.steps !== null && todayCheckin.steps !== undefined && todayCheckin.steps !== '' && parseInt(todayCheckin.steps) > 0;
+
+            const loggedCount = (hasWeight ? 1 : 0) + (hasSleep ? 1 : 0) + (hasSteps ? 1 : 0);
+
+            // Populate input values and statuses without locking the form!
+            if (wInput) {
+                if (hasWeight) {
+                    wInput.value = todayCheckin.weight;
+                    if (weightStatus) {
+                        weightStatus.textContent = `✓ ${todayCheckin.weight} kg`;
+                        weightStatus.classList.remove('hidden');
+                    }
+                } else {
+                    if (weightStatus) weightStatus.classList.add('hidden');
+                }
             }
-        } else {
-            if (checkinForm) {
-                checkinForm.classList.remove('hidden');
-                const wInput = document.getElementById('mobile-checkin-weight');
-                const sInput = document.getElementById('mobile-checkin-sleep');
-                const stInput = document.getElementById('mobile-checkin-steps');
-                if (wInput) wInput.value = '';
-                if (sInput) sInput.value = '';
-                if (stInput) stInput.value = '';
+
+            if (sInput) {
+                if (hasSleep) {
+                    sInput.value = todayCheckin.sleep;
+                    if (sleepStatus) {
+                        sleepStatus.textContent = `✓ ${todayCheckin.sleep} hrs`;
+                        sleepStatus.classList.remove('hidden');
+                    }
+                } else {
+                    if (sleepStatus) sleepStatus.classList.add('hidden');
+                }
             }
-            if (checkinCompleteMsg) checkinCompleteMsg.classList.add('hidden');
+
+            if (stInput) {
+                if (hasSteps) {
+                    stInput.value = todayCheckin.steps;
+                    if (stepsStatus) {
+                        stepsStatus.textContent = `✓ ${Number(todayCheckin.steps).toLocaleString()}`;
+                        stepsStatus.classList.remove('hidden');
+                    }
+                } else {
+                    if (stepsStatus) stepsStatus.classList.add('hidden');
+                }
+            }
+
+            if (mInput && todayCheckin && todayCheckin.mood) {
+                mInput.value = todayCheckin.mood;
+            }
+            if (enInput && todayCheckin && todayCheckin.energy) {
+                enInput.value = todayCheckin.energy;
+            }
+
+            // Update progress pill & status text
+            if (checkinProgressPill) {
+                checkinProgressPill.textContent = `${loggedCount}/3 Logged`;
+                checkinProgressPill.className = loggedCount === 3
+                    ? 'text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#22c55e]/20 text-[#22c55e] font-bold border border-[#22c55e]/30'
+                    : loggedCount > 0
+                        ? 'text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#ceee93]/15 text-[#ceee93] font-semibold border border-[#ceee93]/20'
+                        : 'text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#27272a] text-on-surface-variant font-semibold';
+            }
+
             if (checkinStatusText) {
-                checkinStatusText.textContent = 'Pending • Takes 30s';
-                checkinStatusText.className = 'font-body-sm text-[10px] text-primary-container';
+                if (loggedCount === 3) {
+                    checkinStatusText.textContent = '100% Completed for today • Edit anytime';
+                    checkinStatusText.className = 'font-body-sm text-[10px] text-[#22c55e] font-semibold';
+                } else if (loggedCount > 0) {
+                    const pendingItems = [];
+                    if (!hasWeight) pendingItems.push('weight');
+                    if (!hasSleep) pendingItems.push('sleep');
+                    if (!hasSteps) pendingItems.push('steps');
+                    checkinStatusText.textContent = `Partial (${loggedCount}/3) • ${pendingItems.join(' & ')} pending`;
+                    checkinStatusText.className = 'font-body-sm text-[10px] text-[#ceee93] font-medium';
+                } else {
+                    checkinStatusText.textContent = 'Pending • Morning weigh-in, evening steps';
+                    checkinStatusText.className = 'font-body-sm text-[10px] text-primary-container';
+                }
+            }
+
+            if (btnSaveCheckinLabel) {
+                btnSaveCheckinLabel.textContent = loggedCount > 0 ? "Update Today's Log" : "Save Daily Check-in";
+            }
+
+            if (checkinCompleteMsg) {
+                if (loggedCount > 0) checkinCompleteMsg.classList.remove('hidden');
+                else checkinCompleteMsg.classList.add('hidden');
             }
         }
+
+        renderCheckinStatus();
 
         // Streak bar
         const streakText = document.getElementById('mobile-checkin-streak-text');
@@ -268,73 +454,96 @@ window.init_client_mobile = function(params) {
             streakBar.style.width = `${Math.round((count / 7) * 100)}%`;
         }
 
-        // Handle checkin submit
+        // Automatic smart daily reminder check
+        if (window.CoachOSNotifications) {
+            window.CoachOSNotifications.checkAndTriggerDailyReminders(client, todayCheckin, todayWorkout);
+        }
+
+        // Handle flexible partial checkin submit (e.g. morning weight, evening steps)
         if (checkinForm) {
             checkinForm.onsubmit = async (e) => {
                 e.preventDefault();
-                const weight = document.getElementById('mobile-checkin-weight')?.value || client.weight || '75.0';
-                const sleep = document.getElementById('mobile-checkin-sleep')?.value || '7.0';
-                const steps = document.getElementById('mobile-checkin-steps')?.value || '10000';
-                const mood = document.getElementById('mobile-checkin-mood')?.value || '🙂';
+                const rawWeight = wInput ? wInput.value.trim() : '';
+                const rawSleep = sInput ? sInput.value.trim() : '';
+                const rawSteps = stInput ? stInput.value.trim() : '';
+                const mood = mInput ? mInput.value : '🙂';
+                const energy = enInput ? parseInt(enInput.value) : 4;
 
-                const energy = parseInt(document.getElementById('mobile-checkin-energy')?.value || '4');
+                const hasExistingWeight = todayCheckin && todayCheckin.weight !== null && todayCheckin.weight !== undefined && todayCheckin.weight !== '';
+                const hasExistingSleep = todayCheckin && todayCheckin.sleep !== null && todayCheckin.sleep !== undefined && todayCheckin.sleep !== '';
+                const hasExistingSteps = todayCheckin && todayCheckin.steps !== null && todayCheckin.steps !== undefined && todayCheckin.steps !== '';
 
-                const existingTodayCheckin = (appState.checkins || []).find(c => c.clientId === client.id && c.date === todayStr);
+                // Ensure at least one value is entered or exists
+                if (!rawWeight && !rawSleep && !rawSteps && !hasExistingWeight && !hasExistingSleep && !hasExistingSteps) {
+                    showToast('Please enter at least one metric (e.g. morning weight)', 'error', 'Check-in Error');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('btn-save-checkin');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Saving...`;
+                }
+
+                // If blank in form but previously logged, retain previous value!
+                const weight = rawWeight !== '' ? rawWeight : (hasExistingWeight ? todayCheckin.weight : undefined);
+                const sleep = rawSleep !== '' ? rawSleep : (hasExistingSleep ? todayCheckin.sleep : undefined);
+                const steps = rawSteps !== '' ? rawSteps : (hasExistingSteps ? todayCheckin.steps : undefined);
 
                 const targetCals = client.target_calories || 2000;
                 const targetProtein = client.target_protein || 150;
                 const targetCarbs = client.target_carbs || 200;
                 const targetFats = client.target_fats || 60;
 
-                const calsVal = existingTodayCheckin && existingTodayCheckin.calories ? existingTodayCheckin.calories : targetCals;
-                const protVal = existingTodayCheckin && existingTodayCheckin.protein ? existingTodayCheckin.protein : targetProtein;
-                const carbsVal = existingTodayCheckin && existingTodayCheckin.carbs ? existingTodayCheckin.carbs : targetCarbs;
-                const fatsVal = existingTodayCheckin && existingTodayCheckin.fats ? existingTodayCheckin.fats : targetFats;
+                const calsVal = todayCheckin && todayCheckin.calories ? todayCheckin.calories : targetCals;
+                const protVal = todayCheckin && todayCheckin.protein ? todayCheckin.protein : targetProtein;
+                const carbsVal = todayCheckin && todayCheckin.carbs ? todayCheckin.carbs : targetCarbs;
+                const fatsVal = todayCheckin && todayCheckin.fats ? todayCheckin.fats : targetFats;
 
                 try {
-                    if (client.id !== 'sandbox-client' && window.supabaseClient && appState.user) {
-                        await appState.saveCheckIn(client.id, {
-                            date: todayStr,
-                            weight,
-                            sleep,
-                            steps,
-                            mood,
-                            energy,
-                            calories: calsVal,
-                            protein: protVal,
-                            carbs: carbsVal,
-                            fats: fatsVal,
-                            notes: 'Logged via Athlete Mobile check-in.'
-                        });
-                    } else {
-                        appState.checkins.push({
-                            id: 'ci-' + Date.now(),
-                            clientId: client.id,
-                            date: todayStr,
-                            weight,
-                            sleep,
-                            steps,
-                            mood,
-                            energy,
-                            calories: calsVal,
-                            protein: protVal,
-                            carbs: carbsVal,
-                            fats: fatsVal
-                        });
+                    await appState.saveCheckIn(client.id, {
+                        date: todayStr,
+                        weight,
+                        sleep,
+                        steps,
+                        mood,
+                        energy,
+                        calories: calsVal,
+                        protein: protVal,
+                        carbs: carbsVal,
+                        fats: fatsVal,
+                        notes: 'Logged via Athlete Mobile check-in.'
+                    });
+
+                    // Update in-memory todayCheckin reference
+                    if (todayCheckin) {
+                        if (weight !== undefined) todayCheckin.weight = weight;
+                        if (sleep !== undefined) todayCheckin.sleep = sleep;
+                        if (steps !== undefined) todayCheckin.steps = steps;
+                        todayCheckin.mood = mood;
+                        todayCheckin.energy = energy;
                     }
 
-                    showToast('Daily check-in logged successfully!', 'success', 'Check-in Saved');
-                    if (checkinForm) checkinForm.classList.add('hidden');
-                    if (checkinCompleteMsg) checkinCompleteMsg.classList.remove('hidden');
-                    if (checkinStatusText) {
-                        checkinStatusText.textContent = 'Completed • Well Done!';
-                        checkinStatusText.className = 'font-body-sm text-[10px] text-[#22c55e] font-semibold';
-                    }
+                    renderCheckinStatus();
+
+                    let savedSummary = [];
+                    if (rawWeight !== '') savedSummary.push(`Weight: ${rawWeight}kg`);
+                    if (rawSteps !== '') savedSummary.push(`Steps: ${rawSteps}`);
+                    if (rawSleep !== '') savedSummary.push(`Sleep: ${rawSleep}h`);
+
+                    const summaryMsg = savedSummary.length > 0 ? savedSummary.join(' • ') : 'Metrics updated';
+                    showToast(`Daily log saved successfully! (${summaryMsg})`, 'success', 'Check-in Saved');
                 } catch (err) {
                     console.error('Check-in log save notice:', err);
-                    showToast('Daily check-in logged successfully!', 'success', 'Check-in Saved');
-                    if (checkinForm) checkinForm.classList.add('hidden');
-                    if (checkinCompleteMsg) checkinCompleteMsg.classList.remove('hidden');
+                    showToast('Daily log saved locally!', 'info', 'Saved Locally');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `
+                            <span class="material-symbols-outlined text-[16px]">save</span>
+                            <span id="btn-save-checkin-label">${todayCheckin ? "Update Today's Log" : "Save Daily Check-in"}</span>
+                        `;
+                    }
                 }
             };
         }

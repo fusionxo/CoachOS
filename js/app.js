@@ -741,15 +741,15 @@ class AppState {
         // 1. Update in-memory state immediately for responsive local updates
         let existingLocal = this.checkins.find(c => c.clientId === clientId && c.date === todayStr);
         if (existingLocal) {
-            if (checkin.weight !== undefined) existingLocal.weight = parseFloat(checkin.weight);
-            if (checkin.sleep !== undefined) existingLocal.sleep = parseFloat(checkin.sleep);
-            if (checkin.steps !== undefined) existingLocal.steps = parseInt(checkin.steps);
-            if (checkin.calories !== undefined) existingLocal.calories = parseInt(checkin.calories);
-            if (checkin.protein !== undefined) existingLocal.protein = parseInt(checkin.protein);
-            if (checkin.carbs !== undefined) existingLocal.carbs = parseInt(checkin.carbs);
-            if (checkin.fats !== undefined) existingLocal.fats = parseInt(checkin.fats);
+            if (checkin.weight !== undefined && checkin.weight !== null && checkin.weight !== '') existingLocal.weight = parseFloat(checkin.weight);
+            if (checkin.sleep !== undefined && checkin.sleep !== null && checkin.sleep !== '') existingLocal.sleep = parseFloat(checkin.sleep);
+            if (checkin.steps !== undefined && checkin.steps !== null && checkin.steps !== '') existingLocal.steps = parseInt(checkin.steps);
+            if (checkin.calories !== undefined && checkin.calories !== null && checkin.calories !== '') existingLocal.calories = parseInt(checkin.calories);
+            if (checkin.protein !== undefined && checkin.protein !== null && checkin.protein !== '') existingLocal.protein = parseInt(checkin.protein);
+            if (checkin.carbs !== undefined && checkin.carbs !== null && checkin.carbs !== '') existingLocal.carbs = parseInt(checkin.carbs);
+            if (checkin.fats !== undefined && checkin.fats !== null && checkin.fats !== '') existingLocal.fats = parseInt(checkin.fats);
             if (checkin.mood) existingLocal.mood = checkin.mood;
-            if (checkin.energy !== undefined) existingLocal.energy = parseInt(checkin.energy);
+            if (checkin.energy !== undefined && checkin.energy !== null && checkin.energy !== '') existingLocal.energy = parseInt(checkin.energy);
             if (checkin.notes) existingLocal.notes = checkin.notes;
         } else {
             existingLocal = {
@@ -757,22 +757,22 @@ class AppState {
                 clientId: clientId,
                 date: todayStr,
                 createdAt: new Date().toISOString(),
-                weight: parseFloat(checkin.weight) || 75.0,
-                sleep: parseFloat(checkin.sleep) || 7.0,
-                steps: parseInt(checkin.steps) || 10000,
-                calories: checkin.calories !== undefined && checkin.calories !== null ? parseInt(checkin.calories) : 0,
-                protein: checkin.protein !== undefined && checkin.protein !== null ? parseInt(checkin.protein) : 0,
-                carbs: checkin.carbs !== undefined && checkin.carbs !== null ? parseInt(checkin.carbs) : 0,
-                fats: checkin.fats !== undefined && checkin.fats !== null ? parseInt(checkin.fats) : 0,
+                weight: (checkin.weight !== undefined && checkin.weight !== null && checkin.weight !== '') ? parseFloat(checkin.weight) : null,
+                sleep: (checkin.sleep !== undefined && checkin.sleep !== null && checkin.sleep !== '') ? parseFloat(checkin.sleep) : null,
+                steps: (checkin.steps !== undefined && checkin.steps !== null && checkin.steps !== '') ? parseInt(checkin.steps) : null,
+                calories: (checkin.calories !== undefined && checkin.calories !== null && checkin.calories !== '') ? parseInt(checkin.calories) : null,
+                protein: (checkin.protein !== undefined && checkin.protein !== null && checkin.protein !== '') ? parseInt(checkin.protein) : null,
+                carbs: (checkin.carbs !== undefined && checkin.carbs !== null && checkin.carbs !== '') ? parseInt(checkin.carbs) : null,
+                fats: (checkin.fats !== undefined && checkin.fats !== null && checkin.fats !== '') ? parseInt(checkin.fats) : null,
                 mood: checkin.mood || '🙂',
-                energy: checkin.energy !== undefined ? parseInt(checkin.energy) : 4,
+                energy: (checkin.energy !== undefined && checkin.energy !== null && checkin.energy !== '') ? parseInt(checkin.energy) : 4,
                 notes: checkin.notes || ''
             };
             this.checkins.push(existingLocal);
         }
 
         const client = this.clients.find(c => c.id === clientId);
-        if (client && checkin.weight) {
+        if (client && checkin.weight && !isNaN(parseFloat(checkin.weight))) {
             client.weight = checkin.weight.toString();
         }
 
@@ -792,15 +792,29 @@ class AppState {
 
                 const payload = {
                     client_id: clientId,
-                    weight: parseFloat(checkin.weight),
-                    sleep_hours: parseFloat(checkin.sleep),
-                    steps: parseInt(checkin.steps),
-                    calories: checkin.calories !== undefined && checkin.calories !== null ? parseInt(checkin.calories) : null,
-                    protein: checkin.protein !== undefined && checkin.protein !== null ? parseInt(checkin.protein) : null,
-                    carbs: checkin.carbs !== undefined && checkin.carbs !== null ? parseInt(checkin.carbs) : null,
-                    fats: checkin.fats !== undefined && checkin.fats !== null ? parseInt(checkin.fats) : null,
-                    mood: checkin.mood || '🙂',
-                    notes: checkin.notes || ''
+                    weight: (checkin.weight !== undefined && checkin.weight !== null && checkin.weight !== '') 
+                        ? parseFloat(checkin.weight) 
+                        : (existingToday?.weight ?? existingLocal?.weight ?? null),
+                    sleep_hours: (checkin.sleep !== undefined && checkin.sleep !== null && checkin.sleep !== '') 
+                        ? parseFloat(checkin.sleep) 
+                        : (existingToday?.sleep_hours ?? existingLocal?.sleep ?? null),
+                    steps: (checkin.steps !== undefined && checkin.steps !== null && checkin.steps !== '') 
+                        ? parseInt(checkin.steps) 
+                        : (existingToday?.steps ?? existingLocal?.steps ?? null),
+                    calories: (checkin.calories !== undefined && checkin.calories !== null && checkin.calories !== '') 
+                        ? parseInt(checkin.calories) 
+                        : (existingToday?.calories ?? existingLocal?.calories ?? null),
+                    protein: (checkin.protein !== undefined && checkin.protein !== null && checkin.protein !== '') 
+                        ? parseInt(checkin.protein) 
+                        : (existingToday?.protein ?? existingLocal?.protein ?? null),
+                    carbs: (checkin.carbs !== undefined && checkin.carbs !== null && checkin.carbs !== '') 
+                        ? parseInt(checkin.carbs) 
+                        : (existingToday?.carbs ?? existingLocal?.carbs ?? null),
+                    fats: (checkin.fats !== undefined && checkin.fats !== null && checkin.fats !== '') 
+                        ? parseInt(checkin.fats) 
+                        : (existingToday?.fats ?? existingLocal?.fats ?? null),
+                    mood: checkin.mood || existingToday?.mood || existingLocal?.mood || '🙂',
+                    notes: checkin.notes || existingToday?.notes || existingLocal?.notes || ''
                 };
 
                 if (existingToday) {
@@ -814,13 +828,15 @@ class AppState {
                         .insert(payload);
                 }
 
-                await window.supabaseClient
-                    .from('clients')
-                    .update({
-                        starting_weight: checkin.weight ? checkin.weight.toString() : undefined,
-                        status: 'Healthy'
-                    })
-                    .eq('id', clientId);
+                if (checkin.weight && !isNaN(parseFloat(checkin.weight))) {
+                    await window.supabaseClient
+                        .from('clients')
+                        .update({
+                            starting_weight: checkin.weight.toString(),
+                            status: 'Healthy'
+                        })
+                        .eq('id', clientId);
+                }
             } catch (err) {
                 console.warn('Supabase checkin sync warning:', err.message);
             }
