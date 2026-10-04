@@ -250,6 +250,19 @@ class AppState {
                     .from('programs')
                     .select('*, program_weeks(*, workouts(*, exercises(*)))')
                     .eq('coach_id', user.id);
+
+                // Fetch dedicated workout session logs (independent of active programs)
+                let dbSessionLogs = [];
+                try {
+                    const { data: logsData } = await window.supabaseClient
+                        .from('workout_session_logs')
+                        .select('*')
+                        .order('completed_at', { ascending: false });
+                    if (logsData) dbSessionLogs = logsData;
+                } catch(e) {
+                    console.warn('Could not fetch workout_session_logs:', e);
+                }
+                this.sessionLogs = dbSessionLogs;
                 
                 this.workouts = [];
                 let localCompleted = [];
@@ -1029,7 +1042,10 @@ class AppState {
 
     async logCompletedWorkout(workoutId, sessionLogs = {}) {
         const actualLogs = (sessionLogs && sessionLogs.sessionLogs) ? sessionLogs.sessionLogs : sessionLogs;
-        const nowIso = new Date().toISOString();
+        const exercisesList = (sessionLogs && sessionLogs.exercises) ? sessionLogs.exercises : null;
+        const clientNotes = sessionLogs?.clientNotes || '';
+        const durationSecs = sessionLogs?.durationSeconds || 0;
+        const nowIso = sessionLogs?.completedAt || new Date().toISOString();
 
         // 1. Clear in-progress draft from localStorage
         try {
@@ -1055,11 +1071,50 @@ class AppState {
             targetW.status = 'Completed';
             targetW.loggedAt = nowIso;
             targetW.sessionLogs = actualLogs;
+            if (exercisesList) targetW.exercises = exercisesList;
         }
 
-        // 4. Persist to Supabase if available
-        if (this.user && this.user.id && window.supabaseClient) {
+        // 4. Persist to Supabase workout_session_logs table and update workouts
+        if (window.supabaseClient) {
             try {
+                let clientId = targetW?.clientId;
+                if (!clientId && this.user) {
+                    if (this.user.role === 'client') {
+                        clientId = this.client?.id || this.user.id;
+                    } else if (this.clients && this.clients.length > 0) {
+                        clientId = this.clients[0].id;
+                    }
+                }
+
+                // If still missing clientId, fetch from DB
+                if (!clientId) {
+                    const { data: wkRow } = await window.supabaseClient
+                        .from('workouts')
+                        .select('*, program_weeks(*, programs(*))')
+                        .eq('id', workoutId)
+                        .maybeSingle();
+                    clientId = wkRow?.program_weeks?.programs?.client_id;
+                }
+
+                if (clientId) {
+                    await window.supabaseClient
+                        .from('workout_session_logs')
+                        .insert({
+                            workout_id: workoutId,
+                            client_id: clientId,
+                            coach_id: targetW?.coachId || (this.user?.role === 'coach' ? this.user.id : null),
+                            workout_name: targetW?.name || 'Workout Session',
+                            program_name: targetW?.programName || null,
+                            week_name: targetW?.weekName || null,
+                            exercises: exercisesList || targetW?.exercises || [],
+                            session_logs: actualLogs,
+                            client_notes: clientNotes,
+                            duration_seconds: durationSecs,
+                            completed_at: nowIso
+                        });
+                }
+
+                // Update workouts table for backward compatibility
                 await window.supabaseClient
                     .from('workouts')
                     .update({
@@ -1080,7 +1135,45 @@ class AppState {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
-        // ONLY deletes the workout from workouts table. Never touches templates!
+
+        // Safeguard: Before deleting workout, ensure completed session is saved in workout_session_logs
+        if (window.supabaseClient) {
+            try {
+                const { data: wk } = await window.supabaseClient
+                    .from('workouts')
+                    .select('*, program_weeks(*, programs(*)), exercises(*)')
+                    .eq('id', workoutId)
+                    .maybeSingle();
+
+                if (wk && wk.session_logs && Object.keys(wk.session_logs).length > 0) {
+                    const { data: existing } = await window.supabaseClient
+                        .from('workout_session_logs')
+                        .select('id')
+                        .eq('workout_id', wk.id)
+                        .maybeSingle();
+
+                    if (!existing) {
+                        await window.supabaseClient
+                            .from('workout_session_logs')
+                            .insert({
+                                workout_id: wk.id,
+                                client_id: wk.program_weeks?.programs?.client_id,
+                                coach_id: wk.program_weeks?.programs?.coach_id,
+                                workout_name: wk.name,
+                                program_name: wk.program_weeks?.programs?.name,
+                                week_name: `Week ${wk.program_weeks?.week_number || 1}`,
+                                exercises: wk.exercises || [],
+                                session_logs: wk.session_logs,
+                                completed_at: wk.completed_at || new Date().toISOString()
+                            });
+                    }
+                }
+            } catch (e) {
+                console.warn('Backup before workout deletion warning:', e);
+            }
+        }
+
+        // ONLY deletes the workout from workouts table. Never touches templates or workout_session_logs!
         await window.supabaseClient
             .from('workouts')
             .delete()
@@ -1092,7 +1185,49 @@ class AppState {
         if (!this.user || !this.user.id) {
             throw new Error("Authentication not initialized");
         }
-        // Deleting program cascades ONLY to program_weeks -> workouts -> exercises. Never touches templates!
+
+        // Safeguard: Before deleting active program, ensure all completed sessions are preserved in workout_session_logs
+        if (window.supabaseClient) {
+            try {
+                const { data: progWorkouts } = await window.supabaseClient
+                    .from('workouts')
+                    .select('*, program_weeks!inner(*, programs!inner(*)), exercises(*)')
+                    .eq('program_weeks.programs.id', programId);
+
+                if (progWorkouts && progWorkouts.length > 0) {
+                    for (const pw of progWorkouts) {
+                        if (pw.session_logs && Object.keys(pw.session_logs).length > 0) {
+                            const { data: existing } = await window.supabaseClient
+                                .from('workout_session_logs')
+                                .select('id')
+                                .eq('workout_id', pw.id)
+                                .maybeSingle();
+
+                            if (!existing) {
+                                await window.supabaseClient
+                                    .from('workout_session_logs')
+                                    .insert({
+                                        workout_id: pw.id,
+                                        client_id: pw.program_weeks.programs.client_id,
+                                        coach_id: pw.program_weeks.programs.coach_id,
+                                        workout_name: pw.name,
+                                        program_name: pw.program_weeks.programs.name,
+                                        week_name: `Week ${pw.program_weeks.week_number}`,
+                                        exercises: pw.exercises || [],
+                                        session_logs: pw.session_logs,
+                                        completed_at: pw.completed_at || new Date().toISOString()
+                                    });
+                            }
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn('Session logs safeguard check before program delete:', e);
+            }
+        }
+
+        // Deleting program cascades ONLY to program_weeks -> workouts -> exercises.
+        // workout_session_logs references clients(id), NOT programs, so all client session logs are completely preserved!
         const { error } = await window.supabaseClient
             .from('programs')
             .delete()

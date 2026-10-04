@@ -648,15 +648,47 @@ window.init_analytics = function(params) {
             workoutsListMount.appendChild(progSection);
         });
 
-        // Render Completed Workout Session Logs for Coach Inspection
+        // Render Completed Workout Session Logs for Coach Inspection (Persisted independently of active programs)
         const sessionLogsMount = document.getElementById('analytics-session-logs-mount');
         const countBadgeEl = document.getElementById('completed-session-count-badge');
 
         if (sessionLogsMount) {
             sessionLogsMount.innerHTML = '';
             
-            // Extract all workouts from DB programs fetched above
-            const allWorkoutsMap = new Map();
+            const allSessionsMap = new Map();
+
+            // 1. Fetch all permanent logs from workout_session_logs table in Supabase
+            if (window.supabaseClient) {
+                try {
+                    const { data: dbSessionLogs } = await window.supabaseClient
+                        .from('workout_session_logs')
+                        .select('*')
+                        .eq('client_id', client.id)
+                        .order('completed_at', { ascending: false });
+
+                    if (dbSessionLogs && dbSessionLogs.length > 0) {
+                        dbSessionLogs.forEach(sl => {
+                            allSessionsMap.set(sl.id, {
+                                id: sl.id,
+                                workoutId: sl.workout_id,
+                                name: sl.workout_name,
+                                status: 'Completed',
+                                programName: sl.program_name || 'Training Program',
+                                weekName: sl.week_name || 'Week 1',
+                                sessionLogs: sl.session_logs,
+                                loggedAt: sl.completed_at,
+                                exercises: sl.exercises || [],
+                                clientNotes: sl.client_notes,
+                                durationSeconds: sl.duration_seconds
+                            });
+                        });
+                    }
+                } catch(e) {
+                    console.warn('Could not fetch workout_session_logs from Supabase:', e);
+                }
+            }
+
+            // 2. Also check any active workouts in programs or appState
             let localCompleted = [];
             try {
                 localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
@@ -681,18 +713,20 @@ window.init_analytics = function(params) {
                                     }
 
                                     const isDone = wk.status === 'Completed' || isLocallyDone || (sessionData && Object.keys(sessionData).length > 0);
-
-                                    allWorkoutsMap.set(wk.id, {
-                                        id: wk.id,
-                                        clientId: p.client_id,
-                                        name: wk.name,
-                                        status: isDone ? 'Completed' : (wk.status || 'Scheduled'),
-                                        programName: p.name,
-                                        weekName: `Week ${pw.week_number}`,
-                                        sessionLogs: sessionData,
-                                        loggedAt: wk.completed_at || null,
-                                        exercises: wk.exercises || []
-                                    });
+                                    if (isDone && !allSessionsMap.has(wk.id)) {
+                                        allSessionsMap.set(wk.id, {
+                                            id: wk.id,
+                                            workoutId: wk.id,
+                                            clientId: p.client_id,
+                                            name: wk.name,
+                                            status: 'Completed',
+                                            programName: p.name,
+                                            weekName: `Week ${pw.week_number}`,
+                                            sessionLogs: sessionData,
+                                            loggedAt: wk.completed_at || null,
+                                            exercises: wk.exercises || []
+                                        });
+                                    }
                                 });
                             }
                         });
@@ -700,55 +734,22 @@ window.init_analytics = function(params) {
                 });
             }
 
-            // Also check appState.workouts for any workouts or session logs
+            // Also check appState.workouts
             (window.appState.workouts || []).forEach(w => {
                 if (w.clientId && w.clientId !== client.id) return;
-                
-                if (!allWorkoutsMap.has(w.id)) {
-                    allWorkoutsMap.set(w.id, w);
-                } else {
-                    const existing = allWorkoutsMap.get(w.id);
-                    if (w.sessionLogs && (!existing.sessionLogs || Object.keys(existing.sessionLogs).length === 0)) {
-                        existing.sessionLogs = w.sessionLogs;
-                    }
-                    if (w.status === 'Completed') {
-                        existing.status = 'Completed';
+                if (w.status === 'Completed' && w.sessionLogs && Object.keys(w.sessionLogs).length > 0) {
+                    if (!allSessionsMap.has(w.id)) {
+                        allSessionsMap.set(w.id, w);
                     }
                 }
             });
 
-            const allClientWorkouts = Array.from(allWorkoutsMap.values());
-
-            let completedWorkouts = allClientWorkouts.filter(w => {
-                const isLocallyDone = localCompleted.includes(w.id);
-                const hasLocalLogs = !!localStorage.getItem('coachos_workout_logs_' + w.id);
-                const hasSessionLogs = w.sessionLogs && Object.keys(w.sessionLogs).length > 0;
-                return w.status === 'Completed' || isLocallyDone || hasLocalLogs || hasSessionLogs;
+            // Convert to array and sort newest first
+            const completedWorkouts = Array.from(allSessionsMap.values()).sort((a,b) => {
+                const dateA = a.loggedAt ? new Date(a.loggedAt) : new Date(0);
+                const dateB = b.loggedAt ? new Date(b.loggedAt) : new Date(0);
+                return dateB - dateA;
             });
-
-            // Fallback: If localCompleted has IDs not yet in completedWorkouts, include them
-            if (localCompleted.length > 0) {
-                localCompleted.forEach(doneId => {
-                    if (!completedWorkouts.some(w => w.id === doneId)) {
-                        const fallbackW = (window.appState.workouts || []).find(w => w.id === doneId) || {
-                            id: doneId,
-                            clientId: client.id,
-                            name: 'Completed Workout Session',
-                            status: 'Completed',
-                            programName: 'Training Program',
-                            weekName: 'Week 1',
-                            exercises: []
-                        };
-                        let rawLogs = null;
-                        try {
-                            const raw = localStorage.getItem('coachos_workout_logs_' + doneId);
-                            if (raw) rawLogs = JSON.parse(raw);
-                        } catch(e) {}
-                        fallbackW.sessionLogs = fallbackW.sessionLogs || rawLogs;
-                        completedWorkouts.push(fallbackW);
-                    }
-                });
-            }
 
             if (countBadgeEl) {
                 countBadgeEl.textContent = `${completedWorkouts.length} Completed Session${completedWorkouts.length === 1 ? '' : 's'}`;
@@ -765,7 +766,7 @@ window.init_analytics = function(params) {
                     let sessionData = w.sessionLogs;
                     if (!sessionData) {
                         try {
-                            const raw = localStorage.getItem('coachos_workout_logs_' + w.id);
+                            const raw = localStorage.getItem('coachos_workout_logs_' + (w.workoutId || w.id));
                             if (raw) sessionData = JSON.parse(raw);
                         } catch(e) {}
                     }
@@ -777,6 +778,14 @@ window.init_analytics = function(params) {
                     card.className = 'card-bg border border-[#ceee93]/30 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:border-[#ceee93]/60 transition-all';
                     
                     const exCount = (w.exercises && w.exercises.length > 0) ? w.exercises.length : (sessionData ? Object.keys(sessionData).length : 0);
+                    
+                    let dateStr = '';
+                    if (w.loggedAt) {
+                        try {
+                            dateStr = ' • ' + new Date(w.loggedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        } catch(e) {}
+                    }
+
                     card.innerHTML = `
                         <div>
                             <div class="flex items-center gap-2">
@@ -785,8 +794,9 @@ window.init_analytics = function(params) {
                                 <span class="bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30 px-2 py-0.5 rounded text-[9px] font-bold font-mono">COMPLETED</span>
                             </div>
                             <p class="text-xs text-on-surface-variant font-mono mt-1">
-                                ${w.programName || 'Training Program'} • ${w.weekName || 'Week 1'} • ${exCount} Exercises Logged
+                                ${w.programName || 'Training Program'} • ${w.weekName || 'Week 1'} • ${exCount} Exercises Logged${dateStr}
                             </p>
+                            ${w.clientNotes ? `<p class="text-[11px] text-[#ceee93]/90 italic mt-0.5 font-mono">Feedback: "${w.clientNotes}"</p>` : ''}
                         </div>
                         <button class="px-3.5 py-2 rounded-lg bg-[#d9f99d] text-[#09090b] text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0 btn-inspect-session">
                             <span class="material-symbols-outlined text-[16px]">visibility</span>
@@ -815,9 +825,23 @@ window.init_analytics = function(params) {
         if (!modal || !bodyEl) return;
 
         if (titleEl) titleEl.textContent = workout.name;
-        if (subtitleEl) subtitleEl.textContent = `${workout.programName || 'Training Program'} • ${workout.weekName || 'Week 1'}`;
+        
+        let dateInfo = '';
+        if (workout.loggedAt) {
+            try {
+                dateInfo = ` • Logged ${new Date(workout.loggedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+            } catch(e) {}
+        }
+        if (subtitleEl) subtitleEl.textContent = `${workout.programName || 'Training Program'} • ${workout.weekName || 'Week 1'}${dateInfo}`;
 
         bodyEl.innerHTML = '';
+
+        if (workout.clientNotes) {
+            const notesBox = document.createElement('div');
+            notesBox.className = 'bg-[#18181b] border border-[#27272a] rounded-xl p-3 text-xs text-primary font-mono';
+            notesBox.innerHTML = `<span class="text-on-surface-variant font-bold uppercase text-[10px] block mb-0.5">Client Feedback / Notes</span>"${workout.clientNotes}"`;
+            bodyEl.appendChild(notesBox);
+        }
 
         let exercises = workout.exercises || [];
         if (exercises.length === 0 && sessionData && Object.keys(sessionData).length > 0) {
@@ -826,13 +850,13 @@ window.init_analytics = function(params) {
                 name: `Exercise ${i + 1}`,
                 sets: Array.isArray(sessionData[k]) ? sessionData[k].length : 3,
                 reps: '10',
-                weight: '75',
+                weight: '',
                 rest: '90s'
             }));
         }
 
         if (exercises.length === 0) {
-            bodyEl.innerHTML = `<p class="text-xs text-on-surface-variant italic py-4 text-center">No exercise details recorded for this session.</p>`;
+            bodyEl.innerHTML += `<p class="text-xs text-on-surface-variant italic py-4 text-center">No exercise details recorded for this session.</p>`;
         } else {
             exercises.forEach((ex, idx) => {
                 const exCard = document.createElement('div');
@@ -841,29 +865,30 @@ window.init_analytics = function(params) {
                 const setLogs = (sessionData && (sessionData[ex.id] || sessionData[`ex-${idx+1}`] || sessionData[ex.name])) 
                     ? (sessionData[ex.id] || sessionData[`ex-${idx+1}`] || sessionData[ex.name]) 
                     : (sessionData && Object.values(sessionData)[idx] && Array.isArray(Object.values(sessionData)[idx]) ? Object.values(sessionData)[idx] : []);
-                
-                const defaultNumSets = parseInt(ex.sets) || 3;
-                const defaultWeight = parseFloat(ex.weight) || 75.0;
-                const defaultReps = parseInt(ex.reps) || 10;
 
                 let setsHtml = '';
                 if (setLogs.length > 0) {
-                    setsHtml = setLogs.map(s => `
-                        <div class="flex items-center justify-between text-xs font-mono py-1 border-b border-[#27272a]/30">
-                            <span class="text-on-surface-variant font-semibold">Set ${s.setNum || s.set || 1}</span>
-                            <span class="text-primary font-bold">${s.weight !== undefined ? s.weight : defaultWeight} kg</span>
-                            <span class="text-primary-container font-bold">${s.reps !== undefined ? s.reps : defaultReps} reps</span>
-                            <span class="text-[#22c55e] flex items-center gap-0.5 text-[11px]"><span class="material-symbols-outlined text-[13px]">check_circle</span> ${s.completed !== false ? 'Completed' : 'Logged'}</span>
-                        </div>
-                    `).join('');
+                    setsHtml = setLogs.map((s, sIdx) => {
+                        const weightDisplay = (s.weight !== undefined && s.weight !== null && s.weight !== '') ? `${s.weight} kg` : 'BW / Unspecified';
+                        const repsDisplay = (s.reps !== undefined && s.reps !== null && s.reps !== '') ? `${s.reps} reps` : '—';
+                        return `
+                            <div class="flex items-center justify-between text-xs font-mono py-1 border-b border-[#27272a]/30">
+                                <span class="text-on-surface-variant font-semibold">Set ${s.setNum || sIdx + 1}</span>
+                                <span class="text-primary font-bold">${weightDisplay}</span>
+                                <span class="text-primary-container font-bold">${repsDisplay}</span>
+                                <span class="text-[#22c55e] flex items-center gap-0.5 text-[11px]"><span class="material-symbols-outlined text-[13px]">check_circle</span> ${s.completed !== false ? 'Completed' : 'Logged'}</span>
+                            </div>
+                        `;
+                    }).join('');
                 } else {
-                    for (let i = 1; i <= defaultNumSets; i++) {
+                    const numSets = parseInt(ex.sets) || 3;
+                    for (let i = 1; i <= numSets; i++) {
                         setsHtml += `
                             <div class="flex items-center justify-between text-xs font-mono py-1 border-b border-[#27272a]/30">
                                 <span class="text-on-surface-variant font-semibold">Set ${i}</span>
-                                <span class="text-[#d9f99d] font-bold">${defaultWeight} kg</span>
-                                <span class="text-[#ceee93] font-bold">${defaultReps} reps</span>
-                                <span class="text-[#22c55e] flex items-center gap-0.5 text-[11px]"><span class="material-symbols-outlined text-[13px]">check_circle</span> Completed</span>
+                                <span class="text-on-surface-variant/70 italic">Not logged</span>
+                                <span class="text-on-surface-variant/70 italic">—</span>
+                                <span class="text-on-surface-variant text-[11px]">—</span>
                             </div>
                         `;
                     }
@@ -875,12 +900,12 @@ window.init_analytics = function(params) {
                             <span class="w-5 h-5 rounded bg-[#ceee93]/20 text-[#ceee93] flex items-center justify-center font-mono text-[10px]">${idx + 1}</span>
                             ${ex.name}
                         </h5>
-                        <span class="text-[10px] font-mono text-on-surface-variant">${ex.sets} Sets Target • Rest ${ex.rest || '90s'}</span>
+                        <span class="text-[10px] font-mono text-on-surface-variant">${ex.sets || 3} Sets Target • Rest ${ex.rest || '90s'}</span>
                     </div>
                     <div class="space-y-1 pt-1">
                         ${setsHtml}
                     </div>
-                    ${ex.notes ? `<p class="text-[10px] text-on-surface-variant italic pt-1">Notes: "${ex.notes}"</p>` : ''}
+                    ${ex.notes ? `<p class="text-[10px] text-on-surface-variant italic pt-1">Coach Note: "${ex.notes}"</p>` : ''}
                 `;
 
                 bodyEl.appendChild(exCard);

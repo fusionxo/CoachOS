@@ -1,2 +1,25 @@
-[x] in the mobile view, we can't see training, templates, assistant in the bottom navigation bar.
-    -> Resolved: Bottom navigation replaced with: Dashboard, Clients, Inbox, Training, and More. The More screen/sheet displays Templates, Assistant, and Settings.
+# CoachOS - Task Delivery Log (TDL)
+
+- [x] **RESOLVED** - Session logs disappearing when deleting an active program:
+  - Created persistent `public.workout_session_logs` table in Supabase referenced to `client_id` (not `programs`), preventing cascade deletion.
+  - Backed up and migrated all historical completed workouts into `workout_session_logs`.
+  - Added pre-delete safeguards to `deleteProgram` and `deleteWorkout` in `js/app.js` to ensure completed sessions are preserved before removing programs/workouts.
+  - Updated `js/screens/analytics.js` to query `workout_session_logs` directly, guaranteeing client session history remains visible even with 0 active programs.
+
+- [x] **RESOLVED** - Remove 75kg and 8/10 reps default data from workout tracker:
+  - Removed all hardcoded 75kg and 8/10 rep presets in `js/screens/workout-logger.js`.
+  - Sets initialize with empty inputs (`placeholder="—"`) allowing the client to enter their own data.
+  - Stepper buttons (`+`/`-`) now smoothly handle blank values (starting at 2.5kg / 1 rep).
+  - Cleaned up inspection modals in `js/screens/analytics.js` so they don't fall back to fake 75kg / 10 reps.
+
+- [x] **RESOLVED** - Mike Israetel / RP Hypertrophy previous session comparison:
+  - Added historical session retrieval for the client from `workout_session_logs`.
+  - Added exercise matching across sessions by name and ID.
+  - Added RP Hypertrophy style previous session notification banner below the active exercise card displaying previous session date, workout name, set-by-set breakdown (e.g. Set 1: 25kg × 9 reps), and progressive overload target tips.
+  - Added set-by-set `Prev: 25k×9` benchmark tags directly on each set row.
+
+- [x] **RESOLVED** - Dynamic exercise and set management (short on time / add or remove):
+  - Added individual Set Removal (`✕`) buttons on each set row so clients can remove sets if running out of time.
+  - Added "Remove Movement" button with confirmation to drop an unfinished exercise from today's session.
+  - Added "Add Exercise" button with a modal to add exercises dynamically to today's workout.
+  - Ensured dynamic exercise list persists in session draft and properly saves upon completion.
