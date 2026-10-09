@@ -98,6 +98,42 @@ window.init_workout_logger = async function(params) {
         const savedDraftRaw = localStorage.getItem(draftKey);
         if (savedDraftRaw) {
             const draft = JSON.parse(savedDraftRaw);
+            const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+            const now = Date.now();
+            const startTime = draft.startedAt || draft.updatedAt || 0;
+
+            // Check if draft has at least 1 set entered with data or completed
+            let hasLoggedSet = false;
+            const dLogs = draft.sessionLogs || {};
+            for (const exId of Object.keys(dLogs)) {
+                if (Array.isArray(dLogs[exId])) {
+                    for (const s of dLogs[exId]) {
+                        if (s && (s.completed || (s.weight !== '' && s.weight !== null && parseFloat(s.weight) > 0) || (s.reps !== '' && s.reps !== null && parseInt(s.reps) > 0))) {
+                            hasLoggedSet = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasLoggedSet) break;
+            }
+
+            if (startTime > 0 && (now - startTime) >= FOUR_HOURS_MS && hasLoggedSet) {
+                // Auto-complete and log the workout because 4+ hours have passed!
+                console.log(`Auto-finalizing workout ${workout.name} as 4+ hours have elapsed.`);
+                await appState.logCompletedWorkout(workout.id, {
+                    sessionLogs: draft.sessionLogs,
+                    exercises: draft.exercises || exercises,
+                    durationSeconds: draft.elapsedSeconds || 3600,
+                    completedAt: new Date(draft.updatedAt || draft.startedAt || now).toISOString(),
+                    clientNotes: 'Auto-completed (exceeded 4 hours without manual completion)'
+                });
+                localStorage.removeItem(draftKey);
+                showToast(`Previous workout "${workout.name}" was automatically logged after 4 hours!`, 'success', 'Workout Auto-Logged');
+                const user = appState.user;
+                window.location.hash = user ? `client-mobile/${user.id}` : 'client-mobile';
+                return;
+            }
+
             if (draft && draft.sessionLogs && Object.keys(draft.sessionLogs).length > 0) {
                 sessionLogs = draft.sessionLogs;
                 if (Array.isArray(draft.exercises) && draft.exercises.length > 0) {
@@ -119,11 +155,27 @@ window.init_workout_logger = async function(params) {
     // Helper: Persist draft immediately to localStorage
     function persistDraft() {
         try {
+            let existingStartedAt = Date.now();
+            const existingRaw = localStorage.getItem(draftKey);
+            if (existingRaw) {
+                try {
+                    const parsed = JSON.parse(existingRaw);
+                    if (parsed.startedAt) existingStartedAt = parsed.startedAt;
+                } catch(e) {}
+            }
+
             localStorage.setItem(draftKey, JSON.stringify({
+                workoutId: workout.id,
+                workoutName: workout.name,
+                programName: workout.programName,
+                weekName: workout.weekName,
+                clientId: workout.clientId,
+                coachId: workout.coachId,
                 activeExerciseIndex,
                 exercises,
                 sessionLogs,
                 elapsedSeconds,
+                startedAt: existingStartedAt,
                 updatedAt: Date.now()
             }));
         } catch(e) {}

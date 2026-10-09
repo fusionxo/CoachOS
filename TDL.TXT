@@ -44,3 +44,19 @@
   - Created high-res SVG app icons (`icons/icon-192.svg`, `icons/icon-512.svg`, `icons/icon.svg`).
   - Implemented `sw.js` (Service Worker) with offline shell asset caching, offline workout logging capability, push event listener, and window focus management.
   - Added dynamic PWA install banner in the client mobile view with 1-click install support for Chromium/Android and step-by-step guidance for iOS Safari ("Add to Home Screen").
+
+- [x] **RESOLVED** - Fix Session Log disappearance on program/workout deletion & retrieve logs:
+  - Fixed root cause in `js/screens/analytics.js`: removed premature `return;` when `programs.length === 0` so the Completed Training Session Logs section always renders independently of whether active programs exist.
+  - Fixed pre-delete safeguards in `js/app.js` (`deleteProgram` and `deleteWorkout`): replaced broken nested filter with reliable program_weeks -> workouts traversal to guarantee every completed session is backed up to `workout_session_logs` before program/workout removal.
+  - Retrieved and migrated all completed workout sessions across all clients into `public.workout_session_logs` table (now 9 historical sessions persisted).
+  - Added automatic self-healing background sync in `appState.autoRecoverSessionLogs()` to retrieve any session logs stored in localStorage and sync them into Supabase.
+
+- [x] **RESOLVED** - 4-Hour Inactivity Auto-Log for Workouts:
+  - Added `startedAt`, `updatedAt`, and session metadata to workout drafts in `js/screens/workout-logger.js`.
+  - Implemented `appState.autoLogExpiredDrafts()`: scans all in-progress workout drafts on initialization and via a background timer; if 4+ hours have elapsed and at least one set was recorded, the workout is automatically finalized, marked 'Completed', and persisted to `workout_session_logs`.
+  - Added auto-check in `workout-logger.js` on mount to immediately auto-complete and notify the client if they return to an expired session.
+
+- [x] **RESOLVED** - Complete Client Removal & Database Purge:
+  - Replaced the useless Archive button in `js/screens/clients.js` with a dedicated "Remove Client" button with a confirmation modal.
+  - Added a "Remove Client" button to the client profile header in `views/analytics.html` and wired it in `js/screens/analytics.js`.
+  - Implemented `appState.deleteClient(clientId)`: deletes all associated messages, programs, and client row from `public.clients` in Supabase (which cascades to check_ins, measurements, progress_photos, coach_notes, client_invites, and workout_session_logs), cleans local storage caches, and refreshes the UI.

@@ -288,6 +288,7 @@ class AppState {
                                         this.workouts.push({
                                             id: wk.id,
                                             clientId: p.client_id,
+                                            coachId: p.coach_id,
                                             programId: p.id,
                                             weekId: w.id,
                                             weekNumber: w.week_number,
@@ -551,6 +552,20 @@ class AppState {
                     .select('*, program_weeks(*, workouts(*, exercises(*)))')
                     .eq('client_id', clientVal.id);
                 
+                // Fetch dedicated workout session logs for client
+                let clientDbSessionLogs = [];
+                try {
+                    const { data: logsData } = await window.supabaseClient
+                        .from('workout_session_logs')
+                        .select('*')
+                        .or(`client_id.eq.${clientVal.id}${clientVal.user_id ? `,client_id.eq.${clientVal.user_id}` : ''}`)
+                        .order('completed_at', { ascending: false });
+                    if (logsData) clientDbSessionLogs = logsData;
+                } catch(e) {
+                    console.warn('Could not fetch workout_session_logs for client:', e);
+                }
+                this.sessionLogs = clientDbSessionLogs;
+
                 this.workouts = [];
                 let localCompleted = [];
                 try {
@@ -564,9 +579,18 @@ class AppState {
                                 if (w.workouts) {
                                     w.workouts.forEach(wk => {
                                         const isCompletedLocally = localCompleted.includes(wk.id);
+                                        let sessionLogs = wk.session_logs || null;
+                                        if (!sessionLogs) {
+                                            try {
+                                                const rawLogs = localStorage.getItem('coachos_workout_logs_' + wk.id);
+                                                if (rawLogs) sessionLogs = JSON.parse(rawLogs);
+                                            } catch(e) {}
+                                        }
+
                                         this.workouts.push({
                                             id: wk.id,
                                             clientId: clientVal.id,
+                                            coachId: p.coach_id,
                                             programId: p.id,
                                             weekId: w.id,
                                             weekNumber: w.week_number,
@@ -661,6 +685,15 @@ class AppState {
         
         // Setup realtime subscription
         this.setupRealtimeSubscription();
+
+        // Auto-recover any session logs from localStorage/workouts to Supabase
+        this.autoRecoverSessionLogs();
+
+        // Auto-log expired workout drafts (>4 hours old with sets entered)
+        this.autoLogExpiredDrafts();
+        if (!this._draftCheckInterval) {
+            this._draftCheckInterval = setInterval(() => this.autoLogExpiredDrafts(), 60000);
+        }
     }
 
     async addClient(name, email, goal, startingWeight = '75') {
@@ -1093,10 +1126,11 @@ class AppState {
         // 4. Persist to Supabase workout_session_logs table and update workouts
         if (window.supabaseClient) {
             try {
+                // Robust client ID resolution
                 let clientId = targetW?.clientId;
                 if (!clientId && this.user) {
                     if (this.user.role === 'client') {
-                        clientId = this.client?.id || this.user.id;
+                        clientId = this.client?.id || (this.clients && this.clients[0]?.id);
                     } else if (this.clients && this.clients.length > 0) {
                         clientId = this.clients[0].id;
                     }
@@ -1106,28 +1140,54 @@ class AppState {
                 if (!clientId) {
                     const { data: wkRow } = await window.supabaseClient
                         .from('workouts')
-                        .select('*, program_weeks(*, programs(*))')
+                        .select('*, program_weeks(program_id, programs(client_id, coach_id, name))')
                         .eq('id', workoutId)
                         .maybeSingle();
                     clientId = wkRow?.program_weeks?.programs?.client_id;
                 }
 
+                // Ensure clientId points to primary key of clients table if matched
+                const matchedClient = (this.clients || []).find(c => c.id === clientId || c.user_id === clientId);
+                if (matchedClient) clientId = matchedClient.id;
+
+                const coachId = targetW?.coachId || matchedClient?.coach_id || (this.user?.role === 'coach' ? this.user.id : null);
+
                 if (clientId) {
-                    await window.supabaseClient
+                    // Check if already in workout_session_logs; if so, update; else insert
+                    const { data: existingLog } = await window.supabaseClient
                         .from('workout_session_logs')
-                        .insert({
-                            workout_id: workoutId,
-                            client_id: clientId,
-                            coach_id: targetW?.coachId || (this.user?.role === 'coach' ? this.user.id : null),
-                            workout_name: targetW?.name || 'Workout Session',
-                            program_name: targetW?.programName || null,
-                            week_name: targetW?.weekName || null,
-                            exercises: exercisesList || targetW?.exercises || [],
-                            session_logs: actualLogs,
-                            client_notes: clientNotes,
-                            duration_seconds: durationSecs,
-                            completed_at: nowIso
-                        });
+                        .select('id')
+                        .eq('workout_id', workoutId)
+                        .maybeSingle();
+
+                    if (existingLog) {
+                        await window.supabaseClient
+                            .from('workout_session_logs')
+                            .update({
+                                exercises: exercisesList || targetW?.exercises || [],
+                                session_logs: actualLogs,
+                                client_notes: clientNotes,
+                                duration_seconds: durationSecs,
+                                completed_at: nowIso
+                            })
+                            .eq('id', existingLog.id);
+                    } else {
+                        await window.supabaseClient
+                            .from('workout_session_logs')
+                            .insert({
+                                workout_id: workoutId,
+                                client_id: clientId,
+                                coach_id: coachId,
+                                workout_name: targetW?.name || 'Workout Session',
+                                program_name: targetW?.programName || null,
+                                week_name: targetW?.weekName || null,
+                                exercises: exercisesList || targetW?.exercises || [],
+                                session_logs: actualLogs,
+                                client_notes: clientNotes,
+                                duration_seconds: durationSecs,
+                                completed_at: nowIso
+                            });
+                    }
                 }
 
                 // Update workouts table for backward compatibility
@@ -1157,31 +1217,48 @@ class AppState {
             try {
                 const { data: wk } = await window.supabaseClient
                     .from('workouts')
-                    .select('*, program_weeks(*, programs(*)), exercises(*)')
+                    .select('*, program_weeks(id, week_number, program_id, programs(id, name, client_id, coach_id)), exercises(*)')
                     .eq('id', workoutId)
                     .maybeSingle();
 
-                if (wk && wk.session_logs && Object.keys(wk.session_logs).length > 0) {
-                    const { data: existing } = await window.supabaseClient
-                        .from('workout_session_logs')
-                        .select('id')
-                        .eq('workout_id', wk.id)
-                        .maybeSingle();
+                if (wk) {
+                    const prog = wk.program_weeks?.programs;
+                    const weekNum = wk.program_weeks?.week_number || 1;
+                    let cId = prog?.client_id;
+                    if (!cId && this.clients && this.clients[0]) cId = this.clients[0].id;
+                    const coId = prog?.coach_id || (this.user?.role === 'coach' ? this.user.id : null);
 
-                    if (!existing) {
-                        await window.supabaseClient
+                    let sessionLogsToSave = wk.session_logs;
+                    if (!sessionLogsToSave || Object.keys(sessionLogsToSave).length === 0) {
+                        try {
+                            const raw = localStorage.getItem('coachos_workout_logs_' + wk.id);
+                            if (raw) sessionLogsToSave = JSON.parse(raw);
+                        } catch(e) {}
+                    }
+
+                    const isDone = wk.status === 'Completed' || wk.completed_at || (sessionLogsToSave && Object.keys(sessionLogsToSave).length > 0);
+                    if (isDone && cId) {
+                        const { data: existing } = await window.supabaseClient
                             .from('workout_session_logs')
-                            .insert({
-                                workout_id: wk.id,
-                                client_id: wk.program_weeks?.programs?.client_id,
-                                coach_id: wk.program_weeks?.programs?.coach_id,
-                                workout_name: wk.name,
-                                program_name: wk.program_weeks?.programs?.name,
-                                week_name: `Week ${wk.program_weeks?.week_number || 1}`,
-                                exercises: wk.exercises || [],
-                                session_logs: wk.session_logs,
-                                completed_at: wk.completed_at || new Date().toISOString()
-                            });
+                            .select('id')
+                            .eq('workout_id', wk.id)
+                            .maybeSingle();
+
+                        if (!existing) {
+                            await window.supabaseClient
+                                .from('workout_session_logs')
+                                .insert({
+                                    workout_id: wk.id,
+                                    client_id: cId,
+                                    coach_id: coId,
+                                    workout_name: wk.name,
+                                    program_name: prog?.name || 'Training Program',
+                                    week_name: `Week ${weekNum}`,
+                                    exercises: wk.exercises || [],
+                                    session_logs: sessionLogsToSave || {},
+                                    completed_at: wk.completed_at || new Date().toISOString()
+                                });
+                        }
                     }
                 }
             } catch (e) {
@@ -1189,7 +1266,7 @@ class AppState {
             }
         }
 
-        // ONLY deletes the workout from workouts table. Never touches templates or workout_session_logs!
+        // ONLY deletes the workout from workouts table. Never touches workout_session_logs!
         await window.supabaseClient
             .from('workouts')
             .delete()
@@ -1205,34 +1282,63 @@ class AppState {
         // Safeguard: Before deleting active program, ensure all completed sessions are preserved in workout_session_logs
         if (window.supabaseClient) {
             try {
-                const { data: progWorkouts } = await window.supabaseClient
-                    .from('workouts')
-                    .select('*, program_weeks!inner(*, programs!inner(*)), exercises(*)')
-                    .eq('program_weeks.programs.id', programId);
+                // 1. Fetch program info
+                const { data: prog } = await window.supabaseClient
+                    .from('programs')
+                    .select('id, name, client_id, coach_id')
+                    .eq('id', programId)
+                    .maybeSingle();
 
-                if (progWorkouts && progWorkouts.length > 0) {
-                    for (const pw of progWorkouts) {
-                        if (pw.session_logs && Object.keys(pw.session_logs).length > 0) {
-                            const { data: existing } = await window.supabaseClient
-                                .from('workout_session_logs')
-                                .select('id')
-                                .eq('workout_id', pw.id)
-                                .maybeSingle();
+                // 2. Fetch all weeks for this program
+                const { data: weeks } = await window.supabaseClient
+                    .from('program_weeks')
+                    .select('id, week_number')
+                    .eq('program_id', programId);
 
-                            if (!existing) {
-                                await window.supabaseClient
+                if (weeks && weeks.length > 0) {
+                    const weekIds = weeks.map(w => w.id);
+                    const weekMap = new Map();
+                    weeks.forEach(w => weekMap.set(w.id, w.week_number));
+
+                    // 3. Fetch all workouts for these weeks
+                    const { data: progWorkouts } = await window.supabaseClient
+                        .from('workouts')
+                        .select('*, exercises(*)')
+                        .in('week_id', weekIds);
+
+                    if (progWorkouts && progWorkouts.length > 0 && prog?.client_id) {
+                        for (const pw of progWorkouts) {
+                            let sessionLogsToSave = pw.session_logs;
+                            if (!sessionLogsToSave || Object.keys(sessionLogsToSave).length === 0) {
+                                try {
+                                    const raw = localStorage.getItem('coachos_workout_logs_' + pw.id);
+                                    if (raw) sessionLogsToSave = JSON.parse(raw);
+                                } catch(e) {}
+                            }
+
+                            const isDone = pw.status === 'Completed' || pw.completed_at || (sessionLogsToSave && Object.keys(sessionLogsToSave).length > 0);
+                            if (isDone) {
+                                const { data: existing } = await window.supabaseClient
                                     .from('workout_session_logs')
-                                    .insert({
-                                        workout_id: pw.id,
-                                        client_id: pw.program_weeks.programs.client_id,
-                                        coach_id: pw.program_weeks.programs.coach_id,
-                                        workout_name: pw.name,
-                                        program_name: pw.program_weeks.programs.name,
-                                        week_name: `Week ${pw.program_weeks.week_number}`,
-                                        exercises: pw.exercises || [],
-                                        session_logs: pw.session_logs,
-                                        completed_at: pw.completed_at || new Date().toISOString()
-                                    });
+                                    .select('id')
+                                    .eq('workout_id', pw.id)
+                                    .maybeSingle();
+
+                                if (!existing) {
+                                    await window.supabaseClient
+                                        .from('workout_session_logs')
+                                        .insert({
+                                            workout_id: pw.id,
+                                            client_id: prog.client_id,
+                                            coach_id: prog.coach_id,
+                                            workout_name: pw.name,
+                                            program_name: prog.name,
+                                            week_name: `Week ${weekMap.get(pw.week_id) || 1}`,
+                                            exercises: pw.exercises || [],
+                                            session_logs: sessionLogsToSave || {},
+                                            completed_at: pw.completed_at || new Date().toISOString()
+                                        });
+                                }
                             }
                         }
                     }
@@ -1250,6 +1356,173 @@ class AppState {
             .eq('id', programId);
         if (error) throw error;
         await this.refresh();
+    }
+
+    async deleteClient(clientId) {
+        if (!this.user || !this.user.id) {
+            throw new Error("Authentication not initialized");
+        }
+
+        if (window.supabaseClient) {
+            // 1. Delete messages involving this client
+            try {
+                await window.supabaseClient
+                    .from('messages')
+                    .delete()
+                    .eq('conversation_id', clientId);
+            } catch(e) {
+                console.warn('Error deleting client messages:', e);
+            }
+
+            // 2. Delete programs assigned to this client
+            try {
+                await window.supabaseClient
+                    .from('programs')
+                    .delete()
+                    .eq('client_id', clientId);
+            } catch(e) {
+                console.warn('Error deleting client programs:', e);
+            }
+
+            // 3. Delete from clients table (Postgres CASCADE removes check_ins, measurements, progress_photos, coach_notes, client_invites, workout_session_logs)
+            const { error } = await window.supabaseClient
+                .from('clients')
+                .delete()
+                .eq('id', clientId);
+            if (error) throw error;
+        }
+
+        // 4. Clean local caches
+        try {
+            localStorage.removeItem(`coachos_photos_${clientId}`);
+        } catch(e) {}
+
+        // 5. Update local state
+        this.clients = (this.clients || []).filter(c => c.id !== clientId);
+        this.workouts = (this.workouts || []).filter(w => w.clientId !== clientId);
+        this.checkins = (this.checkins || []).filter(ch => ch.clientId !== clientId);
+        this.measurements = (this.measurements || []).filter(m => m.clientId !== clientId);
+        if (this.sessionLogs) {
+            this.sessionLogs = this.sessionLogs.filter(sl => sl.client_id !== clientId);
+        }
+
+        await this.refresh();
+    }
+
+    async autoLogExpiredDrafts() {
+        const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+        const now = Date.now();
+        const draftsToProcess = [];
+
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('coachos_workout_draft_')) {
+                    try {
+                        const raw = localStorage.getItem(key);
+                        if (!raw) continue;
+                        const draft = JSON.parse(raw);
+                        const workoutId = key.replace('coachos_workout_draft_', '');
+                        const startTime = draft.startedAt || draft.updatedAt || 0;
+                        const age = now - startTime;
+
+                        if (age >= FOUR_HOURS_MS) {
+                            // Check if draft has at least 1 set entered with data or marked completed
+                            const logs = draft.sessionLogs || {};
+                            let hasLoggedSet = false;
+                            for (const exId of Object.keys(logs)) {
+                                if (Array.isArray(logs[exId])) {
+                                    for (const s of logs[exId]) {
+                                        if (s && (s.completed || (s.weight !== '' && s.weight !== null && parseFloat(s.weight) > 0) || (s.reps !== '' && s.reps !== null && parseInt(s.reps) > 0))) {
+                                            hasLoggedSet = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (hasLoggedSet) break;
+                            }
+
+                            if (hasLoggedSet) {
+                                draftsToProcess.push({ key, workoutId, draft });
+                            } else {
+                                // Empty draft older than 4 hours, clean up
+                                localStorage.removeItem(key);
+                            }
+                        }
+                    } catch(e) {}
+                }
+            }
+        } catch(e) {
+            console.warn('Error checking expired drafts:', e);
+        }
+
+        for (const item of draftsToProcess) {
+            try {
+                console.log(`Auto-logging workout draft ${item.workoutId} after 4+ hours inactivity`);
+                await this.logCompletedWorkout(item.workoutId, {
+                    sessionLogs: item.draft.sessionLogs,
+                    exercises: item.draft.exercises,
+                    durationSeconds: item.draft.elapsedSeconds || 3600,
+                    completedAt: new Date(item.draft.updatedAt || item.draft.startedAt || now).toISOString(),
+                    clientNotes: item.draft.clientNotes || 'Auto-logged after 4 hours of inactivity'
+                });
+                localStorage.removeItem(item.key);
+                if (typeof showToast === 'function') {
+                    showToast(`Workout "${item.draft.workoutName || 'Session'}" was automatically finalized and logged (4hr auto-save).`, 'info', 'Workout Auto-Logged');
+                }
+            } catch(e) {
+                console.warn('Failed to auto-log expired workout draft:', e);
+            }
+        }
+    }
+
+    async autoRecoverSessionLogs() {
+        if (!window.supabaseClient) return;
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('coachos_workout_logs_')) {
+                    const workoutId = key.replace('coachos_workout_logs_', '');
+                    const raw = localStorage.getItem(key);
+                    if (!raw) continue;
+                    let logs = JSON.parse(raw);
+                    if (logs && logs.sessionLogs) logs = logs.sessionLogs;
+                    if (!logs || Object.keys(logs).length === 0) continue;
+
+                    // Check if already in workout_session_logs
+                    const { data: existing } = await window.supabaseClient
+                        .from('workout_session_logs')
+                        .select('id')
+                        .eq('workout_id', workoutId)
+                        .maybeSingle();
+
+                    if (!existing) {
+                        const targetW = (this.workouts || []).find(w => w.id === workoutId);
+                        let clientId = targetW?.clientId;
+                        if (!clientId && this.clients && this.clients[0]) {
+                            clientId = this.clients[0].id;
+                        }
+                        if (clientId) {
+                            await window.supabaseClient
+                                .from('workout_session_logs')
+                                .insert({
+                                    workout_id: workoutId,
+                                    client_id: clientId,
+                                    coach_id: this.user?.role === 'coach' ? this.user.id : null,
+                                    workout_name: targetW?.name || 'Recovered Workout Session',
+                                    program_name: targetW?.programName || 'Training Program',
+                                    week_name: targetW?.weekName || 'Week 1',
+                                    exercises: targetW?.exercises || [],
+                                    session_logs: logs,
+                                    completed_at: targetW?.loggedAt || new Date().toISOString()
+                                });
+                        }
+                    }
+                }
+            }
+        } catch(e) {
+            console.warn('Auto-recover session logs warning:', e);
+        }
     }
 
     async duplicateWeek(clientId, programId, sourceWeekNum, targetWeekNum) {

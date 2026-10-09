@@ -61,6 +61,35 @@ window.init_analytics = function(params) {
         }
     }
 
+    // Wire Client Profile Header Actions
+    const btnProfileMsg = document.getElementById('btn-profile-message');
+    if (btnProfileMsg) {
+        btnProfileMsg.onclick = () => {
+            window.location.hash = `inbox/${client.id}`;
+        };
+    }
+
+    const btnProfileRemoveClient = document.getElementById('btn-profile-remove-client');
+    if (btnProfileRemoveClient) {
+        btnProfileRemoveClient.onclick = async () => {
+            const confirmed = await showConfirm(
+                `Are you sure you want to completely remove "${client.name}"? This will permanently delete the client and all their records (training programs, check-ins, messages, measurements, photos) from the database.`,
+                'Remove Client',
+                'Delete Client',
+                'Cancel'
+            );
+            if (confirmed) {
+                try {
+                    await window.appState.deleteClient(client.id);
+                    showToast(`Client "${client.name}" has been permanently removed.`, 'success', 'Client Removed');
+                    window.location.hash = 'clients';
+                } catch (err) {
+                    showToast(`Failed to remove client: ${err.message}`, 'error', 'Delete Error');
+                }
+            }
+        };
+    }
+
     // 2. Active Tab Switching
     const tabs = document.querySelectorAll('#profile-tabs button');
     const panes = document.querySelectorAll('.tab-pane');
@@ -469,10 +498,8 @@ window.init_analytics = function(params) {
             `;
             const btnCreateFirst = document.getElementById('btn-analytics-create-first-workout');
             if (btnCreateFirst) btnCreateFirst.onclick = () => openAddWorkoutModal(1);
-            return;
-        }
-
-        programs.forEach(p => {
+        } else {
+            programs.forEach(p => {
             const progSection = document.createElement('div');
             progSection.className = 'space-y-5 mb-8 card-bg border border-base rounded-2xl p-5';
             progSection.innerHTML = `
@@ -495,10 +522,10 @@ window.init_analytics = function(params) {
             `;
 
             progSection.querySelector('.btn-delete-program').onclick = async () => {
-                if (await showConfirm(`Delete entire program "${p.name}" and all its workouts? Note: Templates in your library remain safe and untouched.`, 'Delete Program', 'Delete', 'Cancel')) {
+                if (await showConfirm(`Delete entire program "${p.name}" and all its workouts? Note: Templates in your library and all completed session logs remain permanently safe and saved.`, 'Delete Program', 'Delete', 'Cancel')) {
                     try {
                         await window.appState.deleteProgram(p.id);
-                        showToast(`Program "${p.name}" deleted successfully!`, 'success', 'Program Deleted');
+                        showToast(`Program "${p.name}" deleted. All completed session logs preserved!`, 'success', 'Program Deleted');
                         renderTraining();
                     } catch (err) {
                         showToast(`Failed to delete program: ${err.message}`, 'error', 'Delete Error');
@@ -627,10 +654,10 @@ window.init_analytics = function(params) {
 
                         // Delete button: ONLY deletes this workout from workouts table
                         card.querySelector('.btn-delete-workout').onclick = async () => {
-                            if (await showConfirm(`Remove "${wk.name}" (${dayLabel} • Week ${wNum}) from ${client.name}'s schedule? Note: Templates in your library remain safe and untouched.`, 'Delete Workout', 'Delete', 'Cancel')) {
+                            if (await showConfirm(`Remove "${wk.name}" (${dayLabel} • Week ${wNum}) from ${client.name}'s schedule? Note: Templates in your library and all completed session logs remain safe and saved.`, 'Delete Workout', 'Delete', 'Cancel')) {
                                 try {
                                     await window.appState.deleteWorkout(wk.id);
-                                    showToast(`Workout "${wk.name}" removed from client training.`, 'success', 'Workout Deleted');
+                                    showToast(`Workout "${wk.name}" removed from client training schedule. Completed logs remain saved.`, 'success', 'Workout Deleted');
                                     renderTraining();
                                 } catch (err) {
                                     showToast(`Failed to delete workout: ${err.message}`, 'error', 'Delete Error');
@@ -647,6 +674,7 @@ window.init_analytics = function(params) {
 
             workoutsListMount.appendChild(progSection);
         });
+    }
 
         // Render Completed Workout Session Logs for Coach Inspection (Persisted independently of active programs)
         const sessionLogsMount = document.getElementById('analytics-session-logs-mount');
@@ -660,11 +688,17 @@ window.init_analytics = function(params) {
             // 1. Fetch all permanent logs from workout_session_logs table in Supabase
             if (window.supabaseClient) {
                 try {
-                    const { data: dbSessionLogs } = await window.supabaseClient
+                    let query = window.supabaseClient
                         .from('workout_session_logs')
-                        .select('*')
-                        .eq('client_id', client.id)
-                        .order('completed_at', { ascending: false });
+                        .select('*');
+
+                    if (client.user_id) {
+                        query = query.or(`client_id.eq.${client.id},client_id.eq.${client.user_id}`);
+                    } else {
+                        query = query.eq('client_id', client.id);
+                    }
+
+                    const { data: dbSessionLogs } = await query.order('completed_at', { ascending: false });
 
                     if (dbSessionLogs && dbSessionLogs.length > 0) {
                         dbSessionLogs.forEach(sl => {
@@ -734,12 +768,41 @@ window.init_analytics = function(params) {
                 });
             }
 
-            // Also check appState.workouts
+            // Also check appState.workouts and auto-backup any unsaved completed sessions
             (window.appState.workouts || []).forEach(w => {
-                if (w.clientId && w.clientId !== client.id) return;
-                if (w.status === 'Completed' && w.sessionLogs && Object.keys(w.sessionLogs).length > 0) {
-                    if (!allSessionsMap.has(w.id)) {
-                        allSessionsMap.set(w.id, w);
+                if (w.clientId && w.clientId !== client.id && w.clientId !== client.user_id) return;
+                const isDone = w.status === 'Completed' || (w.sessionLogs && Object.keys(w.sessionLogs).length > 0);
+                if (isDone) {
+                    const existingLog = Array.from(allSessionsMap.values()).find(s => s.workoutId === w.id || s.id === w.id);
+                    if (!existingLog) {
+                        allSessionsMap.set(w.id, {
+                            id: w.id,
+                            workoutId: w.id,
+                            name: w.name,
+                            status: 'Completed',
+                            programName: w.programName || 'Training Program',
+                            weekName: w.weekName || 'Week 1',
+                            sessionLogs: w.sessionLogs,
+                            loggedAt: w.loggedAt || new Date().toISOString(),
+                            exercises: w.exercises || [],
+                            clientNotes: w.clientNotes || '',
+                            durationSeconds: w.durationSeconds || 0
+                        });
+
+                        // Auto-backup to DB in background so it permanently persists
+                        if (window.supabaseClient && w.sessionLogs && Object.keys(w.sessionLogs).length > 0) {
+                            window.supabaseClient.from('workout_session_logs').insert({
+                                workout_id: w.id,
+                                client_id: client.id,
+                                coach_id: window.appState.user?.id,
+                                workout_name: w.name,
+                                program_name: w.programName || 'Training Program',
+                                week_name: w.weekName || 'Week 1',
+                                exercises: w.exercises || [],
+                                session_logs: w.sessionLogs,
+                                completed_at: w.loggedAt || new Date().toISOString()
+                            }).catch(() => {});
+                        }
                     }
                 }
             });

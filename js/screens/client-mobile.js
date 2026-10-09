@@ -21,6 +21,11 @@ window.init_client_mobile = function(params) {
         localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
     } catch(e) {}
 
+    // Check and auto-log any workouts that were started and left unfinished for 4+ hours
+    if (appState && typeof appState.autoLogExpiredDrafts === 'function') {
+        appState.autoLogExpiredDrafts();
+    }
+
     function playClientChime(isIncoming = true) {
         try {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;

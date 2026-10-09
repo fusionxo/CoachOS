@@ -135,7 +135,9 @@ window.init_clients = function(params) {
                         <button class="py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary font-body-sm text-xs transition-colors btn-view">View Profile</button>
                         <button class="py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary font-body-sm text-xs transition-colors btn-edit">Edit</button>
                         <button class="py-1.5 rounded bg-transparent border border-base text-[#a1a1aa] hover:bg-[#1f201a] hover:text-primary font-body-sm text-xs transition-colors btn-msg">Message</button>
-                        <button class="py-1.5 rounded bg-transparent border border-base text-error/80 hover:bg-error/10 font-body-sm text-xs transition-colors btn-archive">${client.status === 'Inactive' ? 'Activate' : 'Archive'}</button>
+                        <button class="py-1.5 rounded bg-transparent border border-error/40 text-error hover:bg-error/15 font-body-sm text-xs transition-colors btn-remove-client flex items-center justify-center gap-1" title="Completely remove client and all data from database">
+                            <span class="material-symbols-outlined text-[14px]">person_remove</span> Remove
+                        </button>
                     </div>
                 `;
 
@@ -149,18 +151,21 @@ window.init_clients = function(params) {
                 card.querySelector('.btn-msg').onclick = () => {
                     window.location.hash = `inbox/${client.id}`;
                 };
-                card.querySelector('.btn-archive').onclick = async () => {
-                    if (client.status === 'Inactive') {
-                        client.status = 'Healthy';
-                    } else {
-                        client.status = 'Inactive';
-                    }
-                    try {
-                        await window.appState.save();
-                        renderClients();
-                        showToast(`Client ${client.name} status updated to ${client.status}`, 'success', 'Status Updated');
-                    } catch (err) {
-                        showToast(`Failed to update client archive status: ${err.message}`, 'error', 'Status Error');
+                card.querySelector('.btn-remove-client').onclick = async () => {
+                    const confirmed = await showConfirm(
+                        `Are you sure you want to completely remove "${client.name}"? This will permanently delete the client and all associated data (training programs, check-ins, messages, measurements, photos) from the database.`,
+                        'Remove Client',
+                        'Delete Client',
+                        'Cancel'
+                    );
+                    if (confirmed) {
+                        try {
+                            await window.appState.deleteClient(client.id);
+                            showToast(`Client "${client.name}" has been permanently removed.`, 'success', 'Client Removed');
+                            renderClients();
+                        } catch (err) {
+                            showToast(`Failed to remove client: ${err.message}`, 'error', 'Delete Error');
+                        }
                     }
                 };
 
