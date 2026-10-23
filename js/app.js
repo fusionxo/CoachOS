@@ -1222,8 +1222,11 @@ class AppState {
                     .maybeSingle();
 
                 if (wk) {
-                    const prog = wk.program_weeks?.programs;
-                    const weekNum = wk.program_weeks?.week_number || 1;
+                    const rawPw = wk.program_weeks;
+                    const pw = Array.isArray(rawPw) ? rawPw[0] : rawPw;
+                    const rawProg = pw?.programs;
+                    const prog = Array.isArray(rawProg) ? rawProg[0] : rawProg;
+                    const weekNum = pw?.week_number || 1;
                     let cId = prog?.client_id;
                     if (!cId && this.clients && this.clients[0]) cId = this.clients[0].id;
                     const coId = prog?.coach_id || (this.user?.role === 'coach' ? this.user.id : null);
@@ -1251,7 +1254,7 @@ class AppState {
                                     workout_id: wk.id,
                                     client_id: cId,
                                     coach_id: coId,
-                                    workout_name: wk.name,
+                                    workout_name: wk.name || 'Workout Session',
                                     program_name: prog?.name || 'Training Program',
                                     week_name: `Week ${weekNum}`,
                                     exercises: wk.exercises || [],
@@ -1283,11 +1286,12 @@ class AppState {
         if (window.supabaseClient) {
             try {
                 // 1. Fetch program info
-                const { data: prog } = await window.supabaseClient
+                const { data: rawProg } = await window.supabaseClient
                     .from('programs')
                     .select('id, name, client_id, coach_id')
                     .eq('id', programId)
                     .maybeSingle();
+                const prog = Array.isArray(rawProg) ? rawProg[0] : rawProg;
 
                 // 2. Fetch all weeks for this program
                 const { data: weeks } = await window.supabaseClient
@@ -1306,7 +1310,11 @@ class AppState {
                         .select('*, exercises(*)')
                         .in('week_id', weekIds);
 
-                    if (progWorkouts && progWorkouts.length > 0 && prog?.client_id) {
+                    let cId = prog?.client_id;
+                    if (!cId && this.clients && this.clients[0]) cId = this.clients[0].id;
+                    const coId = prog?.coach_id || (this.user?.role === 'coach' ? this.user.id : null);
+
+                    if (progWorkouts && progWorkouts.length > 0 && cId) {
                         for (const pw of progWorkouts) {
                             let sessionLogsToSave = pw.session_logs;
                             if (!sessionLogsToSave || Object.keys(sessionLogsToSave).length === 0) {
@@ -1329,10 +1337,10 @@ class AppState {
                                         .from('workout_session_logs')
                                         .insert({
                                             workout_id: pw.id,
-                                            client_id: prog.client_id,
-                                            coach_id: prog.coach_id,
-                                            workout_name: pw.name,
-                                            program_name: prog.name,
+                                            client_id: cId,
+                                            coach_id: coId,
+                                            workout_name: pw.name || 'Workout Session',
+                                            program_name: prog?.name || 'Training Program',
                                             week_name: `Week ${weekMap.get(pw.week_id) || 1}`,
                                             exercises: pw.exercises || [],
                                             session_logs: sessionLogsToSave || {},

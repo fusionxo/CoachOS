@@ -702,7 +702,7 @@ window.init_analytics = function(params) {
 
                     if (dbSessionLogs && dbSessionLogs.length > 0) {
                         dbSessionLogs.forEach(sl => {
-                            allSessionsMap.set(sl.id, {
+                            const entry = {
                                 id: sl.id,
                                 workoutId: sl.workout_id,
                                 name: sl.workout_name,
@@ -714,7 +714,11 @@ window.init_analytics = function(params) {
                                 exercises: sl.exercises || [],
                                 clientNotes: sl.client_notes,
                                 durationSeconds: sl.duration_seconds
-                            });
+                            };
+                            allSessionsMap.set(sl.id, entry);
+                            if (sl.workout_id) {
+                                allSessionsMap.set(sl.workout_id, entry);
+                            }
                         });
                     }
                 } catch(e) {
@@ -807,8 +811,8 @@ window.init_analytics = function(params) {
                 }
             });
 
-            // Convert to array and sort newest first
-            const completedWorkouts = Array.from(allSessionsMap.values()).sort((a,b) => {
+            // Convert unique values to array and sort newest first
+            const completedWorkouts = Array.from(new Set(allSessionsMap.values())).sort((a,b) => {
                 const dateA = a.loggedAt ? new Date(a.loggedAt) : new Date(0);
                 const dateB = b.loggedAt ? new Date(b.loggedAt) : new Date(0);
                 return dateB - dateA;

@@ -4,4 +4,9 @@ temp_keys.txt
 *.log
 node_modules/
 .DS_Store
+coachOS_theme_analysis.md
+gymmane_analysis.md
+merger_plan.md
+*.py
+
 
