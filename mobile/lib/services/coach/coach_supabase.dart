@@ -17,10 +17,11 @@ class CoachSupabase {
 
   bool _initialized = false;
   bool get isInitialized => _initialized;
+  Future<void>? _initializing;
 
   SupabaseClient get client => Supabase.instance.client;
-  Session? get session => client.auth.currentSession;
-  User? get user => client.auth.currentUser;
+  Session? get session => _initialized ? client.auth.currentSession : null;
+  User? get user => _initialized ? client.auth.currentUser : null;
   bool get isSignedIn => session != null;
 
   String? get userId => user?.id;
@@ -29,8 +30,12 @@ class CoachSupabase {
   RealtimeChannel? _realtimeChannel;
 
   /// Initialize Supabase. Safe to call multiple times.
-  Future<void> init() async {
-    if (_initialized) return;
+  Future<void> init() {
+    if (_initialized) return Future<void>.value();
+    return _initializing ??= _init();
+  }
+
+  Future<void> _init() async {
     try {
       await Supabase.initialize(
         url: _url,
@@ -38,11 +43,23 @@ class CoachSupabase {
         authOptions: const FlutterAuthClientOptions(
           authFlowType: AuthFlowType.pkce,
         ),
-      ).timeout(const Duration(seconds: 6));
+      ).timeout(const Duration(seconds: 20));
       _initialized = true;
     } catch (e) {
-      debugPrint('CoachSupabase: init error (offline?): $e');
-      _initialized = true; // allow app to continue offline
+      // Supabase.initialize can throw when a prior timed-out initialization
+      // completed in the background. Treat it as initialized only if the
+      // singleton client is actually available; otherwise leave it retryable.
+      try {
+        Supabase.instance.client;
+        _initialized = true;
+        debugPrint('CoachSupabase: using an already initialized client: $e');
+      } catch (_) {
+        _initialized = false;
+        debugPrint('CoachSupabase: init failed and can be retried: $e');
+        rethrow;
+      }
+    } finally {
+      _initializing = null;
     }
   }
 

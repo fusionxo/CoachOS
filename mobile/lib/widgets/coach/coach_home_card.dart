@@ -25,12 +25,15 @@ class _CoachHomeCardState extends State<CoachHomeCard> {
     setState(() => _syncing = true);
     final count = await CoachState.instance.flushSyncs();
     await CoachState.instance.syncAssignedPrograms();
+    final syncError = CoachState.instance.lastSyncError;
     if (mounted) {
       setState(() => _syncing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            count > 0 ? 'Synced $count updates with your coach!' : 'Programs and stats up to date!',
+            count > 0
+                ? 'Synced $count updates with your coach!'
+                : (syncError != null ? 'Sync failed: $syncError' : 'Programs and stats up to date!'),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -46,7 +49,7 @@ class _CoachHomeCardState extends State<CoachHomeCard> {
       listenable: CoachState.instance,
       builder: (context, _) {
         final state = CoachState.instance;
-        if (!state.isClient) return const SizedBox.shrink();
+        if (!state.isClient && !state.hasCoach) return const SizedBox.shrink();
 
         final coachName = state.coachName ?? 'Your Coach';
         final pending = state.pendingCount;
@@ -135,6 +138,15 @@ class _CoachHomeCardState extends State<CoachHomeCard> {
                   ),
                 ],
               ),
+              if (state.lastSyncError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Sync issue: ${state.lastSyncError}',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.f(11, weight: FontWeight.w500, color: gc.warn),
+                ),
+              ],
               const SizedBox(height: 14),
 
               // Action Buttons Row

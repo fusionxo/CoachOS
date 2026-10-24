@@ -1347,7 +1347,10 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
     s.clearRest();
     sessionLocked = false;
 
-    if (done.isNotEmpty) {
+    // Finishing a session is itself a durable event. Keep the session even
+    // when the client never toggled a set's done control; completed set data
+    // remains limited to sets actually marked done.
+    if (s.exercises.isNotEmpty) {
       final logged = <LoggedExercise>[];
       for (final e in s.exercises) {
         final doneSets = e.sets.where((st) => st.done).map((st) => st.logged).toList();
@@ -1363,12 +1366,13 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
       _filed = entry;
       _computeSummaryHighlights(entry);
       _offerLevelUp(entry);
-      if (CoachState.instance.isClient) {
-        final exerciseList = entry.exercises.map((e) => {
+      if (CoachState.instance.shouldSyncWorkouts) {
+        final exerciseList = s.exercises.map((e) => {
           'id': e.id,
           'name': e.name,
           'primary': e.primary,
           'sets': e.sets.length,
+          'completed_sets': e.sets.where((set) => set.done).length,
         }).toList();
 
         final sessionLogsMap = <String, dynamic>{

@@ -191,6 +191,22 @@ void main() {
 
     fit.saveAndExit();
   });
+
+  test('finishing a session records it even when no sets were toggled done', () {
+    fit.startWorkout();
+    fit.toggleMuscle('chest');
+    fit.trainContinue();
+    fit.startSession();
+
+    expect(fit.session!.exercises, isNotEmpty);
+    expect(fit.session!.exercises.expand((e) => e.sets).where((s) => s.done), isEmpty);
+
+    fit.finishSession();
+
+    expect(fit.sessions, hasLength(1));
+    expect(fit.sessions.single.exercises, isEmpty,
+        reason: 'the completed session is retained without claiming any sets were completed');
+  });
 }
 
 void _log(String exId, String name, List<LoggedSet> sets, DateTime when) {

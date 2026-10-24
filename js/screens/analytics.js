@@ -467,6 +467,83 @@ window.init_analytics = function(params) {
     const workoutsListMount = document.getElementById('analytics-workouts-list');
     const btnAddWorkout = document.getElementById('btn-analytics-add-workout');
 
+    async function renderPersistedSessionLogs() {
+        const mount = document.getElementById('analytics-session-logs-mount');
+        const badge = document.getElementById('completed-session-count-badge');
+        if (!mount) return;
+
+        mount.innerHTML = '';
+        if (!window.supabaseClient) {
+            mount.textContent = 'Session history is unavailable while the database is disconnected.';
+            return;
+        }
+
+        const { data, error } = await window.supabaseClient
+            .from('workout_session_logs')
+            .select('*')
+            .eq('client_id', client.id)
+            .order('completed_at', { ascending: false });
+
+        if (error) {
+            console.error('Could not load saved workout session logs:', error);
+            mount.textContent = `Could not load saved session history: ${error.message}`;
+            return;
+        }
+
+        const sessions = data || [];
+        if (badge) badge.textContent = `${sessions.length} Completed Session${sessions.length === 1 ? '' : 's'}`;
+        if (sessions.length === 0) {
+            mount.innerHTML = `
+                <div class="p-6 text-center text-xs text-on-surface-variant italic card-bg border border-dashed border-[#27272a] rounded-lg">
+                    No completed workout sessions logged by client yet.
+                </div>`;
+            return;
+        }
+
+        const parseJson = (value, fallback) => {
+            if (typeof value !== 'string') return value ?? fallback;
+            try { return JSON.parse(value); } catch (_) { return fallback; }
+        };
+
+        sessions.forEach(row => {
+            const sessionLogs = parseJson(row.session_logs, {});
+            const exercises = parseJson(row.exercises, []);
+            const exerciseCount = Array.isArray(exercises) && exercises.length > 0
+                ? exercises.length
+                : (sessionLogs && typeof sessionLogs === 'object' ? Object.keys(sessionLogs).length : 0);
+            const card = document.createElement('div');
+            card.className = 'card-bg border border-[#ceee93]/30 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:border-[#ceee93]/60 transition-all';
+
+            const details = document.createElement('div');
+            const title = document.createElement('h5');
+            title.className = 'font-body-base text-primary font-bold text-sm';
+            title.textContent = row.workout_name || 'Workout Session';
+            const subtitle = document.createElement('p');
+            subtitle.className = 'text-xs text-on-surface-variant font-mono mt-1';
+            const date = row.completed_at ? new Date(row.completed_at).toLocaleString() : '';
+            subtitle.textContent = `${row.program_name || 'Training Program'} • ${row.week_name || 'Week 1'} • ${exerciseCount} Exercises Logged${date ? ` • ${date}` : ''}`;
+            details.append(title, subtitle);
+
+            const inspect = document.createElement('button');
+            inspect.className = 'px-3.5 py-2 rounded-lg bg-[#d9f99d] text-[#09090b] text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0';
+            inspect.textContent = 'Inspect Session Log';
+            inspect.onclick = () => openSessionLogModal({
+                id: row.id,
+                workoutId: row.workout_id,
+                name: row.workout_name || 'Workout Session',
+                programName: row.program_name,
+                weekName: row.week_name,
+                loggedAt: row.completed_at,
+                exercises,
+                clientNotes: row.client_notes,
+                durationSeconds: row.duration_seconds
+            }, sessionLogs);
+
+            card.append(details, inspect);
+            mount.appendChild(card);
+        });
+    }
+
     async function renderTraining() {
         if (!workoutsListMount) return;
         workoutsListMount.innerHTML = `<div class="flex items-center justify-center py-8"><span class="material-symbols-outlined text-[24px] text-primary-container animate-spin">progress_activity</span></div>`;
@@ -480,6 +557,9 @@ window.init_analytics = function(params) {
 
         if (error) {
             workoutsListMount.innerHTML = `<div class="text-sm text-error p-4">Error loading programs: ${error.message}</div>`;
+            // Program query failures must not hide history stored independently
+            // in workout_session_logs.
+            await renderPersistedSessionLogs();
             return;
         }
 
@@ -676,209 +756,7 @@ window.init_analytics = function(params) {
         });
     }
 
-        // Render Completed Workout Session Logs for Coach Inspection (Persisted independently of active programs)
-        const sessionLogsMount = document.getElementById('analytics-session-logs-mount');
-        const countBadgeEl = document.getElementById('completed-session-count-badge');
-
-        if (sessionLogsMount) {
-            sessionLogsMount.innerHTML = '';
-            
-            const allSessionsMap = new Map();
-
-            // 1. Fetch all permanent logs from workout_session_logs table in Supabase
-            if (window.supabaseClient) {
-                try {
-                    let query = window.supabaseClient
-                        .from('workout_session_logs')
-                        .select('*');
-
-                    if (client.user_id) {
-                        query = query.or(`client_id.eq.${client.id},client_id.eq.${client.user_id}`);
-                    } else {
-                        query = query.eq('client_id', client.id);
-                    }
-
-                    const { data: dbSessionLogs } = await query.order('completed_at', { ascending: false });
-
-                    if (dbSessionLogs && dbSessionLogs.length > 0) {
-                        dbSessionLogs.forEach(sl => {
-                            const entry = {
-                                id: sl.id,
-                                workoutId: sl.workout_id,
-                                name: sl.workout_name,
-                                status: 'Completed',
-                                programName: sl.program_name || 'Training Program',
-                                weekName: sl.week_name || 'Week 1',
-                                sessionLogs: sl.session_logs,
-                                loggedAt: sl.completed_at,
-                                exercises: sl.exercises || [],
-                                clientNotes: sl.client_notes,
-                                durationSeconds: sl.duration_seconds
-                            };
-                            allSessionsMap.set(sl.id, entry);
-                            if (sl.workout_id) {
-                                allSessionsMap.set(sl.workout_id, entry);
-                            }
-                        });
-                    }
-                } catch(e) {
-                    console.warn('Could not fetch workout_session_logs from Supabase:', e);
-                }
-            }
-
-            // 2. Also check any active workouts in programs or appState
-            let localCompleted = [];
-            try {
-                localCompleted = JSON.parse(localStorage.getItem('coachos_completed_workouts') || '[]');
-            } catch(e) {}
-
-            if (programs) {
-                programs.forEach(p => {
-                    if (p.program_weeks) {
-                        p.program_weeks.forEach(pw => {
-                            if (pw.workouts) {
-                                pw.workouts.forEach(wk => {
-                                    const isLocallyDone = localCompleted.includes(wk.id);
-                                    let sessionData = wk.session_logs || null;
-                                    if (!sessionData) {
-                                        try {
-                                            const raw = localStorage.getItem('coachos_workout_logs_' + wk.id);
-                                            if (raw) sessionData = JSON.parse(raw);
-                                        } catch(e) {}
-                                    }
-                                    if (sessionData && sessionData.sessionLogs) {
-                                        sessionData = sessionData.sessionLogs;
-                                    }
-
-                                    const isDone = wk.status === 'Completed' || isLocallyDone || (sessionData && Object.keys(sessionData).length > 0);
-                                    if (isDone && !allSessionsMap.has(wk.id)) {
-                                        allSessionsMap.set(wk.id, {
-                                            id: wk.id,
-                                            workoutId: wk.id,
-                                            clientId: p.client_id,
-                                            name: wk.name,
-                                            status: 'Completed',
-                                            programName: p.name,
-                                            weekName: `Week ${pw.week_number}`,
-                                            sessionLogs: sessionData,
-                                            loggedAt: wk.completed_at || null,
-                                            exercises: wk.exercises || []
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-
-            // Also check appState.workouts and auto-backup any unsaved completed sessions
-            (window.appState.workouts || []).forEach(w => {
-                if (w.clientId && w.clientId !== client.id && w.clientId !== client.user_id) return;
-                const isDone = w.status === 'Completed' || (w.sessionLogs && Object.keys(w.sessionLogs).length > 0);
-                if (isDone) {
-                    const existingLog = Array.from(allSessionsMap.values()).find(s => s.workoutId === w.id || s.id === w.id);
-                    if (!existingLog) {
-                        allSessionsMap.set(w.id, {
-                            id: w.id,
-                            workoutId: w.id,
-                            name: w.name,
-                            status: 'Completed',
-                            programName: w.programName || 'Training Program',
-                            weekName: w.weekName || 'Week 1',
-                            sessionLogs: w.sessionLogs,
-                            loggedAt: w.loggedAt || new Date().toISOString(),
-                            exercises: w.exercises || [],
-                            clientNotes: w.clientNotes || '',
-                            durationSeconds: w.durationSeconds || 0
-                        });
-
-                        // Auto-backup to DB in background so it permanently persists
-                        if (window.supabaseClient && w.sessionLogs && Object.keys(w.sessionLogs).length > 0) {
-                            window.supabaseClient.from('workout_session_logs').insert({
-                                workout_id: w.id,
-                                client_id: client.id,
-                                coach_id: window.appState.user?.id,
-                                workout_name: w.name,
-                                program_name: w.programName || 'Training Program',
-                                week_name: w.weekName || 'Week 1',
-                                exercises: w.exercises || [],
-                                session_logs: w.sessionLogs,
-                                completed_at: w.loggedAt || new Date().toISOString()
-                            }).catch(() => {});
-                        }
-                    }
-                }
-            });
-
-            // Convert unique values to array and sort newest first
-            const completedWorkouts = Array.from(new Set(allSessionsMap.values())).sort((a,b) => {
-                const dateA = a.loggedAt ? new Date(a.loggedAt) : new Date(0);
-                const dateB = b.loggedAt ? new Date(b.loggedAt) : new Date(0);
-                return dateB - dateA;
-            });
-
-            if (countBadgeEl) {
-                countBadgeEl.textContent = `${completedWorkouts.length} Completed Session${completedWorkouts.length === 1 ? '' : 's'}`;
-            }
-
-            if (completedWorkouts.length === 0) {
-                sessionLogsMount.innerHTML = `
-                    <div class="p-6 text-center text-xs text-on-surface-variant italic card-bg border border-dashed border-[#27272a] rounded-lg">
-                        No completed workout sessions logged by client yet. When client finishes a session on mobile, their set-by-set weight and rep records will appear here.
-                    </div>
-                `;
-            } else {
-                completedWorkouts.forEach(w => {
-                    let sessionData = w.sessionLogs;
-                    if (!sessionData) {
-                        try {
-                            const raw = localStorage.getItem('coachos_workout_logs_' + (w.workoutId || w.id));
-                            if (raw) sessionData = JSON.parse(raw);
-                        } catch(e) {}
-                    }
-                    if (sessionData && sessionData.sessionLogs) {
-                        sessionData = sessionData.sessionLogs;
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'card-bg border border-[#ceee93]/30 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:border-[#ceee93]/60 transition-all';
-                    
-                    const exCount = (w.exercises && w.exercises.length > 0) ? w.exercises.length : (sessionData ? Object.keys(sessionData).length : 0);
-                    
-                    let dateStr = '';
-                    if (w.loggedAt) {
-                        try {
-                            dateStr = ' • ' + new Date(w.loggedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        } catch(e) {}
-                    }
-
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[#22c55e] text-base">check_circle</span>
-                                <h5 class="font-body-base text-primary font-bold text-sm">${w.name}</h5>
-                                <span class="bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30 px-2 py-0.5 rounded text-[9px] font-bold font-mono">COMPLETED</span>
-                            </div>
-                            <p class="text-xs text-on-surface-variant font-mono mt-1">
-                                ${w.programName || 'Training Program'} • ${w.weekName || 'Week 1'} • ${exCount} Exercises Logged${dateStr}
-                            </p>
-                            ${w.clientNotes ? `<p class="text-[11px] text-[#ceee93]/90 italic mt-0.5 font-mono">Feedback: "${w.clientNotes}"</p>` : ''}
-                        </div>
-                        <button class="px-3.5 py-2 rounded-lg bg-[#d9f99d] text-[#09090b] text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0 btn-inspect-session">
-                            <span class="material-symbols-outlined text-[16px]">visibility</span>
-                            Inspect Session Log
-                        </button>
-                    `;
-
-                    card.querySelector('.btn-inspect-session').onclick = () => {
-                        openSessionLogModal(w, sessionData);
-                    };
-
-                    sessionLogsMount.appendChild(card);
-                });
-            }
-        }
+        await renderPersistedSessionLogs();
     }
 
     function openSessionLogModal(workout, sessionData) {

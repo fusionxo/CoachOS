@@ -40,6 +40,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
   List<Map<String, dynamic>> get assignedPrograms => _assignedPrograms;
   bool _syncing = false;
   Timer? _syncRetryTimer;
+  String? _lastSyncError;
 
   // Throttling for health steps sync
   int? _lastSyncedSteps;
@@ -50,7 +51,9 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
   bool get hasCoach => _clientId != null && _clientId!.isNotEmpty;
   bool get isClient => isSignedIn; // Signed-in users are CoachOS athletes
   bool get isSolo => !isSignedIn;
+  bool get shouldSyncWorkouts => isSignedIn || hasCoach;
   bool get isSyncing => _syncing;
+  String? get lastSyncError => _lastSyncError;
 
   String? get clientId => _clientId;
   String? get coachId => _coachId;
@@ -61,8 +64,8 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
 
   String? get userEmail => CoachSupabase.instance.userEmail;
   String? get athleteName =>
-      (CoachSupabase.instance.client.auth.currentUser?.userMetadata?['full_name'] as String?) ??
-      (CoachSupabase.instance.client.auth.currentUser?.userMetadata?['name'] as String?);
+      (CoachSupabase.instance.user?.userMetadata?['full_name'] as String?) ??
+      (CoachSupabase.instance.user?.userMetadata?['name'] as String?);
 
 
   // Initialization (Fast & Non-blocking)
@@ -108,6 +111,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
         _pendingSyncs = [];
       }
     }
+    _scheduleSyncRetries();
 
     // Initialize Supabase in background
     unawaited(_initSupabaseInBackground());
@@ -115,7 +119,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && isSignedIn) {
+    if (state == AppLifecycleState.resumed) {
       unawaited(syncAll());
     }
   }
@@ -209,13 +213,13 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
     _coachName = null;
     _coachEmail = null;
     _lastSync = null;
-    _pendingSyncs.clear();
+    _syncRetryTimer?.cancel();
+    _syncRetryTimer = null;
     await _prefs?.remove(_clientIdKey);
     await _prefs?.remove(_coachIdKey);
     await _prefs?.remove(_coachNameKey);
     await _prefs?.remove(_coachEmailKey);
     await _prefs?.remove(_lastSyncKey);
-    await _prefs?.remove(_pendingSyncsKey);
     _safeNotify();
   }
 
@@ -315,11 +319,11 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     // Offline fallback
-    queueSync('check_in', payload);
+    await queueSync('check_in', payload);
     return false;
   }
 
-  /// Save Workout Session: tries cloud first, falls back to offline queue.
+  /// Save the workout to the durable outbox first, then attempt delivery.
   Future<bool> saveWorkoutOnlineFirst({
     required String workoutName,
     String? programName,
@@ -344,38 +348,26 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
       'client_notes': clientNotes,
     };
 
-    if (isSignedIn && (_clientId == null || _clientId!.trim().isEmpty)) {
-      await refreshCoachLink();
+    final syncKey = payload['sync_key'] as String;
+    try {
+      await queueSync('workout', payload);
+    } catch (e) {
+      _lastSyncError = 'Could not save the workout to this device: $e';
+      debugPrint('CoachState: workout outbox write failed: $e');
+      _safeNotify();
+      return false;
+    }
+    if (!isSignedIn) {
+      _lastSyncError = 'Waiting for the client account to sign in.';
+      _safeNotify();
+      return false;
     }
 
-    if (isSignedIn && _clientId != null && _clientId!.trim().isNotEmpty) {
-      try {
-        await CoachSupabase.instance.syncWorkoutSession(
-          clientId: _clientId!.trim(),
-          syncKey: payload['sync_key'] as String,
-          coachId: _coachId,
-          workoutId: workoutId,
-          workoutName: workoutName,
-          programName: programName,
-          weekName: weekName,
-          completedAt: completedAt,
-          durationSeconds: durationSeconds,
-          sessionLogs: sessionLogs,
-          exercises: exercises,
-          clientNotes: clientNotes,
-        );
-        _lastSync = DateTime.now();
-        await _prefs?.setInt(_lastSyncKey, _lastSync!.millisecondsSinceEpoch);
-        _safeNotify();
-        return true; // Online sync succeeded
-      } catch (e, stack) {
-        debugPrint('CoachState: Workout online sync failed, queuing offline: $e\n$stack');
-      }
-    }
-
-    // Offline fallback
-    queueSync('workout', payload);
-    return false;
+    await flushSyncs();
+    return !_pendingSyncs.any((item) {
+      final data = item['data'];
+      return item['type'] == 'workout' && data is Map && data['sync_key'] == syncKey;
+    });
   }
 
   /// Save Measurements: tries cloud first, falls back to offline queue.
@@ -417,7 +409,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
       }
     }
 
-    queueSync('measurements', payload);
+    await queueSync('measurements', payload);
     return false;
   }
 
@@ -436,44 +428,80 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
 
   // Offline Sync Queue Management
 
-  void queueSync(String type, Map<String, dynamic> data) {
+  Future<void> queueSync(String type, Map<String, dynamic> data) async {
+    final syncKey = data['sync_key'];
+    if (syncKey != null && _pendingSyncs.any((item) {
+      final itemData = item['data'];
+      return item['type'] == type && itemData is Map && itemData['sync_key'] == syncKey;
+    })) {
+      return;
+    }
     _pendingSyncs.add({
       'type': type,
       'data': data,
+      if (CoachSupabase.instance.userId != null) 'auth_user_id': CoachSupabase.instance.userId,
       'queued_at': DateTime.now().toIso8601String(),
     });
-    _savePendingSyncs();
+    await _savePendingSyncs();
     _scheduleSyncRetries();
     _safeNotify();
   }
 
   void _scheduleSyncRetries() {
-    if (_pendingSyncs.isEmpty || _syncRetryTimer != null) return;
+    if (_pendingSyncs.isEmpty && CoachSupabase.instance.isInitialized) return;
+    if (_syncRetryTimer != null) return;
     _syncRetryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (_pendingSyncs.isEmpty) {
+      if (_pendingSyncs.isEmpty && CoachSupabase.instance.isInitialized) {
         _syncRetryTimer?.cancel();
         _syncRetryTimer = null;
-      } else if (isSignedIn) {
-        unawaited(flushSyncs());
+      } else {
+        unawaited(syncAll());
       }
     });
   }
 
   /// Flush pending offline changes to cloud.
   Future<int> flushSyncs() async {
-    if (_syncing || _pendingSyncs.isEmpty || !isSignedIn) {
+    if (_syncing || _pendingSyncs.isEmpty) {
+      return 0;
+    }
+    try {
+      await CoachSupabase.instance.init();
+    } catch (e) {
+      _lastSyncError = e.toString();
+      _safeNotify();
+      return 0;
+    }
+    if (!isSignedIn) {
+      _lastSyncError = 'Sign in to the client account to sync saved workout logs.';
+      _syncRetryTimer?.cancel();
+      _syncRetryTimer = null;
+      _safeNotify();
       return 0;
     }
     if (_clientId == null || _clientId!.trim().isEmpty) {
       await refreshCoachLink();
-      if (_clientId == null || _clientId!.trim().isEmpty) return 0;
+      if (_clientId == null || _clientId!.trim().isEmpty) {
+        _lastSyncError = 'No coach-linked client record was found for this account.';
+        _scheduleSyncRetries();
+        _safeNotify();
+        return 0;
+      }
     }
     _syncing = true;
 
     int synced = 0;
     final failed = <Map<String, dynamic>>[];
+    String? syncError;
 
     for (final item in _pendingSyncs) {
+      final queuedUserId = item['auth_user_id'] as String?;
+      final currentUserId = CoachSupabase.instance.userId;
+      if (queuedUserId != null && queuedUserId != currentUserId) {
+        syncError = 'Pending updates belong to a different signed-in account.';
+        failed.add(item);
+        continue;
+      }
       try {
         final type = item['type'] as String;
         final rawData = item['data'];
@@ -541,14 +569,16 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
         synced++;
       } catch (e, stack) {
         debugPrint('CoachState: sync failed for item: $e\n$stack');
+        syncError = e.toString();
         failed.add(item);
       }
     }
 
     _pendingSyncs = failed;
+    _lastSyncError = _pendingSyncs.isEmpty ? null : syncError ?? _lastSyncError;
     _lastSync = DateTime.now();
     await _prefs?.setInt(_lastSyncKey, _lastSync!.millisecondsSinceEpoch);
-    _savePendingSyncs();
+    await _savePendingSyncs();
     if (_pendingSyncs.isEmpty) {
       _syncRetryTimer?.cancel();
       _syncRetryTimer = null;
@@ -652,12 +682,24 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> syncAll() async {
+    try {
+      await CoachSupabase.instance.init();
+    } catch (e) {
+      _lastSyncError = e.toString();
+      _safeNotify();
+      return;
+    }
+    if (!isSignedIn) {
+      _syncRetryTimer?.cancel();
+      _syncRetryTimer = null;
+      return;
+    }
     await refreshCoachLink();
     await flushSyncs();
     await syncAssignedPrograms();
   }
 
-  void _savePendingSyncs() {
-    _prefs?.setString(_pendingSyncsKey, jsonEncode(_pendingSyncs));
+  Future<void> _savePendingSyncs() async {
+    await _prefs?.setString(_pendingSyncsKey, jsonEncode(_pendingSyncs));
   }
 }
