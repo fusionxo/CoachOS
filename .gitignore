@@ -10,3 +10,6 @@ merger_plan.md
 *.py
 
 
+
+supabase/.temp/
+

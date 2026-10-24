@@ -17,7 +17,7 @@ import 'coach_supabase.dart';
 /// 2. If network fails or is absent, changes fall back safely to a local
 ///    offline queue and flush automatically when connectivity returns.
 /// 3. Supabase Realtime delivers instantaneous coach updates without polling.
-class CoachState extends ChangeNotifier {
+class CoachState extends ChangeNotifier with WidgetsBindingObserver {
   CoachState._();
   static final CoachState instance = CoachState._();
 
@@ -39,6 +39,7 @@ class CoachState extends ChangeNotifier {
   List<Map<String, dynamic>> _assignedPrograms = [];
   List<Map<String, dynamic>> get assignedPrograms => _assignedPrograms;
   bool _syncing = false;
+  Timer? _syncRetryTimer;
 
   // Throttling for health steps sync
   int? _lastSyncedSteps;
@@ -79,6 +80,7 @@ class CoachState extends ChangeNotifier {
   }
 
   Future<void> init() async {
+    WidgetsBinding.instance.addObserver(this);
     _prefs = await SharedPreferences.getInstance();
     final rawClientId = _prefs?.getString(_clientIdKey);
     _clientId = (rawClientId != null && rawClientId.trim().isNotEmpty) ? rawClientId.trim() : null;
@@ -109,6 +111,13 @@ class CoachState extends ChangeNotifier {
 
     // Initialize Supabase in background
     unawaited(_initSupabaseInBackground());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && isSignedIn) {
+      unawaited(syncAll());
+    }
   }
 
   Future<void> _initSupabaseInBackground() async {
@@ -181,6 +190,7 @@ class CoachState extends ChangeNotifier {
         password: password,
       );
       await refreshCoachLink();
+      await flushSyncs();
       await syncAssignedPrograms();
       _safeNotify();
       return null;
@@ -217,6 +227,7 @@ class CoachState extends ChangeNotifier {
       final invite = await CoachSupabase.instance.acceptInvite(token);
       if (invite == null) return 'Invalid or expired invite';
       await refreshCoachLink();
+      await flushSyncs();
       await syncAssignedPrograms();
       return null;
     } catch (e) {
@@ -321,6 +332,7 @@ class CoachState extends ChangeNotifier {
     String? clientNotes,
   }) async {
     final payload = {
+      'sync_key': '${completedAt.toUtc().microsecondsSinceEpoch}-${_clientId ?? 'pending'}',
       if (workoutId != null) 'workout_id': workoutId,
       'workout_name': workoutName,
       'program_name': programName,
@@ -340,6 +352,7 @@ class CoachState extends ChangeNotifier {
       try {
         await CoachSupabase.instance.syncWorkoutSession(
           clientId: _clientId!.trim(),
+          syncKey: payload['sync_key'] as String,
           coachId: _coachId,
           workoutId: workoutId,
           workoutName: workoutName,
@@ -430,7 +443,20 @@ class CoachState extends ChangeNotifier {
       'queued_at': DateTime.now().toIso8601String(),
     });
     _savePendingSyncs();
+    _scheduleSyncRetries();
     _safeNotify();
+  }
+
+  void _scheduleSyncRetries() {
+    if (_pendingSyncs.isEmpty || _syncRetryTimer != null) return;
+    _syncRetryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_pendingSyncs.isEmpty) {
+        _syncRetryTimer?.cancel();
+        _syncRetryTimer = null;
+      } else if (isSignedIn) {
+        unawaited(flushSyncs());
+      }
+    });
   }
 
   /// Flush pending offline changes to cloud.
@@ -489,6 +515,8 @@ class CoachState extends ChangeNotifier {
 
             await CoachSupabase.instance.syncWorkoutSession(
               clientId: _clientId!.trim(),
+              syncKey: (data['sync_key'] as String?) ??
+                  '${(data['completed_at'] as String?) ?? ''}-${data['workout_id'] ?? data['workout_name'] ?? 'session'}',
               coachId: _coachId,
               workoutId: data['workout_id'] as String?,
               workoutName: (data['workout_name'] as String?) ?? 'Workout Session',
@@ -521,6 +549,12 @@ class CoachState extends ChangeNotifier {
     _lastSync = DateTime.now();
     await _prefs?.setInt(_lastSyncKey, _lastSync!.millisecondsSinceEpoch);
     _savePendingSyncs();
+    if (_pendingSyncs.isEmpty) {
+      _syncRetryTimer?.cancel();
+      _syncRetryTimer = null;
+    } else {
+      _scheduleSyncRetries();
+    }
     _syncing = false;
     _safeNotify();
     return synced;

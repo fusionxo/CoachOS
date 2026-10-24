@@ -357,6 +357,7 @@ class CoachSupabase {
   /// Sync a completed workout session to CoachOS.
   Future<void> syncWorkoutSession({
     required String clientId,
+    required String syncKey,
     String? coachId,
     String? workoutId,
     required String workoutName,
@@ -374,6 +375,7 @@ class CoachSupabase {
     }
 
     final insertPayload = <String, dynamic>{
+      'sync_key': syncKey,
       'client_id': cleanClientId,
       if (coachId != null && coachId.trim().isNotEmpty) 'coach_id': coachId.trim(),
       if (workoutId != null && workoutId.trim().isNotEmpty) 'workout_id': workoutId.trim(),
@@ -390,7 +392,7 @@ class CoachSupabase {
     // 1. Insert into workout_session_logs
     await client
         .from('workout_session_logs')
-        .insert(insertPayload)
+        .upsert(insertPayload, onConflict: 'sync_key', ignoreDuplicates: true)
         .timeout(_netTimeout);
 
     // 2. If assigned workout from coach, update workouts table status
