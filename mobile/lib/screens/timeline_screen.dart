@@ -29,6 +29,12 @@ class TimelineScreen extends StatefulWidget {
 class _TimelineScreenState extends State<TimelineScreen> {
   bool _busy = false;
 
+  String _poseLabel(String pose) => switch (pose) {
+        'before' => 'Before',
+        'after' => 'After',
+        _ => t.poseName(pose),
+      };
+
   Future<void> _shoot(DateTime day, String pose) async {
     if (_busy) return;
     final source = await pickPhotoSource(context);
@@ -65,7 +71,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
     final ok = await askConfirm(
       context,
       title: t.delete,
-      body: t.posePhoto(t.poseName(pose).toLowerCase()),
+      body: t.posePhoto(_poseLabel(pose).toLowerCase()),
       confirmLabel: t.delete,
       danger: true,
     );
@@ -327,14 +333,17 @@ class _TimelineScreenState extends State<TimelineScreen> {
         ),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (final pose in kPoses) ...[
-                  if (pose != kPoses.first) const SizedBox(width: 10),
-                  _ghostTile(gc, pose),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (final pose in kPoses) ...[
+                    if (pose != kPoses.first) const SizedBox(width: 10),
+                    _ghostTile(gc, pose),
+                  ],
                 ],
-              ],
+              ),
             ),
             const SizedBox(height: 20),
             Text(t.timelineEmptyTitle,
@@ -634,7 +643,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                   children: [
                     Icon(PhosphorIconsRegular.plus, size: 16, color: gc.textTertiary),
                     const SizedBox(height: 6),
-                    Text(t.poseName(pose),
+                    Text(_poseLabel(pose),
                         style: AppTheme.s(10.5, weight: FontWeight.w600, color: gc.textTertiary)),
                   ],
                 )
@@ -652,7 +661,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         color: const Color(0x99000000),
                         alignment: Alignment.center,
-                        child: Text(t.poseName(pose),
+                        child: Text(_poseLabel(pose),
                             style: AppTheme.s(10, weight: FontWeight.w600, color: Colors.white)),
                       ),
                     ),
@@ -711,7 +720,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                     Icon(PhosphorIconsRegular.person, size: 20, color: gc.textSecondary),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: Text(t.posePhoto(t.poseName(p).toLowerCase()),
+                      child: Text(t.posePhoto(_poseLabel(p).toLowerCase()),
                           style: AppTheme.s(14, weight: FontWeight.w600, color: gc.text)),
                     ),
                   ]),

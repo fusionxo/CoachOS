@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -437,15 +438,62 @@ class CoachSupabase {
     required String poseType,
     DateTime? date,
   }) async {
+    final photoDay = date ?? DateTime.now();
     await client
         .from('progress_photos')
-        .insert({
+        .upsert({
           'client_id': clientId,
           'storage_path': storagePath,
           'pose_type': poseType,
-          'created_at': (date ?? DateTime.now()).toUtc().toIso8601String(),
-        })
+          'created_at': DateTime.utc(photoDay.year, photoDay.month, photoDay.day, 12).toIso8601String(),
+        }, onConflict: 'client_id,storage_path')
         .timeout(_netTimeout);
+  }
+
+  /// Upload a locally stored progress photo under the workspace/client path
+  /// required by Storage RLS, then persist its metadata for coach dashboards.
+  Future<void> uploadProgressPhoto({
+    required String workspaceId,
+    required String clientId,
+    required String localPath,
+    required String poseType,
+    required DateTime date,
+  }) async {
+    final filename = localPath.split(RegExp(r'[/\\]')).last;
+    final storagePath = '$workspaceId/$clientId/$filename';
+    final extension = filename.contains('.') ? filename.split('.').last.toLowerCase() : '';
+    final contentType = switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'heic' => 'image/heic',
+      _ => 'image/jpeg',
+    };
+    await client.storage
+        .from('progress-photos')
+        .upload(storagePath, File(localPath), fileOptions: FileOptions(upsert: true, contentType: contentType))
+        .timeout(_netTimeout);
+    await syncProgressPhoto(clientId: clientId, storagePath: storagePath, poseType: poseType, date: date);
+  }
+
+  /// Keep one nutrition summary row per client per day for the coach check-in view.
+  Future<void> syncNutritionSummary({
+    required String clientId,
+    required DateTime day,
+    required int calories,
+    required int protein,
+    required int carbs,
+    required int fats,
+  }) async {
+    final date = DateTime(day.year, day.month, day.day);
+    await client.from('check_ins').upsert({
+      'client_id': clientId,
+      'nutrition_day': date.toIso8601String().substring(0, 10),
+      'calories': calories,
+      'protein': protein,
+      'carbs': carbs,
+      'fats': fats,
+      'created_at': DateTime.utc(date.year, date.month, date.day, 12).toIso8601String(),
+    }, onConflict: 'client_id,nutrition_day').timeout(_netTimeout);
   }
 
   // -- Coach-Assigned Programs -------------------------------
@@ -500,6 +548,19 @@ class CoachSupabase {
             debugPrint('CoachSupabase: Realtime program update received');
             onProgramUpdate?.call();
           },
+        )
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'clients',
+          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'id', value: clientId),
+          callback: (_) => onProgramUpdate?.call(),
+        )
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'workouts',
+          callback: (_) => onProgramUpdate?.call(),
         )
         ..subscribe();
     } catch (e) {

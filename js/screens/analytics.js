@@ -539,7 +539,30 @@ window.init_analytics = function(params) {
                 durationSeconds: row.duration_seconds
             }, sessionLogs);
 
-            card.append(details, inspect);
+            const actions = document.createElement('div');
+            actions.className = 'flex items-center gap-2 shrink-0';
+            const remove = document.createElement('button');
+            remove.className = 'px-3 py-2 rounded-lg border border-error/40 text-error text-xs font-bold hover:bg-error/10 transition-colors';
+            remove.textContent = 'Delete Log';
+            remove.onclick = async () => {
+                if (!await showConfirm(`Permanently delete the completed session log for "${row.workout_name || 'Workout Session'}"?`, 'Delete Session Log', 'Delete', 'Cancel')) return;
+                remove.disabled = true;
+                try {
+                    const { error } = await window.supabaseClient
+                        .from('workout_session_logs')
+                        .delete()
+                        .eq('id', row.id)
+                        .eq('client_id', client.id);
+                    if (error) throw error;
+                    showToast('Session log deleted.', 'success', 'Log Deleted');
+                    await renderPersistedSessionLogs();
+                } catch (err) {
+                    remove.disabled = false;
+                    showToast(`Failed to delete session log: ${err.message}`, 'error', 'Delete Error');
+                }
+            };
+            actions.append(remove, inspect);
+            card.append(details, actions);
             mount.appendChild(card);
         });
     }
@@ -1022,7 +1045,7 @@ window.init_analytics = function(params) {
         } else {
             // Use 'before' tagged photo if available, else earliest front
             const beforePhoto = clientPhotos.find(p => p.before) || clientPhotos[0];
-            const latestPhoto = [...clientPhotos].sort((a,b) => new Date(b.date) - new Date(a.date)).find(p => p.front) || clientPhotos[clientPhotos.length - 1];
+            const latestPhoto = [...clientPhotos].sort((a,b) => new Date(b.date) - new Date(a.date)).find(p => p.after || p.front) || clientPhotos[clientPhotos.length - 1];
 
             // Render Before
             const beforeCard = document.createElement('div');
@@ -1036,8 +1059,9 @@ window.init_analytics = function(params) {
             // Render Current
             const currentCard = document.createElement('div');
             currentCard.className = 'bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden relative h-64 flex items-center justify-center';
-            currentCard.innerHTML = latestPhoto.front
-                ? `<img alt="Current" class="w-full h-full object-cover" src="${latestPhoto.front}"><div class="absolute bottom-2 left-2 bg-[#d9f99d] text-[#09090b] font-semibold px-2 py-0.5 rounded text-xs">Current (${latestPhoto.date})</div>`
+            const afterSrc = latestPhoto.after || latestPhoto.front;
+            currentCard.innerHTML = afterSrc
+                ? `<img alt="After" class="w-full h-full object-cover" src="${afterSrc}"><div class="absolute bottom-2 left-2 bg-[#d9f99d] text-[#09090b] font-semibold px-2 py-0.5 rounded text-xs">After (${latestPhoto.date})</div>`
                 : `<span class="text-xs text-on-surface-variant italic">No latest photo submitted</span>`;
             photosGalleryMount.appendChild(currentCard);
 

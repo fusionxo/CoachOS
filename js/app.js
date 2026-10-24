@@ -156,7 +156,7 @@ class AppState {
                     this.checkins = (checkins || []).map(c => ({
                         id: c.id,
                         clientId: c.client_id,
-                        date: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                        date: c.nutrition_day || (c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
                         createdAt: c.created_at,
                         weight: c.weight,
                         sleep: c.sleep_hours,
@@ -215,7 +215,8 @@ class AppState {
                                     front: null,
                                     side: null,
                                     back: null,
-                                    before: null
+                                    before: null,
+                                    after: null
                                 };
                             }
                             const signedUrl = signedUrlMap[p.storage_path] || '';
@@ -223,6 +224,7 @@ class AppState {
                             else if (p.pose_type === 'side') photosMap[key].side = signedUrl;
                             else if (p.pose_type === 'back') photosMap[key].back = signedUrl;
                             else if (p.pose_type === 'before') photosMap[key].before = signedUrl;
+                            else if (p.pose_type === 'after') photosMap[key].after = signedUrl;
                         });
                         this.progressPhotos = Object.values(photosMap);
                     }
@@ -445,7 +447,7 @@ class AppState {
                 this.checkins = (checkins || []).map(c => ({
                     id: c.id,
                     clientId: c.client_id,
-                    date: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                    date: c.nutrition_day || (c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
                     createdAt: c.created_at,
                     weight: c.weight,
                     sleep: c.sleep_hours,
@@ -512,6 +514,7 @@ class AppState {
                         else if (p.pose_type === 'side') photosMap[key].side = signedUrl;
                         else if (p.pose_type === 'back') photosMap[key].back = signedUrl;
                         else if (p.pose_type === 'before') photosMap[key].before = signedUrl;
+                        else if (p.pose_type === 'after') photosMap[key].after = signedUrl;
                     });
                     this.progressPhotos = Object.values(photosMap);
                 }

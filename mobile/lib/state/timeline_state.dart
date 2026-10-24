@@ -99,6 +99,13 @@ mixin TimelineState on FitCore {
     final saved = await MediaStore.importFor('shot', srcPath);
     if (saved == null) return false;
     _replaceShot(day, pose, saved);
+    if (CoachState.instance.isClient) {
+      unawaited(CoachState.instance.saveProgressPhotoOnlineFirst(
+        localPath: MediaStore.pathFor(saved)!,
+        poseType: pose,
+        date: day,
+      ));
+    }
     return true;
   }
 

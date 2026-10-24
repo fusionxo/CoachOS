@@ -188,6 +188,8 @@ extension GymL10n on AppLocalizations {
       };
 
   String poseName(String pose) => switch (pose) {
+        'before' => 'Before',
+        'after' => 'After',
         'front' => poseFront,
         'side' => poseSide,
         _ => poseBack,

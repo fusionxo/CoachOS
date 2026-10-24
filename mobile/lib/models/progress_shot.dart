@@ -1,4 +1,4 @@
-const List<String> kPoses = ['front', 'side', 'back'];
+const List<String> kPoses = ['before', 'after', 'front', 'side', 'back'];
 
 class ProgressEntry {
   const ProgressEntry({

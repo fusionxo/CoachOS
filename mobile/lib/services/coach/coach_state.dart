@@ -28,18 +28,21 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
   static const _coachEmailKey = 'coach_email';
   static const _lastSyncKey = 'coach_last_sync';
   static const _pendingSyncsKey = 'coach_pending_syncs';
+  static const _workspaceIdKey = 'coach_workspace_id';
 
   SharedPreferences? _prefs;
   String? _clientId;
   String? _coachId;
   String? _coachName;
   String? _coachEmail;
+  String? _workspaceId;
   DateTime? _lastSync;
   List<Map<String, dynamic>> _pendingSyncs = [];
   List<Map<String, dynamic>> _assignedPrograms = [];
   List<Map<String, dynamic>> get assignedPrograms => _assignedPrograms;
   bool _syncing = false;
   Timer? _syncRetryTimer;
+  Timer? _nutritionSyncTimer;
   String? _lastSyncError;
 
   // Throttling for health steps sync
@@ -93,6 +96,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
 
     _coachName = _prefs?.getString(_coachNameKey);
     _coachEmail = _prefs?.getString(_coachEmailKey);
+    _workspaceId = _prefs?.getString(_workspaceIdKey);
 
     final lastSyncMs = _prefs?.getInt(_lastSyncKey);
     if (lastSyncMs != null) {
@@ -149,7 +153,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
       },
       onProgramUpdate: () {
         debugPrint('CoachState: Realtime program update triggered');
-        syncAssignedPrograms();
+        unawaited(refreshCoachLink().then((_) => syncAssignedPrograms()));
       },
     );
   }
@@ -212,6 +216,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
     _coachId = null;
     _coachName = null;
     _coachEmail = null;
+    _workspaceId = null;
     _lastSync = null;
     _syncRetryTimer?.cancel();
     _syncRetryTimer = null;
@@ -219,6 +224,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
     await _prefs?.remove(_coachIdKey);
     await _prefs?.remove(_coachNameKey);
     await _prefs?.remove(_coachEmailKey);
+    await _prefs?.remove(_workspaceIdKey);
     await _prefs?.remove(_lastSyncKey);
     _safeNotify();
   }
@@ -249,6 +255,19 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
           _clientId = rawClientId.trim();
           await _prefs?.setString(_clientIdKey, _clientId!);
         }
+        final rawWorkspaceId = link['workspace_id'] as String?;
+        if (rawWorkspaceId != null && rawWorkspaceId.trim().isNotEmpty) {
+          _workspaceId = rawWorkspaceId.trim();
+          await _prefs?.setString(_workspaceIdKey, _workspaceId!);
+        }
+        final targets = <String, dynamic>{
+          if (link['target_calories'] != null) 'target_calories': link['target_calories'],
+          if (link['target_protein'] != null) 'target_protein': link['target_protein'],
+          if (link['target_carbs'] != null) 'target_carbs': link['target_carbs'],
+          if (link['target_fats'] != null) 'target_fats': link['target_fats'],
+        };
+        if (targets.isNotEmpty) fit.applyCoachNutritionTargets(targets);
+        fit.syncNutritionTodayToCoach();
         final rawCoachId = link['coach_id'] as String?;
         if (rawCoachId != null && rawCoachId.trim().isNotEmpty) {
           _coachId = rawCoachId.trim();
@@ -323,6 +342,55 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
     return false;
   }
 
+  /// Debounce nutrition updates so a series of food edits produces one cloud write.
+  void scheduleNutritionSync({
+    required DateTime day,
+    required int calories,
+    required int protein,
+    required int carbs,
+    required int fats,
+  }) {
+    _nutritionSyncTimer?.cancel();
+    _nutritionSyncTimer = Timer(const Duration(milliseconds: 900), () {
+      unawaited(saveNutritionOnlineFirst(day: day, calories: calories, protein: protein, carbs: carbs, fats: fats));
+    });
+  }
+
+  Future<bool> saveNutritionOnlineFirst({
+    required DateTime day,
+    required int calories,
+    required int protein,
+    required int carbs,
+    required int fats,
+  }) async {
+    final date = DateTime(day.year, day.month, day.day);
+    final dayKey = date.toIso8601String().substring(0, 10);
+    final syncKey = 'nutrition-${_clientId ?? 'pending'}-$dayKey';
+    await queueSync('nutrition', {
+      'sync_key': syncKey,
+      'nutrition_day': dayKey,
+      'calories': calories,
+      'protein': protein,
+      'carbs': carbs,
+      'fats': fats,
+    });
+    await flushSyncs();
+    return !_pendingSyncs.any((item) {
+      final data = item['data'];
+      return item['type'] == 'nutrition' && data is Map && data['sync_key'] == syncKey;
+    });
+  }
+
+  Future<bool> saveProgressPhotoOnlineFirst({
+    required String localPath,
+    required String poseType,
+    required DateTime date,
+  }) async {
+    await queueSync('photo', {'local_path': localPath, 'pose_type': poseType, 'date': date.toIso8601String()});
+    await flushSyncs();
+    return !_pendingSyncs.any((item) => item['type'] == 'photo' &&
+        (item['data'] as Map?)?['local_path'] == localPath);
+  }
   /// Save the workout to the durable outbox first, then attempt delivery.
   Future<bool> saveWorkoutOnlineFirst({
     required String workoutName,
@@ -430,11 +498,19 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> queueSync(String type, Map<String, dynamic> data) async {
     final syncKey = data['sync_key'];
-    if (syncKey != null && _pendingSyncs.any((item) {
-      final itemData = item['data'];
-      return item['type'] == type && itemData is Map && itemData['sync_key'] == syncKey;
-    })) {
-      return;
+    if (syncKey != null) {
+      final existing = _pendingSyncs.indexWhere((item) {
+        final itemData = item['data'];
+        return item['type'] == type && itemData is Map && itemData['sync_key'] == syncKey;
+      });
+      if (existing >= 0) {
+        _pendingSyncs[existing]['data'] = data;
+        _pendingSyncs[existing]['queued_at'] = DateTime.now().toIso8601String();
+        await _savePendingSyncs();
+        _scheduleSyncRetries();
+        _safeNotify();
+        return;
+      }
     }
     _pendingSyncs.add({
       'type': type,
@@ -558,12 +634,27 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
               exercises: exercises,
               clientNotes: data['client_notes'] as String?,
             );
-          case 'photo':
-            await CoachSupabase.instance.syncProgressPhoto(
+          case 'nutrition':
+            await CoachSupabase.instance.syncNutritionSummary(
               clientId: _clientId!.trim(),
-              storagePath: data['storage_path'] as String,
+              day: DateTime.tryParse(data['nutrition_day'] as String? ?? '') ?? DateTime.now(),
+              calories: (data['calories'] as num?)?.toInt() ?? 0,
+              protein: (data['protein'] as num?)?.toInt() ?? 0,
+              carbs: (data['carbs'] as num?)?.toInt() ?? 0,
+              fats: (data['fats'] as num?)?.toInt() ?? 0,
+            );
+          case 'photo':
+            final workspaceId = _workspaceId;
+            final localPath = data['local_path'] as String?;
+            if (workspaceId == null || workspaceId.isEmpty || localPath == null || localPath.isEmpty) {
+              throw StateError('Missing workspace or local progress photo path.');
+            }
+            await CoachSupabase.instance.uploadProgressPhoto(
+              workspaceId: workspaceId,
+              clientId: _clientId!.trim(),
+              localPath: localPath,
               poseType: (data['pose_type'] as String?) ?? 'front',
-              date: data['date'] != null ? DateTime.tryParse(data['date'] as String) : null,
+              date: data['date'] != null ? DateTime.tryParse(data['date'] as String) ?? DateTime.now() : DateTime.now(),
             );
         }
         synced++;
@@ -599,6 +690,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
       final programs = await CoachSupabase.instance.getAssignedPrograms(_clientId!);
       _assignedPrograms = List<Map<String, dynamic>>.from(programs);
       int importedCount = 0;
+      final assignedRoutineIds = <String>{};
 
       for (final prog in programs) {
         final progName = prog['name'] as String? ?? 'Coach Program';
@@ -610,6 +702,7 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
 
           for (final wk in workouts) {
             final wkId = 'coach_${wk['id']}';
+            assignedRoutineIds.add(wkId);
             final wkName = wk['name'] as String? ?? 'Workout';
             final exList = wk['exercises'] as List<dynamic>? ?? [];
 
@@ -670,7 +763,15 @@ class CoachState extends ChangeNotifier with WidgetsBindingObserver {
         }
       }
 
-      if (importedCount > 0) {
+      final staleRoutineIds = fit.routines
+          .where((routine) => routine.id.startsWith('coach_') && !assignedRoutineIds.contains(routine.id))
+          .map((routine) => routine.id)
+          .toList();
+      for (final id in staleRoutineIds) {
+        fit.deleteRoutine(id);
+      }
+
+      if (importedCount > 0 || staleRoutineIds.isNotEmpty) {
         fit.persistNow();
         _safeNotify();
       }

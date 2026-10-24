@@ -30,6 +30,58 @@ mixin NutritionState on FitCore, ToolsState, StatsState {
   static String _dk(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+  String? _lastNutritionSyncFingerprint;
+
+  @override
+  void _persist() {
+    super._persist();
+    if (_loading || !CoachState.instance.isClient || !CoachState.instance.hasCoach) return;
+    final day = nutritionDay;
+    final entries = entriesOn(day);
+    if (entries.isEmpty) return;
+    final total = totalOn(day);
+    final fingerprint = '${_dk(day)}:${total.kcal.round()}:${total.protein.round()}:${total.carbs.round()}:${total.fat.round()}';
+    if (fingerprint == _lastNutritionSyncFingerprint) return;
+    _lastNutritionSyncFingerprint = fingerprint;
+    CoachState.instance.scheduleNutritionSync(
+      day: day,
+      calories: total.kcal.round(),
+      protein: total.protein.round(),
+      carbs: total.carbs.round(),
+      fats: total.fat.round(),
+    );
+  }
+
+  void syncNutritionTodayToCoach() {
+    final day = _dayKey(DateTime.now());
+    if (entriesOn(day).isEmpty) return;
+    final total = totalOn(day);
+    CoachState.instance.scheduleNutritionSync(
+      day: day,
+      calories: total.kcal.round(),
+      protein: total.protein.round(),
+      carbs: total.carbs.round(),
+      fats: total.fat.round(),
+    );
+  }
+
+  void applyCoachNutritionTargets(Map<String, dynamic> targets) {
+    int? value(String key) => (targets[key] as num?)?.toInt();
+    final kcal = value('target_calories');
+    final protein = value('target_protein');
+    final carbs = value('target_carbs');
+    final fat = value('target_fats');
+    if ([kcal, protein, carbs, fat].every((v) => v == null || v <= 0)) return;
+    nutritionGoals = nutritionGoals.copyWith(
+      kcal: kcal != null && kcal > 0 ? kcal : null,
+      protein: protein != null && protein > 0 ? protein : null,
+      carbs: carbs != null && carbs > 0 ? carbs : null,
+      fat: fat != null && fat > 0 ? fat : null,
+    );
+    nutritionGoalsSet = true;
+    _persist();
+    notifyListeners();
+  }
   bool get nutritionOnToday => _dayKey(DateTime.now()) == nutritionDay;
 
   String _newId(String prefix) => '$prefix${DateTime.now().microsecondsSinceEpoch}-${_foodSeq++}';
